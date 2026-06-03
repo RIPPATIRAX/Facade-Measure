@@ -28,11 +28,17 @@
   --c-point: #c07020;
   --c-annot: #c4991a;
   --c-pline: #0a8a6a;
+  --accent-deep: #234a31;
+  --radius: 7px;
+  --shadow-sm: 0 1px 2px rgba(40,33,24,0.05), 0 1px 1px rgba(40,33,24,0.04);
+  --shadow-md: 0 2px 10px rgba(40,33,24,0.10);
+  --shadow-lg: 0 10px 30px rgba(40,33,24,0.18);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: Georgia, 'Times New Roman', serif;
   background: var(--bg);
+  background-image: radial-gradient(120% 80% at 50% -10%, #fbf9f6 0%, var(--bg) 55%);
   color: var(--text);
   height: 100vh;
   display: flex;
@@ -44,20 +50,21 @@ body {
 
 /* HEADER */
 header {
-  background: var(--surface);
+  background: linear-gradient(var(--surface), #fbf9f6);
   border-bottom: 1px solid var(--border);
-  padding: 0 14px;
-  height: 50px;
+  padding: 0 16px;
+  height: 52px;
   display: flex;
   align-items: center;
   gap: 14px;
   flex-shrink: 0;
   z-index: 50;
+  box-shadow: var(--shadow-sm);
 }
 .logo {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--accent);
   white-space: nowrap;
   flex-shrink: 0;
@@ -65,20 +72,22 @@ header {
 .logo em { color: var(--text3); font-style: normal; font-weight: 400; }
 .sep { width: 1px; height: 26px; background: var(--border); flex-shrink: 0; }
 .file-btn {
-  display: flex; align-items: center; gap: 5px;
-  padding: 5px 11px;
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
   border: 1px solid var(--border2);
-  border-radius: 4px;
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
   cursor: pointer;
   font-size: 12px;
   font-family: Georgia, serif;
   white-space: nowrap;
-  transition: background .12s;
+  transition: background .12s, border-color .12s, box-shadow .12s, transform .04s;
   flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
 }
-.file-btn:hover { background: var(--surface2); }
+.file-btn:hover { background: var(--surface2); border-color: var(--text3); }
+.file-btn:active { transform: translateY(1px); }
 .scale-row {
   display: flex; align-items: center; gap: 6px;
   font-size: 12px; color: var(--text2);
@@ -86,19 +95,24 @@ header {
   flex-shrink: 0;
 }
 .scale-row select, .scale-row input[type=number] {
-  padding: 4px 6px;
+  padding: 5px 7px;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 5px;
   background: var(--surface);
   color: var(--text);
   font-size: 12px;
   font-family: Georgia, serif;
+  transition: border-color .12s, box-shadow .12s;
+}
+.scale-row select:focus, .scale-row input[type=number]:focus {
+  outline: none; border-color: var(--accent2);
+  box-shadow: 0 0 0 3px var(--accent-light);
 }
 .scale-row input[type=number] { width: 56px; text-align: center; }
 .export-btns { display: flex; gap: 5px; margin-left: auto; flex-shrink: 0; }
 .btn-sm {
-  padding: 5px 10px;
-  border-radius: 4px;
+  padding: 6px 11px;
+  border-radius: var(--radius);
   font-size: 12px;
   cursor: pointer;
   font-family: Georgia, serif;
@@ -106,41 +120,54 @@ header {
   background: var(--surface);
   color: var(--text);
   white-space: nowrap;
-  transition: background .12s;
+  transition: background .12s, border-color .12s, box-shadow .12s, transform .04s;
+  box-shadow: var(--shadow-sm);
 }
-.btn-sm:hover { background: var(--surface2); }
-.btn-sm.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.btn-sm.primary:hover { background: var(--accent2); }
+.btn-sm:hover { background: var(--surface2); border-color: var(--text3); }
+.btn-sm:active { transform: translateY(1px); }
+.btn-sm.primary {
+  background: linear-gradient(var(--accent2), var(--accent));
+  border-color: var(--accent-deep); color: #fff;
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,0.12);
+}
+.btn-sm.primary:hover { background: linear-gradient(var(--accent2), var(--accent-deep)); }
 
 /* LAYOUT */
 .main { display: flex; flex: 1; overflow: hidden; }
 
 /* TOOLBAR */
 .toolbar {
-  width: 52px;
-  background: var(--surface);
+  width: 54px;
+  background: linear-gradient(var(--surface), #faf8f4);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 0;
-  gap: 2px;
+  padding: 9px 0;
+  gap: 3px;
   flex-shrink: 0;
   overflow-y: auto;
+  box-shadow: var(--shadow-sm);
+  z-index: 20;
 }
 .tool-sep { width: 30px; height: 1px; background: var(--border); margin: 3px 0; }
 .tool-btn {
-  width: 38px; height: 38px;
+  width: 40px; height: 40px;
   border: 1px solid transparent;
-  border-radius: 5px;
+  border-radius: 8px;
   background: transparent;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
-  transition: background .1s, border-color .1s;
+  transition: background .12s, border-color .12s, box-shadow .12s, transform .04s;
   position: relative;
 }
 .tool-btn:hover { background: var(--surface2); border-color: var(--border); }
-.tool-btn.active { background: var(--accent-light); border-color: var(--accent2); }
+.tool-btn:active { transform: scale(0.94); }
+.tool-btn.active {
+  background: var(--accent-light);
+  border-color: var(--accent2);
+  box-shadow: inset 0 0 0 1px var(--accent2), 0 1px 3px rgba(45,90,61,0.18);
+}
 .tool-btn svg { pointer-events: none; }
 .tool-btn::after {
   content: attr(data-tip);
@@ -166,7 +193,7 @@ header {
   flex: 1;
   position: relative;
   overflow: hidden;
-  background: #252018;
+  background: radial-gradient(130% 130% at 50% 0%, #2c261d 0%, #211c15 60%, #1b1710 100%);
 }
 #view-canvas {
   position: absolute;
@@ -189,16 +216,19 @@ header {
 #drop-overlay.hidden { display: none; }
 .drop-box {
   border: 2px dashed #4a4030;
-  border-radius: 12px;
-  padding: 48px 64px;
+  border-radius: 16px;
+  padding: 52px 68px;
   text-align: center;
   cursor: pointer;
-  transition: border-color .2s;
-  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  transition: border-color .2s, background .2s, transform .2s;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  background: rgba(255,255,255,0.015);
 }
-.drop-box:hover, .drop-box.over { border-color: #5a8a6a; }
-.drop-title { font-size: 18px; font-weight: 700; color: #b0a898; letter-spacing: 0.03em; }
-.drop-sub { font-size: 12px; color: #807060; max-width: 280px; line-height: 1.7; }
+.drop-box:hover, .drop-box.over {
+  border-color: #6a9a78; background: rgba(110,160,120,0.06); transform: translateY(-2px);
+}
+.drop-title { font-size: 19px; font-weight: 700; color: #c0b8a6; letter-spacing: 0.04em; }
+.drop-sub { font-size: 12px; color: #8a7a68; max-width: 300px; line-height: 1.75; }
 
 /* Loading indicator */
 #loading {
@@ -252,25 +282,29 @@ header {
   gap: 2px; z-index: 30;
 }
 .zoom-btn {
-  width: 28px; height: 28px;
+  width: 30px; height: 30px;
   background: var(--surface);
   border: 1px solid var(--border2);
-  border-radius: 4px;
+  border-radius: 7px;
   font-size: 16px; line-height: 1;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
   color: var(--text);
-  transition: background .1s;
+  transition: background .12s, border-color .12s, transform .04s;
   font-family: monospace;
+  box-shadow: var(--shadow-md);
 }
-.zoom-btn:hover { background: var(--surface2); }
+.zoom-btn:hover { background: var(--surface2); border-color: var(--text3); }
+.zoom-btn:active { transform: translateY(1px); }
 #zoom-label {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 10px; text-align: center;
-  padding: 2px 4px;
+  padding: 3px 4px;
   color: var(--text2);
+  box-shadow: var(--shadow-md);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Label size slider */
@@ -279,21 +313,24 @@ header {
   bottom: 14px; right: 14px;
   background: var(--surface);
   border: 1px solid var(--border2);
-  border-radius: 6px;
-  padding: 6px 10px;
+  border-radius: 9px;
+  padding: 7px 12px;
   z-index: 30;
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 9px;
   font-size: 11px; color: var(--text2);
+  box-shadow: var(--shadow-md);
 }
 .label-size-ctrl input[type=range] { width: 80px; }
 
 /* SIDEBAR */
 .sidebar {
-  width: 270px;
+  width: 276px;
   background: var(--surface);
   border-left: 1px solid var(--border);
   display: flex; flex-direction: column;
   flex-shrink: 0; overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  z-index: 20;
 }
 .sidebar-tabs {
   display: flex;
@@ -301,14 +338,15 @@ header {
   flex-shrink: 0;
 }
 .stab {
-  flex: 1; padding: 8px 4px;
+  flex: 1; padding: 10px 4px;
   font-size: 11px; text-align: center;
   cursor: pointer; color: var(--text3);
   border-bottom: 2px solid transparent;
-  transition: color .12s;
+  transition: color .12s, background .12s;
   font-family: Georgia, serif;
+  letter-spacing: 0.02em;
 }
-.stab:hover { color: var(--text2); }
+.stab:hover { color: var(--text2); background: var(--surface2); }
 .stab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
 .sidebar-body { flex: 1; overflow-y: auto; }
 .tab-panel { display: none; padding: 10px; }
@@ -317,16 +355,16 @@ header {
 /* Measurement items */
 .m-item {
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 9px 9px 7px;
-  margin-bottom: 7px;
+  border-radius: 9px;
+  padding: 10px 10px 8px;
+  margin-bottom: 8px;
   font-size: 12px;
   cursor: pointer;
-  transition: border-color .12s, background .12s, box-shadow .12s;
+  transition: border-color .12s, background .12s, box-shadow .12s, transform .04s;
 }
-.m-item:hover { border-color: var(--border2); background: #faf8f4; }
-.m-item.selected { border-color: var(--accent); background: var(--accent-light); box-shadow: 0 0 0 1px var(--accent); }
-.m-item.editing { border-color: var(--accent); background: var(--accent-light); box-shadow: 0 0 0 2px var(--accent); }
+.m-item:hover { border-color: var(--border2); background: #faf8f4; box-shadow: var(--shadow-sm); }
+.m-item.selected { border-color: var(--accent); background: var(--accent-light); box-shadow: 0 0 0 1px var(--accent), var(--shadow-sm); }
+.m-item.editing { border-color: var(--accent); background: var(--accent-light); box-shadow: 0 0 0 2px var(--accent), var(--shadow-md); }
 .m-head { display: flex; align-items: flex-start; gap: 5px; margin-bottom: 3px; }
 .m-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 3px; flex-shrink: 0; }
 .m-label { font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -349,15 +387,15 @@ header {
 /* Annotation items */
 .ann-item {
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 7px 9px;
-  margin-bottom: 7px;
+  border-radius: 9px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
   font-size: 12px;
   cursor: pointer;
   transition: border-color .12s, background .12s, box-shadow .12s;
-  display: flex; align-items: flex-start; gap: 6px;
+  display: flex; align-items: flex-start; gap: 7px;
 }
-.ann-item:hover { border-color: var(--border2); background: #faf8f4; }
+.ann-item:hover { border-color: var(--border2); background: #faf8f4; box-shadow: var(--shadow-sm); }
 .ann-item.selected { border-color: #c4991a; background: #fdf8e0; box-shadow: 0 0 0 1px #c4991a; }
 .ann-num {
   width: 20px; height: 20px; border-radius: 50%;
@@ -401,11 +439,11 @@ header {
 
 /* Status bar */
 #statusbar {
-  height: 24px;
-  background: var(--surface2);
+  height: 26px;
+  background: linear-gradient(#faf8f4, var(--surface2));
   border-top: 1px solid var(--border);
   display: flex; align-items: center;
-  padding: 0 10px;
+  padding: 0 12px;
   font-size: 11px; color: var(--text3);
   gap: 14px;
   flex-shrink: 0;
@@ -650,6 +688,9 @@ const loadingMsg= document.getElementById('loading-msg');
 
 /* The source bitmap lives here. We draw only the visible slice each frame. */
 let sourceBitmap = null;   // ImageBitmap (preferred) or HTMLImageElement
+let overviewBitmap = null; // downsampled copy used for fast zoomed-out drawing
+let overviewScale = 1;     // overview px per source-image px (≤ 1)
+const OVERVIEW_MAX = 3000; // longest edge of the downsampled overview
 const DPR = Math.min(window.devicePixelRatio || 1, 2);
 
 /* ═══════════════════════════════════════════════════
@@ -690,6 +731,8 @@ async function loadFile(f) {
     }
     sourceBitmap = bmp;
     S.imgW = bmp.width; S.imgH = bmp.height; S.loaded = true;
+    overviewBitmap = null; overviewScale = 1;
+    await buildOverview(bmp);
     dropOvl.classList.add('hidden');
     resizeCanvas();
     fitView();
@@ -709,6 +752,26 @@ wrap.addEventListener('dragleave', () => dropZone.classList.remove('over'));
 wrap.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('over'); loadFile(e.dataTransfer.files[0]); });
 dropZone.addEventListener('dragover', e => e.preventDefault());
 dropZone.addEventListener('drop', e => { e.preventDefault(); loadFile(e.dataTransfer.files[0]); });
+
+/* Build a small downsampled copy so zoomed-out pan/zoom on huge orthophotos
+   stays smooth: we draw this instead of rescaling the full image every frame.
+   Falls back silently to the full bitmap if anything goes wrong. */
+async function buildOverview(bmp){
+  try {
+    const longest = Math.max(bmp.width, bmp.height);
+    if (longest <= OVERVIEW_MAX) return;            // already small enough
+    loadingMsg.textContent = 'Optimising for zoom…';
+    const s = OVERVIEW_MAX / longest;
+    const ow = Math.max(1, Math.round(bmp.width * s));
+    const oh = Math.max(1, Math.round(bmp.height * s));
+    const oc = document.createElement('canvas'); oc.width = ow; oc.height = oh;
+    const octx = oc.getContext('2d');
+    octx.imageSmoothingEnabled = true; octx.imageSmoothingQuality = 'high';
+    octx.drawImage(bmp, 0, 0, ow, oh);
+    overviewBitmap = window.createImageBitmap ? await createImageBitmap(oc) : oc;
+    overviewScale = s;
+  } catch (e) { overviewBitmap = null; overviewScale = 1; }
+}
 
 /* ═══════════════════════════════════════════════════
    RENDER LOOP  (rAF-throttled, draws only the visible region)
@@ -748,8 +811,14 @@ function renderImage() {
   ctx.imageSmoothingEnabled = (S.zoom < 1);
   ctx.imageSmoothingQuality = 'medium';
 
+  /* Use the cheap downsampled overview while zoomed out; switch to the full
+     bitmap (visible slice only) once zoomed in past the overview's resolution. */
+  const useOverview = overviewBitmap && S.zoom < overviewScale;
+  const src = useOverview ? overviewBitmap : sourceBitmap;
+  const ss  = useOverview ? overviewScale : 1;   // src px per source-image px
+
   try {
-    ctx.drawImage(sourceBitmap, sx, sy, sW, sH, dx, dy, dW, dH);
+    ctx.drawImage(src, sx*ss, sy*ss, sW*ss, sH*ss, dx, dy, dW, dH);
   } catch (e) { /* drawImage can throw mid-resize; ignore one frame */ }
 }
 
@@ -792,6 +861,12 @@ document.addEventListener('keydown', e => {
   if (e.key==='Escape') { if (S.editId) exitEdit(); else cancelDraw(); return; }
   if (e.key==='Enter' && (S.tool==='poly'||S.tool==='pline') && S.drawing) { finishPolyish(); return; }
   if (e.ctrlKey && e.key==='z') { e.preventDefault(); undo(); return; }
+  if ((e.key==='Delete'||e.key==='Backspace') && S.selectedId && !S.editId) {
+    e.preventDefault();
+    if (S.measurements.some(m=>m.id===S.selectedId)) delM(S.selectedId);
+    else if (S.annotations.some(a=>a.id===S.selectedId)) delA(S.selectedId);
+    return;
+  }
   const k = { v:'pan',e:'edit',d:'dist',l:'pline',p:'poly',r:'rect',m:'point',a:'annot' };
   if (k[e.key.toLowerCase()]) setTool(k[e.key.toLowerCase()]);
 });
@@ -1070,7 +1145,22 @@ wrap.addEventListener('mousemove', e => {
 
   if (S.dragVert) {
     const m=S.measurements.find(x=>x.id===S.dragVert.id);
-    if (m) { m.coords[S.dragVert.index]=p; recompute(m); refreshMList(); scheduleRender(); }
+    if (m) {
+      if (m.type==='rect') {
+        // Rectangle stays axis-aligned: drag this corner, pin the diagonally-opposite one.
+        const opp=m.coords[(S.dragVert.index+2)%4];
+        const x=Math.min(p.x,opp.x), y=Math.min(p.y,opp.y);
+        const w=Math.abs(p.x-opp.x), h=Math.abs(p.y-opp.y);
+        m.coords=[{x,y},{x:x+w,y},{x:x+w,y:y+h},{x,y:y+h}];
+        // keep grabbing the corner now under the cursor (handles dragging past the anchor)
+        let best=0,bd=Infinity;
+        m.coords.forEach((c,i)=>{const d=(c.x-p.x)**2+(c.y-p.y)**2; if(d<bd){bd=d;best=i;}});
+        S.dragVert.index=best;
+      } else {
+        m.coords[S.dragVert.index]=p;
+      }
+      recompute(m); refreshMList(); scheduleRender();
+    }
     return;
   }
 
