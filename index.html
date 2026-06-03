@@ -27,6 +27,7 @@
   --c-rect:  #7020b0;
   --c-point: #c07020;
   --c-annot: #c4991a;
+  --c-pline: #0a8a6a;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -141,7 +142,6 @@ header {
 .tool-btn:hover { background: var(--surface2); border-color: var(--border); }
 .tool-btn.active { background: var(--accent-light); border-color: var(--accent2); }
 .tool-btn svg { pointer-events: none; }
-/* Tooltip */
 .tool-btn::after {
   content: attr(data-tip);
   position: absolute;
@@ -168,19 +168,14 @@ header {
   overflow: hidden;
   background: #252018;
 }
-#canvas-container {
-  position: absolute;
-  transform-origin: 0 0;
-}
-#base-img {
-  display: block;
-  max-width: none;
-  image-rendering: pixelated;
-}
-#measure-svg {
+#view-canvas {
   position: absolute;
   top: 0; left: 0;
-  overflow: visible;
+  display: block;
+}
+#overlay-svg {
+  position: absolute;
+  top: 0; left: 0;
   pointer-events: none;
 }
 
@@ -203,7 +198,51 @@ header {
 }
 .drop-box:hover, .drop-box.over { border-color: #5a8a6a; }
 .drop-title { font-size: 18px; font-weight: 700; color: #b0a898; letter-spacing: 0.03em; }
-.drop-sub { font-size: 12px; color: #807060; max-width: 260px; line-height: 1.7; }
+.drop-sub { font-size: 12px; color: #807060; max-width: 280px; line-height: 1.7; }
+
+/* Loading indicator */
+#loading {
+  position: absolute; inset: 0;
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(37,32,24,0.85);
+  z-index: 60; color: #d0c8b8; gap: 14px;
+}
+#loading.show { display: flex; }
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top-color: #9fd3b0;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Mode banner */
+#mode-banner {
+  position: absolute;
+  top: 12px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(26,23,20,0.92);
+  color: #fff;
+  font-size: 12px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  z-index: 40;
+  display: none;
+  align-items: center; gap: 8px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#mode-banner.show { display: flex; }
+#mode-banner b { font-weight: 700; color: #9fd3b0; }
+#mode-banner .kbd {
+  background: rgba(255,255,255,0.15);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: monospace;
+  font-size: 11px;
+}
 
 /* Zoom controls */
 .zoom-controls {
@@ -233,6 +272,20 @@ header {
   padding: 2px 4px;
   color: var(--text2);
 }
+
+/* Label size slider */
+.label-size-ctrl {
+  position: absolute;
+  bottom: 14px; right: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 6px 10px;
+  z-index: 30;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; color: var(--text2);
+}
+.label-size-ctrl input[type=range] { width: 80px; }
 
 /* SIDEBAR */
 .sidebar {
@@ -269,17 +322,18 @@ header {
   margin-bottom: 7px;
   font-size: 12px;
   cursor: pointer;
-  transition: border-color .12s;
+  transition: border-color .12s, background .12s, box-shadow .12s;
 }
-.m-item:hover { border-color: var(--border2); }
-.m-item.selected { border-color: var(--accent); background: var(--accent-light); }
+.m-item:hover { border-color: var(--border2); background: #faf8f4; }
+.m-item.selected { border-color: var(--accent); background: var(--accent-light); box-shadow: 0 0 0 1px var(--accent); }
+.m-item.editing { border-color: var(--accent); background: var(--accent-light); box-shadow: 0 0 0 2px var(--accent); }
 .m-head { display: flex; align-items: flex-start; gap: 5px; margin-bottom: 3px; }
 .m-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 3px; flex-shrink: 0; }
 .m-label { font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .m-tag { font-size: 9px; padding: 1px 4px; border-radius: 3px; background: var(--surface2); color: var(--text3); flex-shrink: 0; margin-top: 2px; }
 .m-val { font-size: 13px; font-weight: 700; color: var(--accent); margin: 2px 0 0 14px; }
 .m-note-text { font-size: 11px; color: var(--text3); font-style: italic; margin-top: 2px; margin-left: 14px; }
-.m-acts { display: flex; gap: 3px; margin-top: 5px; margin-left: 14px; }
+.m-acts { display: flex; gap: 3px; margin-top: 5px; margin-left: 14px; flex-wrap: wrap; }
 .m-act {
   font-size: 10px; padding: 1px 5px;
   border: 1px solid var(--border);
@@ -290,6 +344,7 @@ header {
 .m-act:hover { background: var(--surface2); color: var(--text); }
 .m-act.del { color: var(--danger); border-color: transparent; }
 .m-act.del:hover { background: var(--danger-light); }
+.m-act.edit-on { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; }
 
 /* Annotation items */
 .ann-item {
@@ -299,11 +354,11 @@ header {
   margin-bottom: 7px;
   font-size: 12px;
   cursor: pointer;
-  transition: border-color .12s;
+  transition: border-color .12s, background .12s, box-shadow .12s;
   display: flex; align-items: flex-start; gap: 6px;
 }
-.ann-item:hover { border-color: var(--border2); }
-.ann-item.selected { border-color: #c4991a; background: #fdf8e0; }
+.ann-item:hover { border-color: var(--border2); background: #faf8f4; }
+.ann-item.selected { border-color: #c4991a; background: #fdf8e0; box-shadow: 0 0 0 1px #c4991a; }
 .ann-num {
   width: 20px; height: 20px; border-radius: 50%;
   background: var(--c-annot);
@@ -317,7 +372,7 @@ header {
 .ann-del { background: transparent; border: none; cursor: pointer; color: var(--text3); font-size: 14px; padding: 0 2px; flex-shrink: 0; }
 .ann-del:hover { color: var(--danger); }
 
-/* Form elements */
+/* Forms */
 .note-form { display: flex; flex-direction: column; gap: 6px; }
 .note-form select, .note-form textarea, .note-form input[type=text] {
   width: 100%; padding: 6px 8px;
@@ -336,7 +391,7 @@ header {
 }
 .ann-form-title { font-size: 11px; font-weight: 700; color: var(--warn); margin-bottom: 7px; }
 
-/* Info rows */
+/* Info */
 .info-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px; border-bottom: 1px solid var(--border); }
 .info-row:last-child { border-bottom: none; }
 .info-key { color: var(--text2); }
@@ -357,7 +412,6 @@ header {
 }
 #status-coords { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-/* Inline label edit */
 .inline-edit {
   border: none; background: transparent;
   font-size: 12px; font-family: Georgia, serif;
@@ -366,8 +420,6 @@ header {
   outline: 1px solid var(--accent);
   border-radius: 2px;
 }
-
-/* Empty state */
 .empty-state { color: var(--text3); font-size: 12px; text-align: center; padding: 22px 8px; line-height: 1.7; }
 </style>
 </head>
@@ -396,13 +448,13 @@ header {
   <div class="export-btns">
     <button class="btn-sm" id="btn-csv">↓ CSV</button>
     <button class="btn-sm" id="btn-json">↓ JSON</button>
+    <button class="btn-sm" id="btn-schedule">↓ Stone schedule</button>
     <button class="btn-sm primary" id="btn-pdf">↓ PDF report</button>
   </div>
 </header>
 
 <div class="main">
 
-  <!-- Toolbar -->
   <div class="toolbar">
     <button class="tool-btn active" id="tool-pan" data-tip="Pan / Select  [V]">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -411,13 +463,25 @@ header {
       </svg>
     </button>
 
+    <button class="tool-btn" id="tool-edit" data-tip="Edit points  [E]">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>
+      </svg>
+    </button>
+
     <div class="tool-sep"></div>
 
     <button class="tool-btn" id="tool-dist" data-tip="Distance  [D]">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-dist)" stroke-width="2" stroke-linecap="round">
-        <line x1="4" y1="12" x2="20" y2="12"/>
-        <line x1="4" y1="8" x2="4" y2="16"/>
-        <line x1="20" y1="8" x2="20" y2="16"/>
+        <line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="8" x2="4" y2="16"/><line x1="20" y1="8" x2="20" y2="16"/>
+      </svg>
+    </button>
+
+    <button class="tool-btn" id="tool-pline" data-tip="Polyline / crack length  [L]">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-pline)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3,17 8,9 13,14 21,5"/>
+        <circle cx="3" cy="17" r="1.4" fill="var(--c-pline)"/><circle cx="8" cy="9" r="1.4" fill="var(--c-pline)"/>
+        <circle cx="13" cy="14" r="1.4" fill="var(--c-pline)"/><circle cx="21" cy="5" r="1.4" fill="var(--c-pline)"/>
       </svg>
     </button>
 
@@ -463,12 +527,9 @@ header {
     </button>
   </div>
 
-  <!-- Canvas -->
   <div class="canvas-wrap" id="canvas-wrap">
-    <div id="canvas-container">
-      <img id="base-img" src="" alt="" draggable="false">
-      <svg id="measure-svg" xmlns="http://www.w3.org/2000/svg"></svg>
-    </div>
+    <canvas id="view-canvas"></canvas>
+    <svg id="overlay-svg" xmlns="http://www.w3.org/2000/svg"></svg>
 
     <div id="drop-overlay">
       <div class="drop-box" id="drop-zone">
@@ -477,10 +538,13 @@ header {
           <polyline points="21 15 16 10 5 21"/>
         </svg>
         <div class="drop-title">Drop an image here</div>
-        <div class="drop-sub">JPEG · PNG · TIFF · WebP<br>All processing happens in your browser — nothing is uploaded.</div>
+        <div class="drop-sub">JPEG · PNG · TIFF · WebP — handles very large facades.<br>All processing happens in your browser. Nothing is uploaded.</div>
         <button class="btn-sm" onclick="document.getElementById('file-input').click()">Browse files</button>
       </div>
     </div>
+
+    <div id="loading"><div class="spinner"></div><div id="loading-msg">Preparing image…</div></div>
+    <div id="mode-banner"></div>
 
     <div class="zoom-controls">
       <button class="zoom-btn" id="btn-zoomin">+</button>
@@ -488,9 +552,13 @@ header {
       <button class="zoom-btn" id="btn-zoomout">−</button>
       <button class="zoom-btn" id="btn-zoomfit" style="font-size:10px;font-family:Georgia,serif;">fit</button>
     </div>
+
+    <div class="label-size-ctrl">
+      <span>Label size</span>
+      <input type="range" id="label-size" min="0.7" max="2" step="0.1" value="1.1">
+    </div>
   </div>
 
-  <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-tabs">
       <div class="stab active" data-tab="measurements">Measurements</div>
@@ -509,17 +577,8 @@ header {
           <div class="help-block">Load an image to see details here.</div>
           <div class="help-block" style="margin-top:8px;">
             <strong>Keyboard shortcuts</strong><br>
-            V — Pan &amp; select<br>
-            D — Distance<br>
-            P — Polygon area<br>
-            R — Rectangle<br>
-            M — Point marker<br>
-            A — Annotation<br>
-            Ctrl+Z — Undo<br>
-            Scroll — Zoom<br>
-            Space+drag — Pan<br>
-            Esc — Cancel / finish<br>
-            Enter or double-click — Close polygon
+            V — Pan &amp; select<br>E — Edit points<br>D — Distance<br>L — Polyline / crack<br>P — Polygon area<br>R — Rectangle<br>M — Point marker<br>A — Annotation<br>
+            Ctrl+Z — Undo<br>Scroll — Zoom<br>Space-drag or middle-mouse — Pan<br>Esc — Cancel / finish<br>Enter or double-click — Finish line/polygon
           </div>
         </div>
       </div>
@@ -534,9 +593,9 @@ header {
 </div>
 
 <script>
-/* ═══════════════════════════════════
+/* ═══════════════════════════════════════════════════
    STATE
-═══════════════════════════════════ */
+═══════════════════════════════════════════════════ */
 const S = {
   tool: 'pan',
   zoom: 1, panX: 0, panY: 0,
@@ -552,24 +611,26 @@ const S = {
   selectedId: null,
   history: [],
   mCtr: 0, aCtr: 0,
+  labelScale: 1.1,
+  editId: null,
+  dragVert: null,
+  mouseImg: { x:0, y:0 },
+  cursorImg: null,      // live cursor pos for rubber-band drawing
 };
 
-const COLORS = { dist:'#c0392b', poly:'#2055c0', rect:'#7020b0', point:'#c07020', annot:'#c4991a' };
+const COLORS = { dist:'#c0392b', poly:'#2055c0', rect:'#7020b0', point:'#c07020', annot:'#c4991a', pline:'#0a8a6a' };
 const CAT_COL = {
-  'General note':    '#c4991a',
-  'Crack':           '#c0392b',
-  'Spall':           '#7020b0',
-  'Weathering':      '#2055b0',
-  'Previous repair': '#207a40',
+  'General note':'#c4991a','Crack':'#c0392b','Spall':'#7020b0','Weathering':'#2055b0','Previous repair':'#207a40',
 };
+const AREA_M2_THRESHOLD_MM2 = 250000;
 
-/* ═══════════════════════════════════
+/* ═══════════════════════════════════════════════════
    ELEMENTS
-═══════════════════════════════════ */
+═══════════════════════════════════════════════════ */
 const wrap    = document.getElementById('canvas-wrap');
-const cont    = document.getElementById('canvas-container');
-const img     = document.getElementById('base-img');
-const svg     = document.getElementById('measure-svg');
+const canvas  = document.getElementById('view-canvas');
+const ctx     = canvas.getContext('2d');
+const svg     = document.getElementById('overlay-svg');
 const dropOvl = document.getElementById('drop-overlay');
 const dropZone= document.getElementById('drop-zone');
 const fileInp = document.getElementById('file-input');
@@ -582,27 +643,64 @@ const sCrd    = document.getElementById('status-coords');
 const mList   = document.getElementById('m-list');
 const aList   = document.getElementById('ann-list');
 const infoP   = document.getElementById('info-panel');
+const banner  = document.getElementById('mode-banner');
+const labelSizeInp = document.getElementById('label-size');
+const loadingEl = document.getElementById('loading');
+const loadingMsg= document.getElementById('loading-msg');
 
-/* ═══════════════════════════════════
+/* The source bitmap lives here. We draw only the visible slice each frame. */
+let sourceBitmap = null;   // ImageBitmap (preferred) or HTMLImageElement
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+/* ═══════════════════════════════════════════════════
+   CANVAS SIZING
+═══════════════════════════════════════════════════ */
+function resizeCanvas() {
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  canvas.width  = Math.round(w * DPR);
+  canvas.height = Math.round(h * DPR);
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  svg.setAttribute('width', w);
+  svg.setAttribute('height', h);
+  svg.style.width = w + 'px';
+  svg.style.height = h + 'px';
+  scheduleRender();
+}
+window.addEventListener('resize', resizeCanvas);
+
+/* ═══════════════════════════════════════════════════
    IMAGE LOAD
-═══════════════════════════════════ */
-function loadFile(f) {
+═══════════════════════════════════════════════════ */
+async function loadFile(f) {
   if (!f || !f.type.startsWith('image/')) return;
-  const url = URL.createObjectURL(f);
-  img.onload = () => {
-    S.imgW = img.naturalWidth; S.imgH = img.naturalHeight; S.loaded = true;
-    img.style.width  = S.imgW + 'px';
-    img.style.height = S.imgH + 'px';
-    svg.setAttribute('width',  S.imgW);
-    svg.setAttribute('height', S.imgH);
-    svg.style.width  = S.imgW + 'px';
-    svg.style.height = S.imgH + 'px';
+  loadingEl.classList.add('show');
+  loadingMsg.textContent = 'Decoding image…';
+  try {
+    let bmp;
+    if (window.createImageBitmap) {
+      bmp = await createImageBitmap(f);
+    } else {
+      bmp = await new Promise((res, rej) => {
+        const im = new Image();
+        im.onload = () => res(im);
+        im.onerror = rej;
+        im.src = URL.createObjectURL(f);
+      });
+    }
+    sourceBitmap = bmp;
+    S.imgW = bmp.width; S.imgH = bmp.height; S.loaded = true;
     dropOvl.classList.add('hidden');
+    resizeCanvas();
     fitView();
     updateInfoPanel(f);
     msg('Loaded: ' + S.imgW + ' × ' + S.imgH + ' px — scale: 1 px = 1 ' + S.unit);
-  };
-  img.src = url;
+  } catch (err) {
+    msg('Could not load that image.');
+    console.error(err);
+  } finally {
+    loadingEl.classList.remove('show');
+  }
 }
 document.getElementById('open-btn').onclick = () => fileInp.click();
 fileInp.onchange = e => loadFile(e.target.files[0]);
@@ -612,13 +710,55 @@ wrap.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remo
 dropZone.addEventListener('dragover', e => e.preventDefault());
 dropZone.addEventListener('drop', e => { e.preventDefault(); loadFile(e.dataTransfer.files[0]); });
 
-/* ═══════════════════════════════════
+/* ═══════════════════════════════════════════════════
+   RENDER LOOP  (rAF-throttled, draws only the visible region)
+═══════════════════════════════════════════════════ */
+let _renderQueued = false;
+function scheduleRender() {
+  if (_renderQueued) return;
+  _renderQueued = true;
+  requestAnimationFrame(() => { _renderQueued = false; renderImage(); renderOverlay(); });
+}
+
+function renderImage() {
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if (!S.loaded || !sourceBitmap) return;
+
+  const cw = canvas.width, ch = canvas.height;       // device px
+  const z = S.zoom * DPR;                              // device px per image px
+  const offX = S.panX * DPR, offY = S.panY * DPR;      // image origin in device px
+
+  /* Visible region of the image, in image pixels */
+  let sx = Math.max(0, (-offX) / z);
+  let sy = Math.max(0, (-offY) / z);
+  let sx2 = Math.min(S.imgW, (cw - offX) / z);
+  let sy2 = Math.min(S.imgH, (ch - offY) / z);
+  if (sx2 <= sx || sy2 <= sy) return;                  // image off-screen
+
+  const sW = sx2 - sx, sH = sy2 - sy;
+
+  /* Destination rect on canvas (device px) */
+  const dx = offX + sx * z;
+  const dy = offY + sy * z;
+  const dW = sW * z;
+  const dH = sH * z;
+
+  /* When zoomed in past 1:1, keep pixels crisp; when out, smooth. */
+  ctx.imageSmoothingEnabled = (S.zoom < 1);
+  ctx.imageSmoothingQuality = 'medium';
+
+  try {
+    ctx.drawImage(sourceBitmap, sx, sy, sW, sH, dx, dy, dW, dH);
+  } catch (e) { /* drawImage can throw mid-resize; ignore one frame */ }
+}
+
+/* ═══════════════════════════════════════════════════
    ZOOM / PAN
-═══════════════════════════════════ */
-let _px0, _py0, _ppx, _ppy;
+═══════════════════════════════════════════════════ */
 function applyXform() {
-  cont.style.transform = `translate(${S.panX}px,${S.panY}px) scale(${S.zoom})`;
   zoomLbl.textContent = Math.round(S.zoom * 100) + '%';
+  scheduleRender();
 }
 function fitView() {
   const ww = wrap.clientWidth, wh = wrap.clientHeight;
@@ -629,139 +769,348 @@ function fitView() {
 }
 wrap.addEventListener('wheel', e => {
   e.preventDefault();
+  if (!S.loaded) return;
   const r = wrap.getBoundingClientRect();
   const mx = e.clientX - r.left, my = e.clientY - r.top;
   const f = e.deltaY < 0 ? 1.12 : 0.89;
-  const nz = Math.max(0.04, Math.min(60, S.zoom * f));
+  const nz = Math.max(0.02, Math.min(80, S.zoom * f));
   S.panX = mx - (mx - S.panX) * nz / S.zoom;
   S.panY = my - (my - S.panY) * nz / S.zoom;
   S.zoom = nz; applyXform();
 }, { passive:false });
-document.getElementById('btn-zoomin').onclick  = () => { S.zoom = Math.min(60, S.zoom*1.2); applyXform(); };
-document.getElementById('btn-zoomout').onclick = () => { S.zoom = Math.max(0.04, S.zoom/1.2); applyXform(); };
+document.getElementById('btn-zoomin').onclick  = () => { S.zoom = Math.min(80, S.zoom*1.25); applyXform(); };
+document.getElementById('btn-zoomout').onclick = () => { S.zoom = Math.max(0.02, S.zoom/1.25); applyXform(); };
 document.getElementById('btn-zoomfit').onclick = fitView;
 
-/* ═══════════════════════════════════
+/* ═══════════════════════════════════════════════════
    KEYBOARD
-═══════════════════════════════════ */
+═══════════════════════════════════════════════════ */
 document.addEventListener('keydown', e => {
   const tag = e.target.tagName;
   if (tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
-  if (e.code==='Space') { e.preventDefault(); S.spaceDown=true; wrap.style.cursor='grab'; return; }
-  if (e.key==='Escape') { cancelDraw(); return; }
-  if (e.key==='Enter' && S.tool==='poly' && S.drawing) { finishPoly(); return; }
+  if (e.code==='Space') { e.preventDefault(); S.spaceDown=true; setCursor(); return; }
+  if (e.key==='Escape') { if (S.editId) exitEdit(); else cancelDraw(); return; }
+  if (e.key==='Enter' && (S.tool==='poly'||S.tool==='pline') && S.drawing) { finishPolyish(); return; }
   if (e.ctrlKey && e.key==='z') { e.preventDefault(); undo(); return; }
-  const k = { v:'pan',d:'dist',p:'poly',r:'rect',m:'point',a:'annot' };
+  const k = { v:'pan',e:'edit',d:'dist',l:'pline',p:'poly',r:'rect',m:'point',a:'annot' };
   if (k[e.key.toLowerCase()]) setTool(k[e.key.toLowerCase()]);
 });
 document.addEventListener('keyup', e => { if (e.code==='Space') { S.spaceDown=false; setCursor(); } });
 
-/* ═══════════════════════════════════
-   COORDS
-═══════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   COORD MATH
+═══════════════════════════════════════════════════ */
 function toImg(cx, cy) {
   const r = wrap.getBoundingClientRect();
   return { x:(cx-r.left-S.panX)/S.zoom, y:(cy-r.top-S.panY)/S.zoom };
 }
+function imgToScreen(ix, iy) { return { x: ix*S.zoom + S.panX, y: iy*S.zoom + S.panY }; }
 function clamp(p) { return { x:Math.max(0,Math.min(S.imgW,p.x)), y:Math.max(0,Math.min(S.imgH,p.y)) }; }
 function dist2(a,b) { return Math.sqrt((b.x-a.x)**2+(b.y-a.y)**2); }
-function polyArea(pts) {
-  let a=0;
-  for(let i=0;i<pts.length;i++){const j=(i+1)%pts.length;a+=pts[i].x*pts[j].y-pts[j].x*pts[i].y;}
-  return Math.abs(a)/2;
-}
-function pxToU(px) { return px / S.pxPerUnit; }
-function fmtDist(px) {
-  const v = pxToU(px);
+function pathLen(pts){ let L=0; for(let i=0;i<pts.length-1;i++) L+=dist2(pts[i],pts[i+1]); return L; }
+function polyArea(pts){ let a=0; for(let i=0;i<pts.length;i++){const j=(i+1)%pts.length;a+=pts[i].x*pts[j].y-pts[j].x*pts[i].y;} return Math.abs(a)/2; }
+function pxToU(px){ return px / S.pxPerUnit; }
+function fmtDist(px){
+  const v=pxToU(px);
   if (S.unit==='mm' && v>=1000) return (v/1000).toFixed(3)+' m';
+  if (S.unit==='cm' && v>=100)  return (v/100).toFixed(3)+' m';
   return v.toFixed(1)+' '+S.unit;
 }
-function fmtArea(px2) {
-  const v = px2/(S.pxPerUnit*S.pxPerUnit);
-  if (S.unit==='mm') {
-    if (v>=1e6) return (v/1e6).toFixed(4)+' m²';
-    return Math.round(v)+' mm²';
-  }
-  if (S.unit==='cm') {
-    if (v>=10000) return (v/10000).toFixed(4)+' m²';
-    return Math.round(v)+' cm²';
-  }
-  return v.toFixed(3)+' '+S.unit+'²';
+function fmtArea(px2){
+  const v=px2/(S.pxPerUnit*S.pxPerUnit);
+  if (S.unit==='mm'){ if(v>=AREA_M2_THRESHOLD_MM2) return (v/1e6).toFixed(3)+' m²'; return Math.round(v)+' mm²'; }
+  if (S.unit==='cm'){ if(v>=AREA_M2_THRESHOLD_MM2/100) return (v/1e4).toFixed(3)+' m²'; return Math.round(v)+' cm²'; }
+  if (S.unit==='m') return v.toFixed(3)+' m²';
+  return Math.round(v)+' px²';
 }
 
-/* ═══════════════════════════════════
+/* ═══════════════════════════════════════════════════
+   SIZE HELPERS  — PARTIAL ZOOM SCALING
+   Geometry (lines, vertices) is drawn in SCREEN px, but the
+   chosen screen size is derived from a value that grows with zoom
+   and is then clamped. Result: small & precise when zoomed in,
+   visible but not huge when zoomed out.
+═══════════════════════════════════════════════════ */
+function strokePx(base) {
+  // base is the nominal screen width at 100%. Let it shrink a bit when
+  // zoomed in (so fine detail is visible) and grow modestly when out.
+  const v = base * Math.pow(S.zoom, 0.15);
+  return Math.max(base*0.6, Math.min(base*2.2, v));
+}
+function vertPx(base) {
+  // Vertex handles: smaller (tighter) when zoomed in for pixel precision,
+  // larger when zoomed out so they remain clickable. Clamped both ends.
+  const v = base / Math.pow(S.zoom, 0.25);
+  return Math.max(3.5, Math.min(base*2.4, v));
+}
+function labelPx() {
+  const baseScreen = 13 * S.labelScale;
+  return Math.max(10, Math.min(30, baseScreen));   // pure screen px, zoom-independent within band
+}
+
+/* ═══════════════════════════════════════════════════
+   OVERLAY (SVG)  — everything drawn in SCREEN coordinates
+═══════════════════════════════════════════════════ */
+function mkEl(tag, attrs) {
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
+  return el;
+}
+function renderOverlay() {
+  svg.innerHTML='';
+  if (!S.loaded) return;
+
+  // Rubber-band preview while drawing
+  if (S.drawing) renderPreview();
+
+  S.measurements.forEach(m => drawMeasurement(m));
+  S.annotations.forEach(a => drawAnnotation(a));
+}
+
+function sCircle(p, r, fill, stroke, sw) {
+  return mkEl('circle',{cx:p.x,cy:p.y,r,fill:fill||'white',stroke:stroke||'#333','stroke-width':sw||1.5});
+}
+
+function drawLabelScreen(centerImg, txt, color) {
+  const c = imgToScreen(centerImg.x, centerImg.y);
+  const fs = labelPx();
+  const padX = fs*0.45, padY = fs*0.3;
+  const w = txt.length*fs*0.56 + padX*2;
+  const h = fs + padY*2;
+  const g = mkEl('g', {});
+  g.append(
+    mkEl('rect',{x:c.x-w/2,y:c.y-h/2,width:w,height:h,rx:Math.max(2,fs*0.22),fill:color,'fill-opacity':'0.9'}),
+    (()=>{const t=mkEl('text',{x:c.x,y:c.y+fs*0.04,'text-anchor':'middle','dominant-baseline':'middle',fill:'white','font-family':'Georgia,serif','font-weight':'700','font-size':fs,'pointer-events':'none'});t.textContent=txt;return t;})()
+  );
+  return g;
+}
+
+function drawMeasurement(m) {
+  const g = mkEl('g', { 'data-mid': m.id });
+  g.style.cursor='pointer';
+  g.style.pointerEvents='auto';
+  g.addEventListener('mousedown', ev => {
+    // Selecting / edit-grab handled centrally; just mark intent on left click
+    if (ev.button===0 && !S.spaceDown && (S.tool==='pan')) { ev.stopPropagation(); selectM(m.id, false); }
+  });
+  g.addEventListener('click', ev => { ev.stopPropagation(); if(S.tool!=='edit') selectM(m.id,false); });
+
+  const editing = (m.id===S.editId);
+  const sel = (m.id===S.selectedId);
+  const hov = (m.id===S._hover);
+  const filt = (sel||editing) ? 'drop-shadow(0 0 3px rgba(0,0,0,0.6))' : (hov ? 'drop-shadow(0 0 2px rgba(0,0,0,0.45))' : '');
+  if (filt) g.setAttribute('style', g.getAttribute('style')+';filter:'+filt);
+
+  const sStroke = strokePx(2);
+
+  if (m.type==='dist') {
+    const a=imgToScreen(m.coords[0].x,m.coords[0].y), b=imgToScreen(m.coords[1].x,m.coords[1].y);
+    g.append(
+      mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:m.color,'stroke-width':sStroke,'stroke-linecap':'round'}),
+      vertexHandle(m,0,editing), vertexHandle(m,1,editing),
+      drawLabelScreen({x:(m.coords[0].x+m.coords[1].x)/2,y:(m.coords[0].y+m.coords[1].y)/2}, m.label+' · '+fmtDist(m.value), m.color)
+    );
+  } else if (m.type==='pline') {
+    const ptsS = m.coords.map(p=>imgToScreen(p.x,p.y));
+    g.append(
+      mkEl('polyline',{points:ptsS.map(p=>p.x+','+p.y).join(' '),stroke:m.color,'stroke-width':strokePx(2.4),fill:'none','stroke-linejoin':'round','stroke-linecap':'round'}),
+      ...m.coords.map((_,i)=>vertexHandle(m,i,editing)),
+      drawLabelScreen(m.coords[Math.floor(m.coords.length/2)], m.label+' · '+fmtDist(m.length), m.color)
+    );
+  } else if (m.type==='poly'||m.type==='rect') {
+    const ptsS = m.coords.map(p=>imgToScreen(p.x,p.y));
+    const cx = m.coords.reduce((s,p)=>s+p.x,0)/m.coords.length;
+    const cy = m.coords.reduce((s,p)=>s+p.y,0)/m.coords.length;
+    const txt = m.type==='rect' ? (m.label+' · '+fmtDist(m.rectW)+'×'+fmtDist(m.rectH)) : (m.label+' · '+fmtArea(m.area));
+    g.append(
+      mkEl('polygon',{points:ptsS.map(p=>p.x+','+p.y).join(' '),stroke:m.color,'stroke-width':sStroke,fill:m.color,'fill-opacity':'0.1','stroke-linejoin':'round'}),
+      ...m.coords.map((_,i)=>vertexHandle(m,i,editing)),
+      drawLabelScreen({x:cx,y:cy}, txt, m.color)
+    );
+  } else if (m.type==='point') {
+    const p=imgToScreen(m.coords[0].x,m.coords[0].y);
+    const outer=sCircle(p,vertPx(9),m.color,m.color,strokePx(1)); outer.setAttribute('fill-opacity','0.2');
+    g.append(
+      outer,
+      mkEl('line',{x1:p.x,y1:p.y-vertPx(11),x2:p.x,y2:p.y-vertPx(22),stroke:m.color,'stroke-width':strokePx(1.5)}),
+      vertexHandle(m,0,editing),
+      drawLabelScreen({x:m.coords[0].x, y:m.coords[0].y - (22/S.zoom)}, m.label, m.color)
+    );
+  }
+  svg.appendChild(g);
+}
+
+function vertexHandle(m, index, editing) {
+  const p = imgToScreen(m.coords[index].x, m.coords[index].y);
+  const r = editing ? vertPx(6) : vertPx(3.6);
+  const c = sCircle(p, r, editing?'#fff':'white', m.color, strokePx(editing?2:1.5));
+  c.setAttribute('data-vid', m.id);
+  c.setAttribute('data-vidx', index);
+  if (editing) { c.style.cursor='grab'; c.style.pointerEvents='all'; }
+  return c;
+}
+
+function drawAnnotation(a) {
+  const g = mkEl('g', { 'data-aid': a.id });
+  g.style.cursor='pointer'; g.style.pointerEvents='auto';
+  g.addEventListener('click', ev => { ev.stopPropagation(); selectA(a.id,false); });
+  const p = imgToScreen(a.x, a.y);
+  const c = a.color||COLORS.annot;
+  const r = Math.max(9, Math.min(16, 11));   // pins keep a stable screen size
+  const sel = (a.id===S.selectedId);
+  const hov = (a.id===S._hoverA);
+  if (sel) g.setAttribute('style', g.getAttribute('style')+';filter:drop-shadow(0 0 3px rgba(0,0,0,0.6))');
+  else if (hov) g.setAttribute('style', g.getAttribute('style')+';filter:drop-shadow(0 0 2px rgba(0,0,0,0.45))');
+  const pin=mkEl('path',{
+    d:`M${p.x},${p.y} Q${p.x-r},${p.y-r} ${p.x-r},${p.y-r*2} Q${p.x-r},${p.y-r*3.2} ${p.x},${p.y-r*3.2} Q${p.x+r},${p.y-r*3.2} ${p.x+r},${p.y-r*2} Q${p.x+r},${p.y-r} ${p.x},${p.y} Z`,
+    fill:c,stroke:'rgba(0,0,0,0.3)','stroke-width':1.2
+  });
+  const tx=mkEl('text',{x:p.x,y:p.y-r*2.1,'text-anchor':'middle','dominant-baseline':'middle',fill:'white','font-size':r,'font-family':'Georgia,serif','font-weight':'700','pointer-events':'none'});
+  tx.textContent=a.num; g.append(pin,tx); svg.appendChild(g);
+}
+
+/* ── Rubber-band preview ── */
+function renderPreview() {
+  const dash = mkEl('g', {});
+  if (S.tool==='dist' && S.distA && S.cursorImg) {
+    const a=imgToScreen(S.distA.x,S.distA.y), b=imgToScreen(S.cursorImg.x,S.cursorImg.y);
+    dash.append(mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:COLORS.dist,'stroke-width':strokePx(1.5),'stroke-dasharray':'6,4',fill:'none'}));
+  } else if ((S.tool==='poly'||S.tool==='pline') && S.polyPts.length) {
+    const pts = S.cursorImg ? [...S.polyPts, S.cursorImg] : S.polyPts;
+    const ptsS = pts.map(p=>imgToScreen(p.x,p.y));
+    dash.append(mkEl('polyline',{points:ptsS.map(p=>p.x+','+p.y).join(' '),stroke:S.tool==='pline'?COLORS.pline:COLORS.poly,'stroke-width':strokePx(1.5),'stroke-dasharray':'6,4',fill:'none'}));
+    ptsS.forEach(p=>dash.append(sCircle(p,vertPx(3),'white',S.tool==='pline'?COLORS.pline:COLORS.poly,1.2)));
+  } else if (S.tool==='rect' && S.rectA && S.cursorImg) {
+    const a=imgToScreen(S.rectA.x,S.rectA.y), b=imgToScreen(S.cursorImg.x,S.cursorImg.y);
+    dash.append(mkEl('rect',{x:Math.min(a.x,b.x),y:Math.min(a.y,b.y),width:Math.abs(b.x-a.x),height:Math.abs(b.y-a.y),stroke:COLORS.rect,'stroke-width':strokePx(1.5),'stroke-dasharray':'6,4',fill:'none'}));
+  }
+  svg.appendChild(dash);
+}
+
+/* ═══════════════════════════════════════════════════
    TOOLS
-═══════════════════════════════════ */
+═══════════════════════════════════════════════════ */
 function setTool(t) {
-  cancelDraw();
-  S.tool = t;
+  if (t!=='edit') { cancelDraw(); }
+  if (S.editId && t!=='edit') exitEdit();
+  S.tool=t;
   document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
-  const btn = document.getElementById('tool-'+t);
+  const btn=document.getElementById('tool-'+t);
   if(btn) btn.classList.add('active');
-  const names = {pan:'Pan / Select',dist:'Distance',poly:'Polygon',rect:'Rectangle',point:'Point marker',annot:'Annotation'};
-  sTool.textContent = names[t]||t;
-  const hints = {
-    dist:'Click start — click end',
-    poly:'Click vertices — double-click or Enter to close',
-    rect:'Click and drag',
-    point:'Click to place',
-    annot:'Click to annotate',
-  };
-  msg(hints[t]||'');
+  const names={pan:'Pan / Select',edit:'Edit points',dist:'Distance',pline:'Polyline',poly:'Polygon',rect:'Rectangle',point:'Point marker',annot:'Annotation'};
+  sTool.textContent=names[t]||t;
+  if (t==='edit') {
+    if (!S.editId && S.selectedId && S.measurements.find(m=>m.id===S.selectedId)) enterEdit(S.selectedId);
+    else if (!S.editId) msg('Select a measurement to edit its points.');
+    else msg('Drag the handles to adjust. Esc to finish.');
+  } else {
+    const hints={
+      dist:'Click start — click end. Pan anytime with Space-drag or middle-mouse.',
+      pline:'Click points along the crack — double-click or Enter to finish.',
+      poly:'Click vertices — double-click or Enter to close.',
+      rect:'Click and drag.',
+      point:'Click to place.',
+      annot:'Click to annotate.',
+      pan:'',
+    };
+    msg(hints[t]||'');
+    hideBanner();
+  }
   setCursor();
 }
 function setCursor() {
-  if (S.spaceDown||S.tool==='pan') wrap.style.cursor = S.panning?'grabbing':'grab';
-  else wrap.style.cursor = 'crosshair';
+  if (S.panning) { wrap.style.cursor='grabbing'; return; }
+  if (S.spaceDown||S.tool==='pan') { wrap.style.cursor='grab'; return; }
+  if (S.tool==='edit') { wrap.style.cursor='default'; return; }
+  wrap.style.cursor='crosshair';
 }
+function showBanner(h){ banner.innerHTML=h; banner.classList.add('show'); }
+function hideBanner(){ banner.classList.remove('show'); }
 
-/* ═══════════════════════════════════
-   MOUSE HANDLERS
-═══════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   MOUSE
+═══════════════════════════════════════════════════ */
+let _px0,_py0,_ppx,_ppy;
+function beginPan(e){ S.panning=true; _px0=e.clientX;_py0=e.clientY;_ppx=S.panX;_ppy=S.panY; setCursor(); }
+
 wrap.addEventListener('mousedown', e => {
+  if (e.button===1) { e.preventDefault(); beginPan(e); return; }          // middle = pan always
   if (e.button!==0) return;
-  if (S.spaceDown||S.tool==='pan') {
-    S.panning=true; _px0=e.clientX; _py0=e.clientY; _ppx=S.panX; _ppy=S.panY;
-    wrap.style.cursor='grabbing'; return;
+
+  if (S.spaceDown) { beginPan(e); return; }                                // space = pan always
+
+  if (S.tool==='edit') {
+    const hit = hitVertex(e.clientX, e.clientY);
+    if (hit) { pushH(); S.dragVert=hit; wrap.style.cursor='grabbing'; return; }
+    // clicked empty space in edit mode → try to select a measurement under cursor to edit
+    const mid = measurementAt(e.clientX, e.clientY);
+    if (mid) { enterEdit(mid); return; }
+    return;  // do NOT pan on a plain drag in edit mode
   }
+
+  if (S.tool==='pan') {
+    const mid = measurementAt(e.clientX, e.clientY);
+    const aid = annotationAt(e.clientX, e.clientY);
+    if (aid) { selectA(aid, false); return; }
+    if (mid) { selectM(mid, false); return; }
+    beginPan(e); return;                                                   // empty space → pan
+  }
+
   if (!S.loaded) return;
   const p = clamp(toImg(e.clientX, e.clientY));
   toolDown(p, e);
 });
 
 wrap.addEventListener('mousemove', e => {
-  if (S.panning) {
-    S.panX=_ppx+(e.clientX-_px0); S.panY=_ppy+(e.clientY-_py0);
-    applyXform(); return;
-  }
+  if (S.panning) { S.panX=_ppx+(e.clientX-_px0); S.panY=_ppy+(e.clientY-_py0); applyXform(); return; }
   if (!S.loaded) return;
   const p = clamp(toImg(e.clientX, e.clientY));
-  sCrd.textContent = 'x: '+Math.round(p.x)+'  y: '+Math.round(p.y)+' px';
-  toolMove(p);
+  S.mouseImg=p;
+  sCrd.textContent='x: '+Math.round(p.x)+'  y: '+Math.round(p.y)+' px';
+
+  if (S.dragVert) {
+    const m=S.measurements.find(x=>x.id===S.dragVert.id);
+    if (m) { m.coords[S.dragVert.index]=p; recompute(m); refreshMList(); scheduleRender(); }
+    return;
+  }
+
+  if (S.drawing) { S.cursorImg=p; scheduleRender();
+    if (S.tool==='dist'&&S.distA) msg('Length: '+fmtDist(dist2(S.distA,p)));
+  }
 });
 
-wrap.addEventListener('mouseup', e => {
+window.addEventListener('mouseup', e => {
   if (S.panning) { S.panning=false; setCursor(); return; }
+  if (S.dragVert) { S.dragVert=null; setCursor(); scheduleRender(); return; }
   if (!S.loaded||e.button!==0) return;
-  const p = clamp(toImg(e.clientX, e.clientY));
-  toolUp(p);
+  if (S.tool==='rect'&&S.drawing&&S.rectA) {
+    const p=clamp(toImg(e.clientX,e.clientY));
+    if (Math.abs(p.x-S.rectA.x)>3||Math.abs(p.y-S.rectA.y)>3) finishRect(S.rectA,p);
+    S.drawing=false; S.rectA=null; S.cursorImg=null; hideBanner(); scheduleRender();
+  }
 });
 
 wrap.addEventListener('dblclick', e => {
   if (!S.loaded) return;
-  if (S.tool==='poly'&&S.drawing) finishPoly();
+  if ((S.tool==='poly'||S.tool==='pline')&&S.drawing) finishPolyish();
 });
+wrap.addEventListener('auxclick', e => { if (e.button===1) e.preventDefault(); });
 
 function toolDown(p, e) {
   if (S.tool==='dist') {
-    if (!S.drawing) { S.drawing=true; S.distA=p; prvLine(p,p); }
+    if (!S.drawing){ S.drawing=true; S.distA=p; S.cursorImg=p; showBanner('Placing <b>distance</b> · click the end point · pan with <span class="kbd">Space</span>-drag or <span class="kbd">middle-mouse</span>'); scheduleRender(); }
     else finishDist(p);
-  } else if (S.tool==='poly') {
-    if (!S.drawing) { S.drawing=true; S.polyPts=[p]; }
+  } else if (S.tool==='pline'||S.tool==='poly') {
+    if (!S.drawing){ S.drawing=true; S.polyPts=[p]; }
     else S.polyPts.push(p);
-    prvPoly();
+    S.cursorImg=p;
+    showBanner(S.tool==='pline'
+      ? 'Tracing <b>crack</b> · click points · <span class="kbd">double-click</span>/<span class="kbd">Enter</span> finishes · pan with <span class="kbd">Space</span>/<span class="kbd">middle-mouse</span>'
+      : 'Drawing <b>area</b> · click vertices · <span class="kbd">double-click</span>/<span class="kbd">Enter</span> closes · pan with <span class="kbd">Space</span>/<span class="kbd">middle-mouse</span>');
+    scheduleRender();
   } else if (S.tool==='rect') {
-    S.drawing=true; S.rectA=p;
+    S.drawing=true; S.rectA=p; S.cursorImg=p;
+    showBanner('Drawing <b>rectangle</b> · drag to size · release to finish'); scheduleRender();
   } else if (S.tool==='point') {
     addPoint(p);
   } else if (S.tool==='annot') {
@@ -769,172 +1118,132 @@ function toolDown(p, e) {
   }
 }
 
-function toolMove(p) {
-  if (S.tool==='dist'&&S.drawing) { prvLine(S.distA,p); msg('Length: '+fmtDist(dist2(S.distA,p))); }
-  if (S.tool==='poly'&&S.drawing) prvPoly(p);
-  if (S.tool==='rect'&&S.drawing&&S.rectA) prvRect(S.rectA,p);
-}
-
-function toolUp(p) {
-  if (S.tool==='rect'&&S.drawing&&S.rectA) {
-    const dx=Math.abs(p.x-S.rectA.x), dy=Math.abs(p.y-S.rectA.y);
-    if (dx>3||dy>3) finishRect(S.rectA,p);
-    S.drawing=false; S.rectA=null; clearPrv();
+/* ═══════════════════════════════════════════════════
+   HIT TESTING  (screen-space)
+═══════════════════════════════════════════════════ */
+function hitVertex(clientX, clientY) {
+  if (!S.editId) return null;
+  const m=S.measurements.find(x=>x.id===S.editId);
+  if(!m) return null;
+  const tol=14, r=wrap.getBoundingClientRect();
+  for (let i=0;i<m.coords.length;i++){
+    const s=imgToScreen(m.coords[i].x,m.coords[i].y);
+    if (Math.hypot(clientX-r.left-s.x, clientY-r.top-s.y)<=tol) return {id:m.id,index:i};
   }
+  return null;
 }
-
-/* ═══════════════════════════════════
-   PREVIEW (dashed temp elements)
-═══════════════════════════════════ */
-function getP(id, tag) {
-  let el=document.getElementById(id);
-  if (!el) {
-    el=mkEl(tag,{}); el.id=id;
-    el.setAttribute('stroke-dasharray','5,3');
-    el.setAttribute('stroke-width','1.5');
-    el.setAttribute('fill','none');
-    el.setAttribute('pointer-events','none');
-    svg.appendChild(el);
+function measurementAt(clientX, clientY) {
+  const r=wrap.getBoundingClientRect();
+  const px=clientX-r.left, py=clientY-r.top, tol=8;
+  // topmost first
+  for (let k=S.measurements.length-1;k>=0;k--){
+    const m=S.measurements[k];
+    const pts=m.coords.map(c=>imgToScreen(c.x,c.y));
+    if (m.type==='point') { if (Math.hypot(px-pts[0].x,py-pts[0].y)<=12) return m.id; continue; }
+    if (m.type==='poly'||m.type==='rect') { if (pointInPoly(px,py,pts)) return m.id; }
+    // segment distance for lines/polylines/edges
+    for (let i=0;i<pts.length-(m.type==='poly'||m.type==='rect'?0:1);i++){
+      const a=pts[i], b=pts[(i+1)%pts.length];
+      if (segDist(px,py,a,b)<=tol+strokePx(2)) return m.id;
+    }
   }
-  return el;
+  return null;
 }
-function prvLine(a,b) {
-  const l=getP('prv-l','line');
-  l.setAttribute('x1',a.x);l.setAttribute('y1',a.y);l.setAttribute('x2',b.x);l.setAttribute('y2',b.y);l.setAttribute('stroke',COLORS.dist);
+function annotationAt(clientX, clientY) {
+  const r=wrap.getBoundingClientRect();
+  const px=clientX-r.left, py=clientY-r.top;
+  for (let k=S.annotations.length-1;k>=0;k--){
+    const a=S.annotations[k], s=imgToScreen(a.x,a.y);
+    if (Math.hypot(px-s.x, py-(s.y-14))<=16) return a.id;
+  }
+  return null;
 }
-function prvPoly(cur) {
-  const pts=cur?[...S.polyPts,cur]:S.polyPts;
-  const pl=getP('prv-p','polyline');
-  pl.setAttribute('points',pts.map(p=>p.x+','+p.y).join(' '));pl.setAttribute('stroke',COLORS.poly);
+function segDist(px,py,a,b){
+  const dx=b.x-a.x, dy=b.y-a.y, L2=dx*dx+dy*dy;
+  if(!L2) return Math.hypot(px-a.x,py-a.y);
+  let t=((px-a.x)*dx+(py-a.y)*dy)/L2; t=Math.max(0,Math.min(1,t));
+  return Math.hypot(px-(a.x+t*dx), py-(a.y+t*dy));
 }
-function prvRect(a,b) {
-  const x=Math.min(a.x,b.x),y=Math.min(a.y,b.y),w=Math.abs(b.x-a.x),h=Math.abs(b.y-a.y);
-  const r=getP('prv-r','rect');
-  r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',w);r.setAttribute('height',h);r.setAttribute('stroke',COLORS.rect);
+function pointInPoly(px,py,pts){
+  let inside=false;
+  for(let i=0,j=pts.length-1;i<pts.length;j=i++){
+    if(((pts[i].y>py)!==(pts[j].y>py)) && (px < (pts[j].x-pts[i].x)*(py-pts[i].y)/(pts[j].y-pts[i].y)+pts[i].x)) inside=!inside;
+  }
+  return inside;
 }
-function clearPrv() { ['prv-l','prv-p','prv-r'].forEach(id=>{const e=document.getElementById(id);if(e)e.remove();}); }
 
-/* ═══════════════════════════════════
+/* ═══════════════════════════════════════════════════
    FINISH MEASUREMENTS
-═══════════════════════════════════ */
-function nMid() { return 'M'+(++S.mCtr); }
-function nAid() { return 'A'+(++S.aCtr); }
+═══════════════════════════════════════════════════ */
+function nMid(){ return 'M'+(++S.mCtr); }
+function nAid(){ return 'A'+(++S.aCtr); }
 
-function finishDist(b) {
-  S.drawing=false; clearPrv();
+function finishDist(b){
+  S.drawing=false; S.cursorImg=null; hideBanner();
   const d=dist2(S.distA,b);
   const m={id:nMid(),type:'dist',coords:[S.distA,b],label:'Distance '+S.mCtr,note:'',color:COLORS.dist,value:d};
-  pushH(); S.measurements.push(m); renderM(m); refreshMList();
-  msg('Distance: '+fmtDist(d)); selectM(m.id);
+  pushH(); S.measurements.push(m); refreshMList(); scheduleRender();
+  msg('Distance: '+fmtDist(d)); selectM(m.id,false);
 }
-
-function finishPoly() {
-  if (S.polyPts.length<3) { cancelDraw(); return; }
-  S.drawing=false; clearPrv();
+function finishPolyish(){
+  const isLine=S.tool==='pline', minPts=isLine?2:3;
+  if (S.polyPts.length<minPts){ cancelDraw(); return; }
+  S.drawing=false; S.cursorImg=null; hideBanner();
   const pts=S.polyPts.slice();
-  const area=polyArea(pts);
-  const m={id:nMid(),type:'poly',coords:pts,label:'Area '+S.mCtr,note:'',color:COLORS.poly,area};
-  pushH(); S.measurements.push(m); renderM(m); refreshMList();
-  S.polyPts=[]; msg('Area: '+fmtArea(area)); selectM(m.id);
+  if (isLine){
+    const L=pathLen(pts);
+    const m={id:nMid(),type:'pline',coords:pts,label:'Crack '+S.mCtr,note:'',color:COLORS.pline,length:L};
+    pushH(); S.measurements.push(m); refreshMList(); scheduleRender();
+    S.polyPts=[]; msg('Crack length: '+fmtDist(L)); selectM(m.id,false);
+  } else {
+    const area=polyArea(pts);
+    const m={id:nMid(),type:'poly',coords:pts,label:'Area '+S.mCtr,note:'',color:COLORS.poly,area};
+    pushH(); S.measurements.push(m); refreshMList(); scheduleRender();
+    S.polyPts=[]; msg('Area: '+fmtArea(area)); selectM(m.id,false);
+  }
 }
-
-function finishRect(a,b) {
+function finishRect(a,b){
   const x=Math.min(a.x,b.x),y=Math.min(a.y,b.y),w=Math.abs(b.x-a.x),h=Math.abs(b.y-a.y);
   const pts=[{x,y},{x:x+w,y},{x:x+w,y:y+h},{x,y:y+h}];
   const m={id:nMid(),type:'rect',coords:pts,rectW:w,rectH:h,label:'Rect '+S.mCtr,note:'',color:COLORS.rect,area:w*h};
-  pushH(); S.measurements.push(m); renderM(m); refreshMList();
-  msg(fmtDist(w)+' × '+fmtDist(h)+' = '+fmtArea(w*h)); selectM(m.id);
+  pushH(); S.measurements.push(m); refreshMList(); scheduleRender();
+  msg(fmtDist(w)+' × '+fmtDist(h)+' = '+fmtArea(w*h)); selectM(m.id,false);
 }
-
-function addPoint(p) {
+function addPoint(p){
   const m={id:nMid(),type:'point',coords:[p],label:'Point '+S.mCtr,note:'',color:COLORS.point};
-  pushH(); S.measurements.push(m); renderM(m); refreshMList(); selectM(m.id);
+  pushH(); S.measurements.push(m); refreshMList(); scheduleRender(); selectM(m.id,false);
+}
+function cancelDraw(){ S.drawing=false; S.polyPts=[]; S.distA=null; S.rectA=null; S.cursorImg=null; hideBanner(); scheduleRender(); }
+function recompute(m){
+  if(m.type==='dist') m.value=dist2(m.coords[0],m.coords[1]);
+  if(m.type==='pline') m.length=pathLen(m.coords);
+  if(m.type==='poly') m.area=polyArea(m.coords);
+  if(m.type==='rect'){ const xs=m.coords.map(p=>p.x),ys=m.coords.map(p=>p.y); m.rectW=Math.max(...xs)-Math.min(...xs); m.rectH=Math.max(...ys)-Math.min(...ys); m.area=m.rectW*m.rectH; }
 }
 
-function cancelDraw() {
-  S.drawing=false; S.polyPts=[]; S.distA=null; S.rectA=null; clearPrv();
+/* ═══════════════════════════════════════════════════
+   EDIT MODE
+═══════════════════════════════════════════════════ */
+function enterEdit(id){
+  S.editId=id; S.selectedId=id; S.tool='edit';
+  document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tool-edit').classList.add('active');
+  const m=S.measurements.find(x=>x.id===id);
+  sTool.textContent='Edit points';
+  showBanner('Editing <b>'+esc(m?m.label:'')+'</b> · drag the handles to adjust · <span class="kbd">Esc</span> to finish');
+  refreshMList(); scheduleRender(); setCursor();
+}
+function exitEdit(){
+  if(!S.editId) return;
+  S.editId=null;
+  if(S.tool==='edit'){ S.tool='pan'; document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active')); document.getElementById('tool-pan').classList.add('active'); sTool.textContent='Pan / Select'; }
+  hideBanner(); refreshMList(); scheduleRender(); setCursor();
 }
 
-/* ═══════════════════════════════════
-   SVG RENDERING
-═══════════════════════════════════ */
-function mkEl(tag, attrs) {
-  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
-  Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
-  return el;
-}
-function circ(p,r,fill,stroke,sw) {
-  return mkEl('circle',{cx:p.x,cy:p.y,r,fill:fill||'white',stroke:stroke||'#333','stroke-width':sw||1.5});
-}
-function label(p,txt,color,small) {
-  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
-  const fs=small?9:11;
-  const pw=txt.length*(fs*0.58)+8, ph=fs+8;
-  const bg=mkEl('rect',{x:p.x-pw/2,y:p.y-ph/2,width:pw,height:ph,rx:3,fill:color,'fill-opacity':'0.9'});
-  const tx=mkEl('text',{x:p.x,y:p.y,'text-anchor':'middle','dominant-baseline':'middle',fill:'white','font-size':fs,'font-family':'Georgia,serif','font-weight':'700','pointer-events':'none'});
-  tx.textContent=txt; g.append(bg,tx); return g;
-}
-
-function renderM(m) {
-  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
-  g.setAttribute('data-mid',m.id); g.style.cursor='pointer';
-  g.addEventListener('click',()=>selectM(m.id));
-
-  if (m.type==='dist') {
-    const [a,b]=m.coords;
-    g.append(
-      mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:m.color,'stroke-width':2,'stroke-linecap':'round'}),
-      circ(a,4,'white',m.color,1.5), circ(b,4,'white',m.color,1.5),
-      label({x:(a.x+b.x)/2,y:(a.y+b.y)/2},fmtDist(m.value),m.color)
-    );
-  } else if (m.type==='poly'||m.type==='rect') {
-    const pts=m.coords, pstr=pts.map(p=>p.x+','+p.y).join(' ');
-    const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length;
-    const cy=pts.reduce((s,p)=>s+p.y,0)/pts.length;
-    const txt=m.type==='rect'?fmtDist(m.rectW)+'×'+fmtDist(m.rectH):fmtArea(m.area);
-    g.append(
-      mkEl('polygon',{points:pstr,stroke:m.color,'stroke-width':2,fill:m.color,'fill-opacity':'0.1','stroke-linejoin':'round'}),
-      ...pts.map(p=>circ(p,3.5,'white',m.color,1.5)),
-      label({x:cx,y:cy},txt,m.color)
-    );
-  } else if (m.type==='point') {
-    const p=m.coords[0];
-    g.append(
-      circ(p,10,m.color,m.color,1),
-      circ(p,5,'white',m.color,1.5),
-      mkEl('line',{x1:p.x,y1:p.y-12,x2:p.x,y2:p.y-24,stroke:m.color,'stroke-width':1.5}),
-      label({x:p.x,y:p.y-30},m.label,m.color,true)
-    );
-    // Set fill-opacity on outer circle
-    g.querySelector('circle').setAttribute('fill-opacity','0.2');
-  }
-  svg.appendChild(g);
-}
-
-function renderA(a) {
-  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
-  g.setAttribute('data-aid',a.id); g.style.cursor='pointer';
-  g.addEventListener('click',()=>selectA(a.id));
-  const c=a.color||COLORS.annot, {x,y}=a, r=11;
-  // teardrop pin
-  const pin=mkEl('path',{
-    d:`M${x},${y} Q${x-r},${y-r} ${x-r},${y-r*2} Q${x-r},${y-r*3.2} ${x},${y-r*3.2} Q${x+r},${y-r*3.2} ${x+r},${y-r*2} Q${x+r},${y-r} ${x},${y} Z`,
-    fill:c,stroke:'rgba(0,0,0,0.3)','stroke-width':1
-  });
-  const tx=mkEl('text',{x,y:y-r*2.1,'text-anchor':'middle','dominant-baseline':'middle',fill:'white','font-size':9,'font-family':'Georgia,serif','font-weight':'700','pointer-events':'none'});
-  tx.textContent=a.num; g.append(pin,tx); svg.appendChild(g);
-}
-
-function rerender() {
-  svg.innerHTML='';
-  S.measurements.forEach(renderM);
-  S.annotations.forEach(renderA);
-}
-
-/* ═══════════════════════════════════
-   ANNOTATION FORM (inline sidebar)
-═══════════════════════════════════ */
-function showAnnotForm(p) {
+/* ═══════════════════════════════════════════════════
+   ANNOTATION FORM
+═══════════════════════════════════════════════════ */
+function showAnnotForm(p){
   switchTab('annotations');
   const num=S.annotations.length+1;
   const div=document.createElement('div');
@@ -942,10 +1251,7 @@ function showAnnotForm(p) {
   div.innerHTML=`
     <div class="ann-form-title">New annotation at (${Math.round(p.x)}, ${Math.round(p.y)})</div>
     <div class="note-form">
-      <select id="ann-cat">
-        <option>General note</option><option>Crack</option><option>Spall</option>
-        <option>Weathering</option><option>Previous repair</option>
-      </select>
+      <select id="ann-cat"><option>General note</option><option>Crack</option><option>Spall</option><option>Weathering</option><option>Previous repair</option></select>
       <textarea id="ann-txt" placeholder="Describe this defect or feature…" rows="3"></textarea>
       <div style="display:flex;gap:6px;">
         <button class="btn-sm primary" id="ann-save" style="flex:1;">Add</button>
@@ -958,27 +1264,31 @@ function showAnnotForm(p) {
     const cat=document.getElementById('ann-cat').value;
     const txt=document.getElementById('ann-txt').value.trim()||cat;
     const a={id:nAid(),x:p.x,y:p.y,category:cat,text:txt,num,color:CAT_COL[cat]||COLORS.annot};
-    pushH(); S.annotations.push(a); renderA(a); div.remove(); refreshAList(); selectA(a.id);
+    pushH(); S.annotations.push(a); div.remove(); refreshAList(); scheduleRender(); selectA(a.id,false);
   };
   document.getElementById('ann-cancel').onclick=()=>div.remove();
 }
 
-/* ═══════════════════════════════════
+/* ═══════════════════════════════════════════════════
    SIDEBAR LISTS
-═══════════════════════════════════ */
-function refreshMList() {
-  if (!S.measurements.length) { mList.innerHTML='<div class="empty-state">No measurements yet.<br>Choose a tool and click on the image.</div>'; return; }
+═══════════════════════════════════════════════════ */
+function refreshMList(){
+  if(!S.measurements.length){ mList.innerHTML='<div class="empty-state">No measurements yet.<br>Choose a tool and click on the image.</div>'; return; }
   mList.innerHTML='';
-  const types={dist:'Distance',poly:'Polygon',rect:'Rectangle',point:'Point'};
+  const types={dist:'Distance',pline:'Crack',poly:'Polygon',rect:'Rectangle',point:'Point'};
   S.measurements.forEach(m=>{
     let val='';
-    if(m.type==='dist')  val=fmtDist(m.value);
-    if(m.type==='poly')  val=fmtArea(m.area);
-    if(m.type==='rect')  val=fmtDist(m.rectW)+' × '+fmtDist(m.rectH)+'  =  '+fmtArea(m.area);
+    if(m.type==='dist') val=fmtDist(m.value);
+    if(m.type==='pline') val=fmtDist(m.length);
+    if(m.type==='poly') val=fmtArea(m.area);
+    if(m.type==='rect') val=fmtDist(m.rectW)+' × '+fmtDist(m.rectH)+'  =  '+fmtArea(m.area);
     if(m.type==='point') val='('+Math.round(m.coords[0].x)+', '+Math.round(m.coords[0].y)+') px';
+    const editing=(m.id===S.editId);
     const div=document.createElement('div');
-    div.className='m-item'+(m.id===S.selectedId?' selected':'');
+    div.className='m-item'+(editing?' editing':(m.id===S.selectedId?' selected':''));
     div.setAttribute('data-mid',m.id);
+    div.addEventListener('mouseenter',()=>{ if(m.id!==S.selectedId&&m.id!==S.editId){ S._hover=m.id; scheduleRender(); }});
+    div.addEventListener('mouseleave',()=>{ if(S._hover===m.id){ S._hover=null; scheduleRender(); }});
     div.innerHTML=`
       <div class="m-head">
         <div class="m-dot" style="background:${m.color}"></div>
@@ -990,118 +1300,126 @@ function refreshMList() {
       <div class="m-acts">
         <button class="m-act" data-ren="${m.id}">rename</button>
         <button class="m-act" data-note="${m.id}">note</button>
+        <button class="m-act ${editing?'edit-on':''}" data-edit="${m.id}">${editing?'done':'edit pts'}</button>
         <button class="m-act del" data-del="${m.id}">delete</button>
       </div>`;
     div.addEventListener('click',e=>{
-      if(e.target.dataset.ren)  { renM(m.id); return; }
-      if(e.target.dataset.note) { noteM(m.id); return; }
-      if(e.target.dataset.del)  { delM(m.id); return; }
-      selectM(m.id);
+      if(e.target.dataset.ren){ renM(m.id); return; }
+      if(e.target.dataset.note){ noteM(m.id); return; }
+      if(e.target.dataset.edit){ editing?exitEdit():enterEdit(m.id); return; }
+      if(e.target.dataset.del){ delM(m.id); return; }
+      selectM(m.id,true);
     });
     mList.appendChild(div);
   });
 }
-
-function refreshAList() {
-  if (!S.annotations.length) { aList.innerHTML='<div class="empty-state">No annotations yet.<br>Use the annotation tool (A) to add defect markers.</div>'; return; }
+function refreshAList(){
+  if(!S.annotations.length){ aList.innerHTML='<div class="empty-state">No annotations yet.<br>Use the annotation tool (A) to add defect markers.</div>'; return; }
   aList.innerHTML='';
   S.annotations.forEach(a=>{
     const div=document.createElement('div');
     div.className='ann-item'+(a.id===S.selectedId?' selected':'');
     div.setAttribute('data-aid',a.id);
+    div.addEventListener('mouseenter',()=>{ if(a.id!==S.selectedId){ S._hoverA=a.id; scheduleRender(); }});
+    div.addEventListener('mouseleave',()=>{ if(S._hoverA===a.id){ S._hoverA=null; scheduleRender(); }});
     div.innerHTML=`
       <div class="ann-num" style="background:${a.color||COLORS.annot}">${a.num}</div>
-      <div class="ann-body">
-        <span class="ann-text">${esc(a.text)}</span>
-        <div class="ann-cat">${esc(a.category)} — ${Math.round(a.x)}, ${Math.round(a.y)}</div>
-      </div>
+      <div class="ann-body"><span class="ann-text">${esc(a.text)}</span><div class="ann-cat">${esc(a.category)} — ${Math.round(a.x)}, ${Math.round(a.y)}</div></div>
       <button class="ann-del" data-dela="${a.id}" title="Delete">✕</button>`;
     div.addEventListener('click',e=>{
-      if(e.target.dataset.dela) { delA(a.id); return; }
-      selectA(a.id);
+      if(e.target.dataset.dela){ delA(a.id); return; }
+      selectA(a.id,true);
     });
     aList.appendChild(div);
   });
 }
 
-function selectM(id) {
+function selectM(id, panTo){
   S.selectedId=id;
-  document.querySelectorAll('.m-item').forEach(el=>el.classList.toggle('selected',el.getAttribute('data-mid')===id));
-  svg.querySelectorAll('g[data-mid]').forEach(g=>g.style.filter=g.getAttribute('data-mid')===id?'drop-shadow(0 0 4px rgba(0,0,0,0.6))':'');
-  switchTab('measurements');
+  document.querySelectorAll('.m-item').forEach(el=>el.classList.toggle('selected',el.getAttribute('data-mid')===id && id!==S.editId));
+  document.querySelectorAll('.ann-item').forEach(el=>el.classList.remove('selected'));
+  switchTab('measurements'); scrollListTo('[data-mid="'+id+'"]');
+  scheduleRender();
+  if(panTo) panToMeasurement(id);
 }
-function selectA(id) {
+function selectA(id, panTo){
   S.selectedId=id;
   document.querySelectorAll('.ann-item').forEach(el=>el.classList.toggle('selected',el.getAttribute('data-aid')===id));
-  switchTab('annotations');
+  document.querySelectorAll('.m-item').forEach(el=>el.classList.remove('selected'));
+  switchTab('annotations'); scrollListTo('[data-aid="'+id+'"]');
+  scheduleRender();
+  if(panTo){ const a=S.annotations.find(x=>x.id===id); if(a) panToPoint(a.x,a.y); }
 }
-function renM(id) {
+function scrollListTo(sel){ const el=document.querySelector('.sidebar-body '+sel); if(el) el.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+function panToMeasurement(id){
   const m=S.measurements.find(x=>x.id===id); if(!m) return;
-  const el=document.getElementById('lbl'+id); if(!el) return;
-  const inp=document.createElement('input');
-  inp.className='inline-edit'; inp.value=m.label;
-  el.replaceWith(inp); inp.focus(); inp.select();
-  const done=()=>{ m.label=inp.value.trim()||m.label; refreshMList(); rerender(); };
-  inp.onblur=done;
-  inp.onkeydown=e=>{ if(e.key==='Enter') done(); if(e.key==='Escape') refreshMList(); };
+  const xs=m.coords.map(p=>p.x), ys=m.coords.map(p=>p.y);
+  panToPoint((Math.min(...xs)+Math.max(...xs))/2,(Math.min(...ys)+Math.max(...ys))/2);
 }
-function noteM(id) {
-  const m=S.measurements.find(x=>x.id===id); if(!m) return;
-  const n=prompt('Note for "'+m.label+'":', m.note||'');
-  if(n===null) return;
-  m.note=n; refreshMList();
-}
-function delM(id) {
-  pushH(); S.measurements=S.measurements.filter(x=>x.id!==id);
-  const el=svg.querySelector('[data-mid="'+id+'"]'); if(el) el.remove();
-  if(S.selectedId===id) S.selectedId=null;
-  refreshMList();
-}
-function delA(id) {
-  pushH(); S.annotations=S.annotations.filter(x=>x.id!==id);
-  const el=svg.querySelector('[data-aid="'+id+'"]'); if(el) el.remove();
-  if(S.selectedId===id) S.selectedId=null;
-  refreshAList();
+function panToPoint(ix,iy){
+  const ww=wrap.clientWidth, wh=wrap.clientHeight;
+  S.panX=ww/2-ix*S.zoom; S.panY=wh/2-iy*S.zoom; applyXform();
 }
 
-/* ═══════════════════════════════════
-   TABS
-═══════════════════════════════════ */
-function switchTab(name) {
+function renM(id){
+  const m=S.measurements.find(x=>x.id===id); if(!m) return;
+  const el=document.getElementById('lbl'+id); if(!el) return;
+  const inp=document.createElement('input'); inp.className='inline-edit'; inp.value=m.label;
+  el.replaceWith(inp); inp.focus(); inp.select();
+  const done=()=>{ m.label=inp.value.trim()||m.label; refreshMList(); scheduleRender(); };
+  inp.onblur=done;
+  inp.onkeydown=e=>{ e.stopPropagation(); if(e.key==='Enter') done(); if(e.key==='Escape') refreshMList(); };
+}
+function noteM(id){
+  const m=S.measurements.find(x=>x.id===id); if(!m) return;
+  const n=prompt('Note for "'+m.label+'":', m.note||''); if(n===null) return;
+  m.note=n; refreshMList();
+}
+function delM(id){
+  pushH(); S.measurements=S.measurements.filter(x=>x.id!==id);
+  if(S.selectedId===id) S.selectedId=null;
+  if(S.editId===id) exitEdit();
+  refreshMList(); scheduleRender();
+}
+function delA(id){
+  pushH(); S.annotations=S.annotations.filter(x=>x.id!==id);
+  if(S.selectedId===id) S.selectedId=null;
+  refreshAList(); scheduleRender();
+}
+
+/* ═══════════════════════════════════════════════════
+   TABS / CONTROLS
+═══════════════════════════════════════════════════ */
+function switchTab(name){
   document.querySelectorAll('.stab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+name));
 }
 document.querySelectorAll('.stab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
+pxInp.addEventListener('change',()=>{ S.pxPerUnit=parseFloat(pxInp.value)||1; refreshMList(); scheduleRender(); });
+unitSel.addEventListener('change',()=>{ S.unit=unitSel.value; refreshMList(); scheduleRender(); });
+labelSizeInp.addEventListener('input',()=>{ S.labelScale=parseFloat(labelSizeInp.value); scheduleRender(); });
 
-/* ═══════════════════════════════════
-   SCALE CHANGE
-═══════════════════════════════════ */
-pxInp.addEventListener('change',()=>{ S.pxPerUnit=parseFloat(pxInp.value)||1; refreshMList(); rerender(); });
-unitSel.addEventListener('change',()=>{ S.unit=unitSel.value; refreshMList(); rerender(); });
+/* Hover highlight handled in render via S._hover / S._hoverA */
 
-/* ═══════════════════════════════════
+/* ═══════════════════════════════════════════════════
    UNDO
-═══════════════════════════════════ */
-function pushH() {
-  S.history.push({
-    measurements:JSON.parse(JSON.stringify(S.measurements)),
-    annotations:JSON.parse(JSON.stringify(S.annotations)),
-    mCtr:S.mCtr, aCtr:S.aCtr,
-  });
-  if(S.history.length>40) S.history.shift();
+═══════════════════════════════════════════════════ */
+function pushH(){
+  S.history.push({ measurements:JSON.parse(JSON.stringify(S.measurements)), annotations:JSON.parse(JSON.stringify(S.annotations)), mCtr:S.mCtr, aCtr:S.aCtr });
+  if(S.history.length>60) S.history.shift();
 }
-function undo() {
+function undo(){
   if(!S.history.length) return;
   const snap=S.history.pop();
-  S.measurements=snap.measurements; S.annotations=snap.annotations;
-  S.mCtr=snap.mCtr; S.aCtr=snap.aCtr;
-  rerender(); refreshMList(); refreshAList(); msg('Undo');
+  S.measurements=snap.measurements; S.annotations=snap.annotations; S.mCtr=snap.mCtr; S.aCtr=snap.aCtr;
+  if(S.editId && !S.measurements.find(x=>x.id===S.editId)) exitEdit();
+  refreshMList(); refreshAList(); scheduleRender(); msg('Undo');
 }
 
-/* ═══════════════════════════════════
+/* ═══════════════════════════════════════════════════
    INFO PANEL
-═══════════════════════════════════ */
-function updateInfoPanel(f) {
+═══════════════════════════════════════════════════ */
+function updateInfoPanel(f){
   infoP.innerHTML=`
     <div class="info-row"><span class="info-key">File</span><span class="info-val" style="word-break:break-all;font-size:11px;">${esc(f.name)}</span></div>
     <div class="info-row"><span class="info-key">Size</span><span class="info-val">${(f.size/1024/1024).toFixed(2)} MB</span></div>
@@ -1109,76 +1427,78 @@ function updateInfoPanel(f) {
     <div class="info-row"><span class="info-key">Scale</span><span class="info-val">1 px = 1 ${S.unit}</span></div>
     <div class="help-block" style="margin-top:10px;">
       <strong>Keyboard shortcuts</strong><br>
-      V — Pan &amp; select<br>D — Distance<br>P — Polygon area<br>R — Rectangle<br>M — Point marker<br>A — Annotation<br>
-      Ctrl+Z — Undo<br>Scroll — Zoom<br>Space+drag — Pan<br>Esc — Cancel<br>Enter / dbl-click — Close polygon
+      V — Pan &amp; select<br>E — Edit points<br>D — Distance<br>L — Polyline / crack<br>P — Polygon area<br>R — Rectangle<br>M — Point marker<br>A — Annotation<br>
+      Ctrl+Z — Undo<br>Scroll — Zoom<br>Space-drag or middle-mouse — Pan<br>Esc — Cancel<br>Enter / dbl-click — Finish line/polygon
     </div>`;
 }
 
-/* ═══════════════════════════════════
+/* ═══════════════════════════════════════════════════
    EXPORT
-═══════════════════════════════════ */
+═══════════════════════════════════════════════════ */
 document.getElementById('btn-csv').addEventListener('click', exportCSV);
 document.getElementById('btn-json').addEventListener('click', exportJSON);
 document.getElementById('btn-pdf').addEventListener('click', exportPDF);
+document.getElementById('btn-schedule').addEventListener('click', exportSchedule);
 
-function exportCSV() {
-  const rows=[['ID','Type','Label','Value','Unit','Width','Height','Area','Area_Unit','X_px','Y_px','Note']];
+function exportCSV(){
+  const rows=[['ID','Type','Label','Value','Unit','Width','Height','Area','Area_Unit','Length','Length_Unit','X_px','Y_px','Note']];
   S.measurements.forEach(m=>{
-    let val='',unit='',w='',h='',area='',aunit='',x='',y='';
+    let val='',unit='',w='',h='',area='',aunit='',len='',lunit='',x='',y='';
     if(m.type==='dist'){val=pxToU(m.value).toFixed(2);unit=S.unit;}
-    if(m.type==='poly'||m.type==='rect'){
-      const au=m.area/(S.pxPerUnit*S.pxPerUnit);
-      area=au.toFixed(2);aunit=S.unit+'²';
-    }
+    if(m.type==='pline'){len=pxToU(m.length).toFixed(2);lunit=S.unit;}
+    if(m.type==='poly'||m.type==='rect'){const au=m.area/(S.pxPerUnit*S.pxPerUnit);area=au.toFixed(2);aunit=S.unit+'²';}
     if(m.type==='rect'){w=pxToU(m.rectW).toFixed(2);h=pxToU(m.rectH).toFixed(2);}
     if(m.type==='point'){x=m.coords[0].x.toFixed(1);y=m.coords[0].y.toFixed(1);}
-    rows.push([m.id,m.type,m.label,val,unit,w,h,area,aunit,x,y,m.note||'']);
+    rows.push([m.id,m.type,m.label,val,unit,w,h,area,aunit,len,lunit,x,y,m.note||'']);
   });
   if(S.annotations.length){
-    rows.push([]);
-    rows.push(['Ann_ID','Number','Category','Description','X_px','Y_px','','','','','','']);
-    S.annotations.forEach(a=>{rows.push([a.id,a.num,a.category,a.text,a.x.toFixed(1),a.y.toFixed(1),'','','','','','']);});
+    rows.push([]); rows.push(['Ann_ID','Number','Category','Description','X_px','Y_px','','','','','','','','']);
+    S.annotations.forEach(a=>rows.push([a.id,a.num,a.category,a.text,a.x.toFixed(1),a.y.toFixed(1),'','','','','','','','']));
   }
-  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
-  dl(csv,'facade-measurements.csv','text/csv');
+  dl(rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),'facade-measurements.csv','text/csv');
 }
-
-function exportJSON() {
-  const data={
-    exported:new Date().toISOString(),
-    scale:{pxPerUnit:S.pxPerUnit,unit:S.unit},
-    image:{width:S.imgW,height:S.imgH},
-    measurements:S.measurements.map(m=>({
-      ...m,
-      valueFmt:m.type==='dist'?fmtDist(m.value):'',
-      areaFmt:(m.type==='poly'||m.type==='rect')?fmtArea(m.area):'',
-    })),
-    annotations:S.annotations,
-  };
+function centroid(m){const xs=m.coords.map(p=>p.x),ys=m.coords.map(p=>p.y);return{x:(Math.min(...xs)+Math.max(...xs))/2,y:(Math.min(...ys)+Math.max(...ys))/2};}
+function nearestAnnotation(pt){let best=null,bd=1e9;S.annotations.forEach(a=>{const d=Math.hypot(a.x-pt.x,a.y-pt.y);if(d<bd){bd=d;best=a;}});return bd<=200?best:null;}
+function exportSchedule(){
+  const headers=['Stone ID','Width','Height','Area','Crack length','Defect / category','Comment'];
+  const rows=[headers];
+  S.measurements.forEach(m=>{
+    let id=m.label,width='',height='',area='',crack='',defect='',note=m.note||'';
+    if(m.type==='rect'){width=fmtDist(m.rectW);height=fmtDist(m.rectH);area=fmtArea(m.area);}
+    else if(m.type==='poly'){area=fmtArea(m.area);}
+    else if(m.type==='dist'){width=fmtDist(m.value);}
+    else if(m.type==='pline'){crack=fmtDist(m.length);defect='Crack';}
+    const near=nearestAnnotation(centroid(m));
+    if(near){ if(!defect) defect=near.category; note=note?(note+' / '+near.text):near.text; }
+    rows.push([id,width,height,area,crack,defect,note]);
+  });
+  dl(rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),'stone-replacement-schedule.csv','text/csv');
+}
+function exportJSON(){
+  const data={ exported:new Date().toISOString(), scale:{pxPerUnit:S.pxPerUnit,unit:S.unit}, image:{width:S.imgW,height:S.imgH},
+    measurements:S.measurements.map(m=>({...m,valueFmt:m.type==='dist'?fmtDist(m.value):'',lengthFmt:m.type==='pline'?fmtDist(m.length):'',areaFmt:(m.type==='poly'||m.type==='rect')?fmtArea(m.area):''})),
+    annotations:S.annotations };
   dl(JSON.stringify(data,null,2),'facade-measurements.json','application/json');
 }
-
-function exportPDF() {
+function exportPDF(){
   const win=window.open('','_blank');
+  const types={dist:'Distance',pline:'Crack',poly:'Polygon',rect:'Rectangle',point:'Point'};
   const mRows=S.measurements.map(m=>{
     let val='';
     if(m.type==='dist') val=fmtDist(m.value);
+    if(m.type==='pline') val='Length '+fmtDist(m.length);
     if(m.type==='poly') val=fmtArea(m.area);
     if(m.type==='rect') val=fmtDist(m.rectW)+' × '+fmtDist(m.rectH)+' = '+fmtArea(m.area);
     if(m.type==='point') val='('+Math.round(m.coords[0].x)+', '+Math.round(m.coords[0].y)+') px';
-    return `<tr><td>${esc(m.id)}</td><td>${esc(m.label)}</td><td>${m.type}</td><td>${val}</td><td>${esc(m.note||'')}</td></tr>`;
+    return `<tr><td>${esc(m.id)}</td><td>${esc(m.label)}</td><td>${types[m.type]||m.type}</td><td>${val}</td><td>${esc(m.note||'')}</td></tr>`;
   }).join('');
   const aRows=S.annotations.map(a=>`<tr><td>${a.num}</td><td>${esc(a.category)}</td><td>${esc(a.text)}</td><td>${Math.round(a.x)}, ${Math.round(a.y)}</td></tr>`).join('');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Facade Survey Report</title>
 <style>body{font-family:Georgia,serif;max-width:900px;margin:40px auto;color:#1a1714;font-size:13px;}
 h1{font-size:20px;color:#2d5a3d;border-bottom:2px solid #2d5a3d;padding-bottom:8px;margin-bottom:6px;letter-spacing:.04em;}
-h2{font-size:14px;margin:22px 0 8px;color:#2d5a3d;}
-.meta{color:#5a534a;font-size:11px;margin-bottom:22px;}
-table{width:100%;border-collapse:collapse;font-size:12px;}
-th{background:#2d5a3d;color:white;padding:6px 10px;text-align:left;}
-td{padding:5px 10px;border-bottom:1px solid #e0dbd3;}
-tr:nth-child(even) td{background:#f8f5f1;}
-.empty{color:#8a837a;font-style:italic;}</style></head><body>
+h2{font-size:14px;margin:22px 0 8px;color:#2d5a3d;}.meta{color:#5a534a;font-size:11px;margin-bottom:22px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}th{background:#2d5a3d;color:white;padding:6px 10px;text-align:left;}
+td{padding:5px 10px;border-bottom:1px solid #e0dbd3;}tr:nth-child(even) td{background:#f8f5f1;}.empty{color:#8a837a;font-style:italic;}</style></head><body>
 <h1>FACADE SURVEY — MEASUREMENT REPORT</h1>
 <div class="meta">Generated: ${new Date().toLocaleString()} &nbsp;|&nbsp; Image: ${S.imgW} × ${S.imgH} px &nbsp;|&nbsp; Scale: 1 px = 1 ${S.unit}</div>
 <h2>Measurements (${S.measurements.length})</h2>
@@ -1186,37 +1506,31 @@ ${mRows?`<table><tr><th>ID</th><th>Label</th><th>Type</th><th>Value</th><th>Note
 <h2>Annotations / Defects (${S.annotations.length})</h2>
 ${aRows?`<table><tr><th>#</th><th>Category</th><th>Description</th><th>Position</th></tr>${aRows}</table>`:'<div class="empty">None</div>'}
 </body></html>`);
-  win.document.close();
-  setTimeout(()=>win.print(),400);
+  win.document.close(); setTimeout(()=>win.print(),400);
 }
+function dl(content,filename,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=filename; a.click(); URL.revokeObjectURL(a.href); }
 
-function dl(content,filename,type) {
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([content],{type}));
-  a.download=filename; a.click(); URL.revokeObjectURL(a.href);
-}
-
-/* ═══════════════════════════════════
+/* ═══════════════════════════════════════════════════
    HELPERS
-═══════════════════════════════════ */
+═══════════════════════════════════════════════════ */
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function msg(s){sMsg.textContent=s;}
 
-/* ═══════════════════════════════════
-   TOOLBAR BUTTONS
-═══════════════════════════════════ */
-['pan','dist','poly','rect','point','annot'].forEach(id=>{
-  const btn=document.getElementById('tool-'+id);
-  if(btn) btn.addEventListener('click',()=>setTool(id));
+/* Click empty canvas (SVG background) clears selection */
+svg.addEventListener('click', e=>{ if(e.target===svg && S.tool!=='edit'){ S.selectedId=null; refreshMList(); refreshAList(); scheduleRender(); } });
+
+/* Toolbar buttons */
+['pan','edit','dist','pline','poly','rect','point','annot'].forEach(id=>{
+  const btn=document.getElementById('tool-'+id); if(btn) btn.addEventListener('click',()=>setTool(id));
 });
 document.getElementById('btn-undo').addEventListener('click',undo);
 document.getElementById('btn-clear').addEventListener('click',()=>{
   if(!confirm('Clear ALL measurements and annotations?')) return;
-  pushH(); S.measurements=[]; S.annotations=[];
-  svg.innerHTML=''; refreshMList(); refreshAList();
+  pushH(); S.measurements=[]; S.annotations=[]; S.editId=null; refreshMList(); refreshAList(); scheduleRender();
 });
 
 // Init
+resizeCanvas();
 setTool('pan');
 </script>
 </body>
