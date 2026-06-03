@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FacadeMeasure — Heritage Survey Tool</title>
+<style>
+:root {
+  --bg: #f5f2ee;
+  --surface: #ffffff;
+  --surface2: #f0ede8;
+  --border: #d8d3cb;
+  --border2: #c4bfb6;
+  --text: #1a1714;
+  --text2: #5a534a;
+  --text3: #8a837a;
+  --accent: #2d5a3d;
+  --accent2: #4a7c5f;
+  --accent-light: #e8f2eb;
+  --danger: #8b2e2e;
+  --danger-light: #fdf0f0;
+  --warn: #7a5c1a;
+  --info: #1e4a7a;
+  --info-light: #e8f0fa;
+  --c-dist:  #c0392b;
+  --c-poly:  #2055c0;
+  --c-rect:  #7020b0;
+  --c-point: #c07020;
+  --c-annot: #c4991a;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 14px;
+  user-select: none;
+}
+
+/* HEADER */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 14px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  z-index: 50;
+}
+.logo {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.logo em { color: var(--text3); font-style: normal; font-weight: 400; }
+.sep { width: 1px; height: 26px; background: var(--border); flex-shrink: 0; }
+.file-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 11px;
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: Georgia, serif;
+  white-space: nowrap;
+  transition: background .12s;
+  flex-shrink: 0;
+}
+.file-btn:hover { background: var(--surface2); }
+.scale-row {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text2);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.scale-row select, .scale-row input[type=number] {
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  font-family: Georgia, serif;
+}
+.scale-row input[type=number] { width: 56px; text-align: center; }
+.export-btns { display: flex; gap: 5px; margin-left: auto; flex-shrink: 0; }
+.btn-sm {
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: Georgia, serif;
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  color: var(--text);
+  white-space: nowrap;
+  transition: background .12s;
+}
+.btn-sm:hover { background: var(--surface2); }
+.btn-sm.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-sm.primary:hover { background: var(--accent2); }
+
+/* LAYOUT */
+.main { display: flex; flex: 1; overflow: hidden; }
+
+/* TOOLBAR */
+.toolbar {
+  width: 52px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  gap: 2px;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+.tool-sep { width: 30px; height: 1px; background: var(--border); margin: 3px 0; }
+.tool-btn {
+  width: 38px; height: 38px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background .1s, border-color .1s;
+  position: relative;
+}
+.tool-btn:hover { background: var(--surface2); border-color: var(--border); }
+.tool-btn.active { background: var(--accent-light); border-color: var(--accent2); }
+.tool-btn svg { pointer-events: none; }
+/* Tooltip */
+.tool-btn::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 46px; top: 50%;
+  transform: translateY(-50%);
+  background: #1a1714;
+  color: #fff;
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .15s;
+  z-index: 200;
+  font-family: Georgia, serif;
+}
+.tool-btn:hover::after { opacity: 1; }
+
+/* CANVAS AREA */
+.canvas-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #252018;
+}
+#canvas-container {
+  position: absolute;
+  transform-origin: 0 0;
+}
+#base-img {
+  display: block;
+  max-width: none;
+  image-rendering: pixelated;
+}
+#measure-svg {
+  position: absolute;
+  top: 0; left: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* Drop overlay */
+#drop-overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 10;
+}
+#drop-overlay.hidden { display: none; }
+.drop-box {
+  border: 2px dashed #4a4030;
+  border-radius: 12px;
+  padding: 48px 64px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.drop-box:hover, .drop-box.over { border-color: #5a8a6a; }
+.drop-title { font-size: 18px; font-weight: 700; color: #b0a898; letter-spacing: 0.03em; }
+.drop-sub { font-size: 12px; color: #807060; max-width: 260px; line-height: 1.7; }
+
+/* Zoom controls */
+.zoom-controls {
+  position: absolute;
+  bottom: 14px; left: 10px;
+  display: flex; flex-direction: column;
+  gap: 2px; z-index: 30;
+}
+.zoom-btn {
+  width: 28px; height: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  font-size: 16px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--text);
+  transition: background .1s;
+  font-family: monospace;
+}
+.zoom-btn:hover { background: var(--surface2); }
+#zoom-label {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 10px; text-align: center;
+  padding: 2px 4px;
+  color: var(--text2);
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 270px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  flex-shrink: 0; overflow: hidden;
+}
+.sidebar-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.stab {
+  flex: 1; padding: 8px 4px;
+  font-size: 11px; text-align: center;
+  cursor: pointer; color: var(--text3);
+  border-bottom: 2px solid transparent;
+  transition: color .12s;
+  font-family: Georgia, serif;
+}
+.stab:hover { color: var(--text2); }
+.stab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+.sidebar-body { flex: 1; overflow-y: auto; }
+.tab-panel { display: none; padding: 10px; }
+.tab-panel.active { display: block; }
+
+/* Measurement items */
+.m-item {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 9px 9px 7px;
+  margin-bottom: 7px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color .12s;
+}
+.m-item:hover { border-color: var(--border2); }
+.m-item.selected { border-color: var(--accent); background: var(--accent-light); }
+.m-head { display: flex; align-items: flex-start; gap: 5px; margin-bottom: 3px; }
+.m-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 3px; flex-shrink: 0; }
+.m-label { font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m-tag { font-size: 9px; padding: 1px 4px; border-radius: 3px; background: var(--surface2); color: var(--text3); flex-shrink: 0; margin-top: 2px; }
+.m-val { font-size: 13px; font-weight: 700; color: var(--accent); margin: 2px 0 0 14px; }
+.m-note-text { font-size: 11px; color: var(--text3); font-style: italic; margin-top: 2px; margin-left: 14px; }
+.m-acts { display: flex; gap: 3px; margin-top: 5px; margin-left: 14px; }
+.m-act {
+  font-size: 10px; padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 3px; background: transparent;
+  cursor: pointer; color: var(--text3);
+  font-family: Georgia, serif; transition: background .1s;
+}
+.m-act:hover { background: var(--surface2); color: var(--text); }
+.m-act.del { color: var(--danger); border-color: transparent; }
+.m-act.del:hover { background: var(--danger-light); }
+
+/* Annotation items */
+.ann-item {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 9px;
+  margin-bottom: 7px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color .12s;
+  display: flex; align-items: flex-start; gap: 6px;
+}
+.ann-item:hover { border-color: var(--border2); }
+.ann-item.selected { border-color: #c4991a; background: #fdf8e0; }
+.ann-num {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--c-annot);
+  color: #fff; font-size: 9px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.ann-body { flex: 1; min-width: 0; }
+.ann-text { color: var(--text); display: block; }
+.ann-cat { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.ann-del { background: transparent; border: none; cursor: pointer; color: var(--text3); font-size: 14px; padding: 0 2px; flex-shrink: 0; }
+.ann-del:hover { color: var(--danger); }
+
+/* Form elements */
+.note-form { display: flex; flex-direction: column; gap: 6px; }
+.note-form select, .note-form textarea, .note-form input[type=text] {
+  width: 100%; padding: 6px 8px;
+  border: 1px solid var(--border); border-radius: 4px;
+  font-size: 12px; font-family: Georgia, serif;
+  color: var(--text); background: var(--surface);
+  resize: vertical;
+}
+.note-form textarea { min-height: 54px; }
+.ann-form-card {
+  background: #fdf8e0;
+  border: 1px solid #d4b840;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+.ann-form-title { font-size: 11px; font-weight: 700; color: var(--warn); margin-bottom: 7px; }
+
+/* Info rows */
+.info-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px; border-bottom: 1px solid var(--border); }
+.info-row:last-child { border-bottom: none; }
+.info-key { color: var(--text2); }
+.info-val { font-weight: 700; }
+.help-block { font-size: 11px; color: var(--text3); line-height: 1.65; padding: 8px; background: var(--surface2); border-radius: 4px; margin-top: 10px; }
+.help-block strong { color: var(--text2); }
+
+/* Status bar */
+#statusbar {
+  height: 24px;
+  background: var(--surface2);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 10px;
+  font-size: 11px; color: var(--text3);
+  gap: 14px;
+  flex-shrink: 0;
+}
+#status-coords { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Inline label edit */
+.inline-edit {
+  border: none; background: transparent;
+  font-size: 12px; font-family: Georgia, serif;
+  font-weight: 700; color: var(--text);
+  width: 100%; padding: 0;
+  outline: 1px solid var(--accent);
+  border-radius: 2px;
+}
+
+/* Empty state */
+.empty-state { color: var(--text3); font-size: 12px; text-align: center; padding: 22px 8px; line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">FACADE<em>MEASURE</em></div>
+  <div class="sep"></div>
+  <button class="file-btn" id="open-btn">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+    Open image
+  </button>
+  <input type="file" id="file-input" accept="image/*" style="display:none">
+  <div class="sep"></div>
+  <div class="scale-row">
+    <span>Scale:</span>
+    <input type="number" id="px-per-unit" value="1" min="0.0001" step="0.001">
+    <span>px per</span>
+    <select id="unit-select">
+      <option value="mm" selected>mm</option>
+      <option value="cm">cm</option>
+      <option value="m">m</option>
+      <option value="px">px</option>
+    </select>
+  </div>
+  <div class="export-btns">
+    <button class="btn-sm" id="btn-csv">↓ CSV</button>
+    <button class="btn-sm" id="btn-json">↓ JSON</button>
+    <button class="btn-sm primary" id="btn-pdf">↓ PDF report</button>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <button class="tool-btn active" id="tool-pan" data-tip="Pan / Select  [V]">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/>
+        <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2a8 8 0 0 1-8-8 2 2 0 1 1 4 0"/>
+      </svg>
+    </button>
+
+    <div class="tool-sep"></div>
+
+    <button class="tool-btn" id="tool-dist" data-tip="Distance  [D]">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-dist)" stroke-width="2" stroke-linecap="round">
+        <line x1="4" y1="12" x2="20" y2="12"/>
+        <line x1="4" y1="8" x2="4" y2="16"/>
+        <line x1="20" y1="8" x2="20" y2="16"/>
+      </svg>
+    </button>
+
+    <button class="tool-btn" id="tool-poly" data-tip="Polygon area  [P]">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-poly)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12,3 21,8.5 21,15.5 12,21 3,15.5 3,8.5"/>
+      </svg>
+    </button>
+
+    <button class="tool-btn" id="tool-rect" data-tip="Rectangle  [R]">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-rect)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="6" width="18" height="12" rx="1"/>
+      </svg>
+    </button>
+
+    <button class="tool-btn" id="tool-point" data-tip="Point marker  [M]">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-point)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+      </svg>
+    </button>
+
+    <div class="tool-sep"></div>
+
+    <button class="tool-btn" id="tool-annot" data-tip="Annotation  [A]">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-annot)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    </button>
+
+    <div class="tool-sep"></div>
+
+    <button class="tool-btn" id="btn-undo" data-tip="Undo  [Ctrl+Z]">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
+      </svg>
+    </button>
+
+    <button class="tool-btn" id="btn-clear" data-tip="Clear all">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8b2e2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        <path d="M10 11v6m4-6v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Canvas -->
+  <div class="canvas-wrap" id="canvas-wrap">
+    <div id="canvas-container">
+      <img id="base-img" src="" alt="" draggable="false">
+      <svg id="measure-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div id="drop-overlay">
+      <div class="drop-box" id="drop-zone">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#5a4a38" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+        <div class="drop-title">Drop an image here</div>
+        <div class="drop-sub">JPEG · PNG · TIFF · WebP<br>All processing happens in your browser — nothing is uploaded.</div>
+        <button class="btn-sm" onclick="document.getElementById('file-input').click()">Browse files</button>
+      </div>
+    </div>
+
+    <div class="zoom-controls">
+      <button class="zoom-btn" id="btn-zoomin">+</button>
+      <div id="zoom-label">100%</div>
+      <button class="zoom-btn" id="btn-zoomout">−</button>
+      <button class="zoom-btn" id="btn-zoomfit" style="font-size:10px;font-family:Georgia,serif;">fit</button>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-tabs">
+      <div class="stab active" data-tab="measurements">Measurements</div>
+      <div class="stab" data-tab="annotations">Notes</div>
+      <div class="stab" data-tab="info">Info</div>
+    </div>
+    <div class="sidebar-body">
+      <div class="tab-panel active" id="tab-measurements">
+        <div id="m-list"><div class="empty-state">No measurements yet.<br>Choose a tool and click on the image.</div></div>
+      </div>
+      <div class="tab-panel" id="tab-annotations">
+        <div id="ann-list"><div class="empty-state">No annotations yet.<br>Use the annotation tool (A) to add defect markers.</div></div>
+      </div>
+      <div class="tab-panel" id="tab-info">
+        <div id="info-panel">
+          <div class="help-block">Load an image to see details here.</div>
+          <div class="help-block" style="margin-top:8px;">
+            <strong>Keyboard shortcuts</strong><br>
+            V — Pan &amp; select<br>
+            D — Distance<br>
+            P — Polygon area<br>
+            R — Rectangle<br>
+            M — Point marker<br>
+            A — Annotation<br>
+            Ctrl+Z — Undo<br>
+            Scroll — Zoom<br>
+            Space+drag — Pan<br>
+            Esc — Cancel / finish<br>
+            Enter or double-click — Close polygon
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="statusbar">
+  <span id="s-tool">Pan / Select</span>
+  <span id="s-msg"></span>
+  <span id="status-coords"></span>
+</div>
+
+<script>
+/* ═══════════════════════════════════
+   STATE
+═══════════════════════════════════ */
+const S = {
+  tool: 'pan',
+  zoom: 1, panX: 0, panY: 0,
+  panning: false, spaceDown: false,
+  imgW: 0, imgH: 0, loaded: false,
+  pxPerUnit: 1, unit: 'mm',
+  measurements: [],
+  annotations: [],
+  drawing: false,
+  polyPts: [],
+  distA: null,
+  rectA: null,
+  selectedId: null,
+  history: [],
+  mCtr: 0, aCtr: 0,
+};
+
+const COLORS = { dist:'#c0392b', poly:'#2055c0', rect:'#7020b0', point:'#c07020', annot:'#c4991a' };
+const CAT_COL = {
+  'General note':    '#c4991a',
+  'Crack':           '#c0392b',
+  'Spall':           '#7020b0',
+  'Weathering':      '#2055b0',
+  'Previous repair': '#207a40',
+};
+
+/* ═══════════════════════════════════
+   ELEMENTS
+═══════════════════════════════════ */
+const wrap    = document.getElementById('canvas-wrap');
+const cont    = document.getElementById('canvas-container');
+const img     = document.getElementById('base-img');
+const svg     = document.getElementById('measure-svg');
+const dropOvl = document.getElementById('drop-overlay');
+const dropZone= document.getElementById('drop-zone');
+const fileInp = document.getElementById('file-input');
+const pxInp   = document.getElementById('px-per-unit');
+const unitSel = document.getElementById('unit-select');
+const zoomLbl = document.getElementById('zoom-label');
+const sTool   = document.getElementById('s-tool');
+const sMsg    = document.getElementById('s-msg');
+const sCrd    = document.getElementById('status-coords');
+const mList   = document.getElementById('m-list');
+const aList   = document.getElementById('ann-list');
+const infoP   = document.getElementById('info-panel');
+
+/* ═══════════════════════════════════
+   IMAGE LOAD
+═══════════════════════════════════ */
+function loadFile(f) {
+  if (!f || !f.type.startsWith('image/')) return;
+  const url = URL.createObjectURL(f);
+  img.onload = () => {
+    S.imgW = img.naturalWidth; S.imgH = img.naturalHeight; S.loaded = true;
+    img.style.width  = S.imgW + 'px';
+    img.style.height = S.imgH + 'px';
+    svg.setAttribute('width',  S.imgW);
+    svg.setAttribute('height', S.imgH);
+    svg.style.width  = S.imgW + 'px';
+    svg.style.height = S.imgH + 'px';
+    dropOvl.classList.add('hidden');
+    fitView();
+    updateInfoPanel(f);
+    msg('Loaded: ' + S.imgW + ' × ' + S.imgH + ' px — scale: 1 px = 1 ' + S.unit);
+  };
+  img.src = url;
+}
+document.getElementById('open-btn').onclick = () => fileInp.click();
+fileInp.onchange = e => loadFile(e.target.files[0]);
+wrap.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+wrap.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+wrap.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('over'); loadFile(e.dataTransfer.files[0]); });
+dropZone.addEventListener('dragover', e => e.preventDefault());
+dropZone.addEventListener('drop', e => { e.preventDefault(); loadFile(e.dataTransfer.files[0]); });
+
+/* ═══════════════════════════════════
+   ZOOM / PAN
+═══════════════════════════════════ */
+let _px0, _py0, _ppx, _ppy;
+function applyXform() {
+  cont.style.transform = `translate(${S.panX}px,${S.panY}px) scale(${S.zoom})`;
+  zoomLbl.textContent = Math.round(S.zoom * 100) + '%';
+}
+function fitView() {
+  const ww = wrap.clientWidth, wh = wrap.clientHeight;
+  S.zoom = Math.min((ww-40)/S.imgW, (wh-40)/S.imgH, 1);
+  S.panX = (ww - S.imgW * S.zoom) / 2;
+  S.panY = (wh - S.imgH * S.zoom) / 2;
+  applyXform();
+}
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  const r = wrap.getBoundingClientRect();
+  const mx = e.clientX - r.left, my = e.clientY - r.top;
+  const f = e.deltaY < 0 ? 1.12 : 0.89;
+  const nz = Math.max(0.04, Math.min(60, S.zoom * f));
+  S.panX = mx - (mx - S.panX) * nz / S.zoom;
+  S.panY = my - (my - S.panY) * nz / S.zoom;
+  S.zoom = nz; applyXform();
+}, { passive:false });
+document.getElementById('btn-zoomin').onclick  = () => { S.zoom = Math.min(60, S.zoom*1.2); applyXform(); };
+document.getElementById('btn-zoomout').onclick = () => { S.zoom = Math.max(0.04, S.zoom/1.2); applyXform(); };
+document.getElementById('btn-zoomfit').onclick = fitView;
+
+/* ═══════════════════════════════════
+   KEYBOARD
+═══════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  const tag = e.target.tagName;
+  if (tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
+  if (e.code==='Space') { e.preventDefault(); S.spaceDown=true; wrap.style.cursor='grab'; return; }
+  if (e.key==='Escape') { cancelDraw(); return; }
+  if (e.key==='Enter' && S.tool==='poly' && S.drawing) { finishPoly(); return; }
+  if (e.ctrlKey && e.key==='z') { e.preventDefault(); undo(); return; }
+  const k = { v:'pan',d:'dist',p:'poly',r:'rect',m:'point',a:'annot' };
+  if (k[e.key.toLowerCase()]) setTool(k[e.key.toLowerCase()]);
+});
+document.addEventListener('keyup', e => { if (e.code==='Space') { S.spaceDown=false; setCursor(); } });
+
+/* ═══════════════════════════════════
+   COORDS
+═══════════════════════════════════ */
+function toImg(cx, cy) {
+  const r = wrap.getBoundingClientRect();
+  return { x:(cx-r.left-S.panX)/S.zoom, y:(cy-r.top-S.panY)/S.zoom };
+}
+function clamp(p) { return { x:Math.max(0,Math.min(S.imgW,p.x)), y:Math.max(0,Math.min(S.imgH,p.y)) }; }
+function dist2(a,b) { return Math.sqrt((b.x-a.x)**2+(b.y-a.y)**2); }
+function polyArea(pts) {
+  let a=0;
+  for(let i=0;i<pts.length;i++){const j=(i+1)%pts.length;a+=pts[i].x*pts[j].y-pts[j].x*pts[i].y;}
+  return Math.abs(a)/2;
+}
+function pxToU(px) { return px / S.pxPerUnit; }
+function fmtDist(px) {
+  const v = pxToU(px);
+  if (S.unit==='mm' && v>=1000) return (v/1000).toFixed(3)+' m';
+  return v.toFixed(1)+' '+S.unit;
+}
+function fmtArea(px2) {
+  const v = px2/(S.pxPerUnit*S.pxPerUnit);
+  if (S.unit==='mm') {
+    if (v>=1e6) return (v/1e6).toFixed(4)+' m²';
+    return Math.round(v)+' mm²';
+  }
+  if (S.unit==='cm') {
+    if (v>=10000) return (v/10000).toFixed(4)+' m²';
+    return Math.round(v)+' cm²';
+  }
+  return v.toFixed(3)+' '+S.unit+'²';
+}
+
+/* ═══════════════════════════════════
+   TOOLS
+═══════════════════════════════════ */
+function setTool(t) {
+  cancelDraw();
+  S.tool = t;
+  document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('tool-'+t);
+  if(btn) btn.classList.add('active');
+  const names = {pan:'Pan / Select',dist:'Distance',poly:'Polygon',rect:'Rectangle',point:'Point marker',annot:'Annotation'};
+  sTool.textContent = names[t]||t;
+  const hints = {
+    dist:'Click start — click end',
+    poly:'Click vertices — double-click or Enter to close',
+    rect:'Click and drag',
+    point:'Click to place',
+    annot:'Click to annotate',
+  };
+  msg(hints[t]||'');
+  setCursor();
+}
+function setCursor() {
+  if (S.spaceDown||S.tool==='pan') wrap.style.cursor = S.panning?'grabbing':'grab';
+  else wrap.style.cursor = 'crosshair';
+}
+
+/* ═══════════════════════════════════
+   MOUSE HANDLERS
+═══════════════════════════════════ */
+wrap.addEventListener('mousedown', e => {
+  if (e.button!==0) return;
+  if (S.spaceDown||S.tool==='pan') {
+    S.panning=true; _px0=e.clientX; _py0=e.clientY; _ppx=S.panX; _ppy=S.panY;
+    wrap.style.cursor='grabbing'; return;
+  }
+  if (!S.loaded) return;
+  const p = clamp(toImg(e.clientX, e.clientY));
+  toolDown(p, e);
+});
+
+wrap.addEventListener('mousemove', e => {
+  if (S.panning) {
+    S.panX=_ppx+(e.clientX-_px0); S.panY=_ppy+(e.clientY-_py0);
+    applyXform(); return;
+  }
+  if (!S.loaded) return;
+  const p = clamp(toImg(e.clientX, e.clientY));
+  sCrd.textContent = 'x: '+Math.round(p.x)+'  y: '+Math.round(p.y)+' px';
+  toolMove(p);
+});
+
+wrap.addEventListener('mouseup', e => {
+  if (S.panning) { S.panning=false; setCursor(); return; }
+  if (!S.loaded||e.button!==0) return;
+  const p = clamp(toImg(e.clientX, e.clientY));
+  toolUp(p);
+});
+
+wrap.addEventListener('dblclick', e => {
+  if (!S.loaded) return;
+  if (S.tool==='poly'&&S.drawing) finishPoly();
+});
+
+function toolDown(p, e) {
+  if (S.tool==='dist') {
+    if (!S.drawing) { S.drawing=true; S.distA=p; prvLine(p,p); }
+    else finishDist(p);
+  } else if (S.tool==='poly') {
+    if (!S.drawing) { S.drawing=true; S.polyPts=[p]; }
+    else S.polyPts.push(p);
+    prvPoly();
+  } else if (S.tool==='rect') {
+    S.drawing=true; S.rectA=p;
+  } else if (S.tool==='point') {
+    addPoint(p);
+  } else if (S.tool==='annot') {
+    showAnnotForm(p);
+  }
+}
+
+function toolMove(p) {
+  if (S.tool==='dist'&&S.drawing) { prvLine(S.distA,p); msg('Length: '+fmtDist(dist2(S.distA,p))); }
+  if (S.tool==='poly'&&S.drawing) prvPoly(p);
+  if (S.tool==='rect'&&S.drawing&&S.rectA) prvRect(S.rectA,p);
+}
+
+function toolUp(p) {
+  if (S.tool==='rect'&&S.drawing&&S.rectA) {
+    const dx=Math.abs(p.x-S.rectA.x), dy=Math.abs(p.y-S.rectA.y);
+    if (dx>3||dy>3) finishRect(S.rectA,p);
+    S.drawing=false; S.rectA=null; clearPrv();
+  }
+}
+
+/* ═══════════════════════════════════
+   PREVIEW (dashed temp elements)
+═══════════════════════════════════ */
+function getP(id, tag) {
+  let el=document.getElementById(id);
+  if (!el) {
+    el=mkEl(tag,{}); el.id=id;
+    el.setAttribute('stroke-dasharray','5,3');
+    el.setAttribute('stroke-width','1.5');
+    el.setAttribute('fill','none');
+    el.setAttribute('pointer-events','none');
+    svg.appendChild(el);
+  }
+  return el;
+}
+function prvLine(a,b) {
+  const l=getP('prv-l','line');
+  l.setAttribute('x1',a.x);l.setAttribute('y1',a.y);l.setAttribute('x2',b.x);l.setAttribute('y2',b.y);l.setAttribute('stroke',COLORS.dist);
+}
+function prvPoly(cur) {
+  const pts=cur?[...S.polyPts,cur]:S.polyPts;
+  const pl=getP('prv-p','polyline');
+  pl.setAttribute('points',pts.map(p=>p.x+','+p.y).join(' '));pl.setAttribute('stroke',COLORS.poly);
+}
+function prvRect(a,b) {
+  const x=Math.min(a.x,b.x),y=Math.min(a.y,b.y),w=Math.abs(b.x-a.x),h=Math.abs(b.y-a.y);
+  const r=getP('prv-r','rect');
+  r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',w);r.setAttribute('height',h);r.setAttribute('stroke',COLORS.rect);
+}
+function clearPrv() { ['prv-l','prv-p','prv-r'].forEach(id=>{const e=document.getElementById(id);if(e)e.remove();}); }
+
+/* ═══════════════════════════════════
+   FINISH MEASUREMENTS
+═══════════════════════════════════ */
+function nMid() { return 'M'+(++S.mCtr); }
+function nAid() { return 'A'+(++S.aCtr); }
+
+function finishDist(b) {
+  S.drawing=false; clearPrv();
+  const d=dist2(S.distA,b);
+  const m={id:nMid(),type:'dist',coords:[S.distA,b],label:'Distance '+S.mCtr,note:'',color:COLORS.dist,value:d};
+  pushH(); S.measurements.push(m); renderM(m); refreshMList();
+  msg('Distance: '+fmtDist(d)); selectM(m.id);
+}
+
+function finishPoly() {
+  if (S.polyPts.length<3) { cancelDraw(); return; }
+  S.drawing=false; clearPrv();
+  const pts=S.polyPts.slice();
+  const area=polyArea(pts);
+  const m={id:nMid(),type:'poly',coords:pts,label:'Area '+S.mCtr,note:'',color:COLORS.poly,area};
+  pushH(); S.measurements.push(m); renderM(m); refreshMList();
+  S.polyPts=[]; msg('Area: '+fmtArea(area)); selectM(m.id);
+}
+
+function finishRect(a,b) {
+  const x=Math.min(a.x,b.x),y=Math.min(a.y,b.y),w=Math.abs(b.x-a.x),h=Math.abs(b.y-a.y);
+  const pts=[{x,y},{x:x+w,y},{x:x+w,y:y+h},{x,y:y+h}];
+  const m={id:nMid(),type:'rect',coords:pts,rectW:w,rectH:h,label:'Rect '+S.mCtr,note:'',color:COLORS.rect,area:w*h};
+  pushH(); S.measurements.push(m); renderM(m); refreshMList();
+  msg(fmtDist(w)+' × '+fmtDist(h)+' = '+fmtArea(w*h)); selectM(m.id);
+}
+
+function addPoint(p) {
+  const m={id:nMid(),type:'point',coords:[p],label:'Point '+S.mCtr,note:'',color:COLORS.point};
+  pushH(); S.measurements.push(m); renderM(m); refreshMList(); selectM(m.id);
+}
+
+function cancelDraw() {
+  S.drawing=false; S.polyPts=[]; S.distA=null; S.rectA=null; clearPrv();
+}
+
+/* ═══════════════════════════════════
+   SVG RENDERING
+═══════════════════════════════════ */
+function mkEl(tag, attrs) {
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
+  return el;
+}
+function circ(p,r,fill,stroke,sw) {
+  return mkEl('circle',{cx:p.x,cy:p.y,r,fill:fill||'white',stroke:stroke||'#333','stroke-width':sw||1.5});
+}
+function label(p,txt,color,small) {
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+  const fs=small?9:11;
+  const pw=txt.length*(fs*0.58)+8, ph=fs+8;
+  const bg=mkEl('rect',{x:p.x-pw/2,y:p.y-ph/2,width:pw,height:ph,rx:3,fill:color,'fill-opacity':'0.9'});
+  const tx=mkEl('text',{x:p.x,y:p.y,'text-anchor':'middle','dominant-baseline':'middle',fill:'white','font-size':fs,'font-family':'Georgia,serif','font-weight':'700','pointer-events':'none'});
+  tx.textContent=txt; g.append(bg,tx); return g;
+}
+
+function renderM(m) {
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.setAttribute('data-mid',m.id); g.style.cursor='pointer';
+  g.addEventListener('click',()=>selectM(m.id));
+
+  if (m.type==='dist') {
+    const [a,b]=m.coords;
+    g.append(
+      mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:m.color,'stroke-width':2,'stroke-linecap':'round'}),
+      circ(a,4,'white',m.color,1.5), circ(b,4,'white',m.color,1.5),
+      label({x:(a.x+b.x)/2,y:(a.y+b.y)/2},fmtDist(m.value),m.color)
+    );
+  } else if (m.type==='poly'||m.type==='rect') {
+    const pts=m.coords, pstr=pts.map(p=>p.x+','+p.y).join(' ');
+    const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length;
+    const cy=pts.reduce((s,p)=>s+p.y,0)/pts.length;
+    const txt=m.type==='rect'?fmtDist(m.rectW)+'×'+fmtDist(m.rectH):fmtArea(m.area);
+    g.append(
+      mkEl('polygon',{points:pstr,stroke:m.color,'stroke-width':2,fill:m.color,'fill-opacity':'0.1','stroke-linejoin':'round'}),
+      ...pts.map(p=>circ(p,3.5,'white',m.color,1.5)),
+      label({x:cx,y:cy},txt,m.color)
+    );
+  } else if (m.type==='point') {
+    const p=m.coords[0];
+    g.append(
+      circ(p,10,m.color,m.color,1),
+      circ(p,5,'white',m.color,1.5),
+      mkEl('line',{x1:p.x,y1:p.y-12,x2:p.x,y2:p.y-24,stroke:m.color,'stroke-width':1.5}),
+      label({x:p.x,y:p.y-30},m.label,m.color,true)
+    );
+    // Set fill-opacity on outer circle
+    g.querySelector('circle').setAttribute('fill-opacity','0.2');
+  }
+  svg.appendChild(g);
+}
+
+function renderA(a) {
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.setAttribute('data-aid',a.id); g.style.cursor='pointer';
+  g.addEventListener('click',()=>selectA(a.id));
+  const c=a.color||COLORS.annot, {x,y}=a, r=11;
+  // teardrop pin
+  const pin=mkEl('path',{
+    d:`M${x},${y} Q${x-r},${y-r} ${x-r},${y-r*2} Q${x-r},${y-r*3.2} ${x},${y-r*3.2} Q${x+r},${y-r*3.2} ${x+r},${y-r*2} Q${x+r},${y-r} ${x},${y} Z`,
+    fill:c,stroke:'rgba(0,0,0,0.3)','stroke-width':1
+  });
+  const tx=mkEl('text',{x,y:y-r*2.1,'text-anchor':'middle','dominant-baseline':'middle',fill:'white','font-size':9,'font-family':'Georgia,serif','font-weight':'700','pointer-events':'none'});
+  tx.textContent=a.num; g.append(pin,tx); svg.appendChild(g);
+}
+
+function rerender() {
+  svg.innerHTML='';
+  S.measurements.forEach(renderM);
+  S.annotations.forEach(renderA);
+}
+
+/* ═══════════════════════════════════
+   ANNOTATION FORM (inline sidebar)
+═══════════════════════════════════ */
+function showAnnotForm(p) {
+  switchTab('annotations');
+  const num=S.annotations.length+1;
+  const div=document.createElement('div');
+  div.className='ann-form-card';
+  div.innerHTML=`
+    <div class="ann-form-title">New annotation at (${Math.round(p.x)}, ${Math.round(p.y)})</div>
+    <div class="note-form">
+      <select id="ann-cat">
+        <option>General note</option><option>Crack</option><option>Spall</option>
+        <option>Weathering</option><option>Previous repair</option>
+      </select>
+      <textarea id="ann-txt" placeholder="Describe this defect or feature…" rows="3"></textarea>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-sm primary" id="ann-save" style="flex:1;">Add</button>
+        <button class="btn-sm" id="ann-cancel">Cancel</button>
+      </div>
+    </div>`;
+  aList.prepend(div);
+  document.getElementById('ann-txt').focus();
+  document.getElementById('ann-save').onclick=()=>{
+    const cat=document.getElementById('ann-cat').value;
+    const txt=document.getElementById('ann-txt').value.trim()||cat;
+    const a={id:nAid(),x:p.x,y:p.y,category:cat,text:txt,num,color:CAT_COL[cat]||COLORS.annot};
+    pushH(); S.annotations.push(a); renderA(a); div.remove(); refreshAList(); selectA(a.id);
+  };
+  document.getElementById('ann-cancel').onclick=()=>div.remove();
+}
+
+/* ═══════════════════════════════════
+   SIDEBAR LISTS
+═══════════════════════════════════ */
+function refreshMList() {
+  if (!S.measurements.length) { mList.innerHTML='<div class="empty-state">No measurements yet.<br>Choose a tool and click on the image.</div>'; return; }
+  mList.innerHTML='';
+  const types={dist:'Distance',poly:'Polygon',rect:'Rectangle',point:'Point'};
+  S.measurements.forEach(m=>{
+    let val='';
+    if(m.type==='dist')  val=fmtDist(m.value);
+    if(m.type==='poly')  val=fmtArea(m.area);
+    if(m.type==='rect')  val=fmtDist(m.rectW)+' × '+fmtDist(m.rectH)+'  =  '+fmtArea(m.area);
+    if(m.type==='point') val='('+Math.round(m.coords[0].x)+', '+Math.round(m.coords[0].y)+') px';
+    const div=document.createElement('div');
+    div.className='m-item'+(m.id===S.selectedId?' selected':'');
+    div.setAttribute('data-mid',m.id);
+    div.innerHTML=`
+      <div class="m-head">
+        <div class="m-dot" style="background:${m.color}"></div>
+        <span class="m-label" id="lbl${m.id}">${esc(m.label)}</span>
+        <span class="m-tag">${types[m.type]||m.type}</span>
+      </div>
+      ${val?`<div class="m-val">${val}</div>`:''}
+      ${m.note?`<div class="m-note-text">${esc(m.note)}</div>`:''}
+      <div class="m-acts">
+        <button class="m-act" data-ren="${m.id}">rename</button>
+        <button class="m-act" data-note="${m.id}">note</button>
+        <button class="m-act del" data-del="${m.id}">delete</button>
+      </div>`;
+    div.addEventListener('click',e=>{
+      if(e.target.dataset.ren)  { renM(m.id); return; }
+      if(e.target.dataset.note) { noteM(m.id); return; }
+      if(e.target.dataset.del)  { delM(m.id); return; }
+      selectM(m.id);
+    });
+    mList.appendChild(div);
+  });
+}
+
+function refreshAList() {
+  if (!S.annotations.length) { aList.innerHTML='<div class="empty-state">No annotations yet.<br>Use the annotation tool (A) to add defect markers.</div>'; return; }
+  aList.innerHTML='';
+  S.annotations.forEach(a=>{
+    const div=document.createElement('div');
+    div.className='ann-item'+(a.id===S.selectedId?' selected':'');
+    div.setAttribute('data-aid',a.id);
+    div.innerHTML=`
+      <div class="ann-num" style="background:${a.color||COLORS.annot}">${a.num}</div>
+      <div class="ann-body">
+        <span class="ann-text">${esc(a.text)}</span>
+        <div class="ann-cat">${esc(a.category)} — ${Math.round(a.x)}, ${Math.round(a.y)}</div>
+      </div>
+      <button class="ann-del" data-dela="${a.id}" title="Delete">✕</button>`;
+    div.addEventListener('click',e=>{
+      if(e.target.dataset.dela) { delA(a.id); return; }
+      selectA(a.id);
+    });
+    aList.appendChild(div);
+  });
+}
+
+function selectM(id) {
+  S.selectedId=id;
+  document.querySelectorAll('.m-item').forEach(el=>el.classList.toggle('selected',el.getAttribute('data-mid')===id));
+  svg.querySelectorAll('g[data-mid]').forEach(g=>g.style.filter=g.getAttribute('data-mid')===id?'drop-shadow(0 0 4px rgba(0,0,0,0.6))':'');
+  switchTab('measurements');
+}
+function selectA(id) {
+  S.selectedId=id;
+  document.querySelectorAll('.ann-item').forEach(el=>el.classList.toggle('selected',el.getAttribute('data-aid')===id));
+  switchTab('annotations');
+}
+function renM(id) {
+  const m=S.measurements.find(x=>x.id===id); if(!m) return;
+  const el=document.getElementById('lbl'+id); if(!el) return;
+  const inp=document.createElement('input');
+  inp.className='inline-edit'; inp.value=m.label;
+  el.replaceWith(inp); inp.focus(); inp.select();
+  const done=()=>{ m.label=inp.value.trim()||m.label; refreshMList(); rerender(); };
+  inp.onblur=done;
+  inp.onkeydown=e=>{ if(e.key==='Enter') done(); if(e.key==='Escape') refreshMList(); };
+}
+function noteM(id) {
+  const m=S.measurements.find(x=>x.id===id); if(!m) return;
+  const n=prompt('Note for "'+m.label+'":', m.note||'');
+  if(n===null) return;
+  m.note=n; refreshMList();
+}
+function delM(id) {
+  pushH(); S.measurements=S.measurements.filter(x=>x.id!==id);
+  const el=svg.querySelector('[data-mid="'+id+'"]'); if(el) el.remove();
+  if(S.selectedId===id) S.selectedId=null;
+  refreshMList();
+}
+function delA(id) {
+  pushH(); S.annotations=S.annotations.filter(x=>x.id!==id);
+  const el=svg.querySelector('[data-aid="'+id+'"]'); if(el) el.remove();
+  if(S.selectedId===id) S.selectedId=null;
+  refreshAList();
+}
+
+/* ═══════════════════════════════════
+   TABS
+═══════════════════════════════════ */
+function switchTab(name) {
+  document.querySelectorAll('.stab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+name));
+}
+document.querySelectorAll('.stab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
+
+/* ═══════════════════════════════════
+   SCALE CHANGE
+═══════════════════════════════════ */
+pxInp.addEventListener('change',()=>{ S.pxPerUnit=parseFloat(pxInp.value)||1; refreshMList(); rerender(); });
+unitSel.addEventListener('change',()=>{ S.unit=unitSel.value; refreshMList(); rerender(); });
+
+/* ═══════════════════════════════════
+   UNDO
+═══════════════════════════════════ */
+function pushH() {
+  S.history.push({
+    measurements:JSON.parse(JSON.stringify(S.measurements)),
+    annotations:JSON.parse(JSON.stringify(S.annotations)),
+    mCtr:S.mCtr, aCtr:S.aCtr,
+  });
+  if(S.history.length>40) S.history.shift();
+}
+function undo() {
+  if(!S.history.length) return;
+  const snap=S.history.pop();
+  S.measurements=snap.measurements; S.annotations=snap.annotations;
+  S.mCtr=snap.mCtr; S.aCtr=snap.aCtr;
+  rerender(); refreshMList(); refreshAList(); msg('Undo');
+}
+
+/* ═══════════════════════════════════
+   INFO PANEL
+═══════════════════════════════════ */
+function updateInfoPanel(f) {
+  infoP.innerHTML=`
+    <div class="info-row"><span class="info-key">File</span><span class="info-val" style="word-break:break-all;font-size:11px;">${esc(f.name)}</span></div>
+    <div class="info-row"><span class="info-key">Size</span><span class="info-val">${(f.size/1024/1024).toFixed(2)} MB</span></div>
+    <div class="info-row"><span class="info-key">Dimensions</span><span class="info-val">${S.imgW} × ${S.imgH} px</span></div>
+    <div class="info-row"><span class="info-key">Scale</span><span class="info-val">1 px = 1 ${S.unit}</span></div>
+    <div class="help-block" style="margin-top:10px;">
+      <strong>Keyboard shortcuts</strong><br>
+      V — Pan &amp; select<br>D — Distance<br>P — Polygon area<br>R — Rectangle<br>M — Point marker<br>A — Annotation<br>
+      Ctrl+Z — Undo<br>Scroll — Zoom<br>Space+drag — Pan<br>Esc — Cancel<br>Enter / dbl-click — Close polygon
+    </div>`;
+}
+
+/* ═══════════════════════════════════
+   EXPORT
+═══════════════════════════════════ */
+document.getElementById('btn-csv').addEventListener('click', exportCSV);
+document.getElementById('btn-json').addEventListener('click', exportJSON);
+document.getElementById('btn-pdf').addEventListener('click', exportPDF);
+
+function exportCSV() {
+  const rows=[['ID','Type','Label','Value','Unit','Width','Height','Area','Area_Unit','X_px','Y_px','Note']];
+  S.measurements.forEach(m=>{
+    let val='',unit='',w='',h='',area='',aunit='',x='',y='';
+    if(m.type==='dist'){val=pxToU(m.value).toFixed(2);unit=S.unit;}
+    if(m.type==='poly'||m.type==='rect'){
+      const au=m.area/(S.pxPerUnit*S.pxPerUnit);
+      area=au.toFixed(2);aunit=S.unit+'²';
+    }
+    if(m.type==='rect'){w=pxToU(m.rectW).toFixed(2);h=pxToU(m.rectH).toFixed(2);}
+    if(m.type==='point'){x=m.coords[0].x.toFixed(1);y=m.coords[0].y.toFixed(1);}
+    rows.push([m.id,m.type,m.label,val,unit,w,h,area,aunit,x,y,m.note||'']);
+  });
+  if(S.annotations.length){
+    rows.push([]);
+    rows.push(['Ann_ID','Number','Category','Description','X_px','Y_px','','','','','','']);
+    S.annotations.forEach(a=>{rows.push([a.id,a.num,a.category,a.text,a.x.toFixed(1),a.y.toFixed(1),'','','','','','']);});
+  }
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  dl(csv,'facade-measurements.csv','text/csv');
+}
+
+function exportJSON() {
+  const data={
+    exported:new Date().toISOString(),
+    scale:{pxPerUnit:S.pxPerUnit,unit:S.unit},
+    image:{width:S.imgW,height:S.imgH},
+    measurements:S.measurements.map(m=>({
+      ...m,
+      valueFmt:m.type==='dist'?fmtDist(m.value):'',
+      areaFmt:(m.type==='poly'||m.type==='rect')?fmtArea(m.area):'',
+    })),
+    annotations:S.annotations,
+  };
+  dl(JSON.stringify(data,null,2),'facade-measurements.json','application/json');
+}
+
+function exportPDF() {
+  const win=window.open('','_blank');
+  const mRows=S.measurements.map(m=>{
+    let val='';
+    if(m.type==='dist') val=fmtDist(m.value);
+    if(m.type==='poly') val=fmtArea(m.area);
+    if(m.type==='rect') val=fmtDist(m.rectW)+' × '+fmtDist(m.rectH)+' = '+fmtArea(m.area);
+    if(m.type==='point') val='('+Math.round(m.coords[0].x)+', '+Math.round(m.coords[0].y)+') px';
+    return `<tr><td>${esc(m.id)}</td><td>${esc(m.label)}</td><td>${m.type}</td><td>${val}</td><td>${esc(m.note||'')}</td></tr>`;
+  }).join('');
+  const aRows=S.annotations.map(a=>`<tr><td>${a.num}</td><td>${esc(a.category)}</td><td>${esc(a.text)}</td><td>${Math.round(a.x)}, ${Math.round(a.y)}</td></tr>`).join('');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Facade Survey Report</title>
+<style>body{font-family:Georgia,serif;max-width:900px;margin:40px auto;color:#1a1714;font-size:13px;}
+h1{font-size:20px;color:#2d5a3d;border-bottom:2px solid #2d5a3d;padding-bottom:8px;margin-bottom:6px;letter-spacing:.04em;}
+h2{font-size:14px;margin:22px 0 8px;color:#2d5a3d;}
+.meta{color:#5a534a;font-size:11px;margin-bottom:22px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{background:#2d5a3d;color:white;padding:6px 10px;text-align:left;}
+td{padding:5px 10px;border-bottom:1px solid #e0dbd3;}
+tr:nth-child(even) td{background:#f8f5f1;}
+.empty{color:#8a837a;font-style:italic;}</style></head><body>
+<h1>FACADE SURVEY — MEASUREMENT REPORT</h1>
+<div class="meta">Generated: ${new Date().toLocaleString()} &nbsp;|&nbsp; Image: ${S.imgW} × ${S.imgH} px &nbsp;|&nbsp; Scale: 1 px = 1 ${S.unit}</div>
+<h2>Measurements (${S.measurements.length})</h2>
+${mRows?`<table><tr><th>ID</th><th>Label</th><th>Type</th><th>Value</th><th>Note</th></tr>${mRows}</table>`:'<div class="empty">None</div>'}
+<h2>Annotations / Defects (${S.annotations.length})</h2>
+${aRows?`<table><tr><th>#</th><th>Category</th><th>Description</th><th>Position</th></tr>${aRows}</table>`:'<div class="empty">None</div>'}
+</body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(),400);
+}
+
+function dl(content,filename,type) {
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type}));
+  a.download=filename; a.click(); URL.revokeObjectURL(a.href);
+}
+
+/* ═══════════════════════════════════
+   HELPERS
+═══════════════════════════════════ */
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function msg(s){sMsg.textContent=s;}
+
+/* ═══════════════════════════════════
+   TOOLBAR BUTTONS
+═══════════════════════════════════ */
+['pan','dist','poly','rect','point','annot'].forEach(id=>{
+  const btn=document.getElementById('tool-'+id);
+  if(btn) btn.addEventListener('click',()=>setTool(id));
+});
+document.getElementById('btn-undo').addEventListener('click',undo);
+document.getElementById('btn-clear').addEventListener('click',()=>{
+  if(!confirm('Clear ALL measurements and annotations?')) return;
+  pushH(); S.measurements=[]; S.annotations=[];
+  svg.innerHTML=''; refreshMList(); refreshAList();
+});
+
+// Init
+setTool('pan');
+</script>
+</body>
+</html>
