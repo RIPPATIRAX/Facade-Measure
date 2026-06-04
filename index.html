@@ -366,12 +366,13 @@ header {
 .m-item.selected { border-color: var(--accent); background: var(--accent-light); box-shadow: 0 0 0 1px var(--accent), var(--shadow-sm); }
 .m-item.editing { border-color: var(--accent); background: var(--accent-light); box-shadow: 0 0 0 2px var(--accent), var(--shadow-md); }
 .m-head { display: flex; align-items: flex-start; gap: 5px; margin-bottom: 3px; }
-.m-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 3px; flex-shrink: 0; }
+.m-dot { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px; font-weight: 700; }
 .m-label { font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .m-tag { font-size: 9px; padding: 1px 4px; border-radius: 3px; background: var(--surface2); color: var(--text3); flex-shrink: 0; margin-top: 2px; }
-.m-val { font-size: 13px; font-weight: 700; color: var(--accent); margin: 2px 0 0 14px; }
-.m-note-text { font-size: 11px; color: var(--text3); font-style: italic; margin-top: 2px; margin-left: 14px; }
-.m-acts { display: flex; gap: 3px; margin-top: 5px; margin-left: 14px; flex-wrap: wrap; }
+.m-val { font-size: 13px; font-weight: 700; color: var(--accent); margin: 3px 0 0 24px; }
+.m-sides { font-size: 11px; color: var(--text2); margin: 2px 0 0 24px; font-variant-numeric: tabular-nums; }
+.m-note-text { font-size: 11px; color: var(--text3); font-style: italic; margin-top: 2px; margin-left: 24px; }
+.m-acts { display: flex; gap: 3px; margin-top: 5px; margin-left: 24px; flex-wrap: wrap; }
 .m-act {
   font-size: 10px; padding: 1px 5px;
   border: 1px solid var(--border);
@@ -501,7 +502,7 @@ header {
   <div class="sep"></div>
   <div class="scale-row">
     <span>Scale:</span>
-    <input type="number" id="px-per-unit" value="1" min="0.0001" step="0.001">
+    <input type="number" id="px-per-unit" value="1" min="0.0001" step="any">
     <span>px per</span>
     <select id="unit-select">
       <option value="mm" selected>mm</option>
@@ -545,7 +546,13 @@ header {
       </svg>
     </button>
 
-    <button class="tool-btn" id="tool-pline" data-tip="Polyline / crack length  [L]">
+    <button class="tool-btn" id="tool-rect" data-tip="Rectangle  [R]">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-rect)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="6" width="18" height="12" rx="1"/>
+      </svg>
+    </button>
+
+    <button class="tool-btn" id="tool-pline" data-tip="Crack length / polyline  [L]">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-pline)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="3,17 8,9 13,14 21,5"/>
         <circle cx="3" cy="17" r="1.4" fill="var(--c-pline)"/><circle cx="8" cy="9" r="1.4" fill="var(--c-pline)"/>
@@ -559,19 +566,13 @@ header {
       </svg>
     </button>
 
-    <button class="tool-btn" id="tool-rect" data-tip="Rectangle  [R]">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-rect)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="6" width="18" height="12" rx="1"/>
-      </svg>
-    </button>
+    <div class="tool-sep"></div>
 
     <button class="tool-btn" id="tool-point" data-tip="Point marker  [M]">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-point)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
       </svg>
     </button>
-
-    <div class="tool-sep"></div>
 
     <button class="tool-btn" id="tool-annot" data-tip="Annotation  [A]">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-annot)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -954,8 +955,10 @@ function vertPx(base) {
   return Math.max(3.5, Math.min(base*2.4, v));
 }
 function labelPx() {
-  const baseScreen = 13 * S.labelScale;
-  return Math.max(10, Math.min(30, baseScreen));   // pure screen px, zoom-independent within band
+  // Labels scale PARTIALLY with zoom: small & unobtrusive when zoomed out,
+  // growing legible as you zoom in. The slider is an overall multiplier.
+  const base = 12 * S.labelScale;
+  return Math.max(9, Math.min(30, base * Math.pow(S.zoom, 0.34)));
 }
 
 /* ═══════════════════════════════════════════════════
@@ -973,7 +976,7 @@ function renderOverlay() {
   // Rubber-band preview while drawing
   if (S.drawing) renderPreview();
 
-  S.measurements.forEach(m => drawMeasurement(m));
+  S.measurements.forEach((m,i) => drawMeasurement(m, i+1));
   S.annotations.forEach(a => drawAnnotation(a));
 }
 
@@ -995,7 +998,19 @@ function drawLabelScreen(centerImg, txt, color) {
   return g;
 }
 
-function drawMeasurement(m) {
+/* Small haloed length label centred on an edge (used for rectangle sides). */
+function drawEdgeLabel(aImg, bImg, txt, color, awayImg) {
+  const a = imgToScreen(aImg.x, aImg.y), b = imgToScreen(bImg.x, bImg.y);
+  const fs = Math.max(8, labelPx()*0.82);
+  let mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+  if (awayImg){ const c=imgToScreen(awayImg.x,awayImg.y), dx=mx-c.x, dy=my-c.y, L=Math.hypot(dx,dy)||1; mx+=dx/L*fs*1.3; my+=dy/L*fs*1.3; }
+  const t = mkEl('text', {x:mx, y:my, 'text-anchor':'middle','dominant-baseline':'middle',
+    fill:color, stroke:'#fff', 'stroke-width':Math.max(2,fs*0.3), 'paint-order':'stroke',
+    'font-family':'Georgia,serif','font-weight':'700','font-size':fs,'pointer-events':'none'});
+  t.textContent = txt; return t;
+}
+
+function drawMeasurement(m, num) {
   const g = mkEl('g', { 'data-mid': m.id });
   g.style.cursor='pointer';
   g.style.pointerEvents='auto';
@@ -1018,25 +1033,31 @@ function drawMeasurement(m) {
     g.append(
       mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:m.color,'stroke-width':sStroke,'stroke-linecap':'round'}),
       vertexHandle(m,0,editing), vertexHandle(m,1,editing),
-      drawLabelScreen({x:(m.coords[0].x+m.coords[1].x)/2,y:(m.coords[0].y+m.coords[1].y)/2}, m.label+' · '+fmtDist(m.value), m.color)
+      drawLabelScreen({x:(m.coords[0].x+m.coords[1].x)/2,y:(m.coords[0].y+m.coords[1].y)/2}, num+' · '+fmtDist(m.value), m.color)
     );
   } else if (m.type==='pline') {
     const ptsS = m.coords.map(p=>imgToScreen(p.x,p.y));
     g.append(
       mkEl('polyline',{points:ptsS.map(p=>p.x+','+p.y).join(' '),stroke:m.color,'stroke-width':strokePx(2.4),fill:'none','stroke-linejoin':'round','stroke-linecap':'round'}),
       ...m.coords.map((_,i)=>vertexHandle(m,i,editing)),
-      drawLabelScreen(m.coords[Math.floor(m.coords.length/2)], m.label+' · '+fmtDist(m.length), m.color)
+      drawLabelScreen(m.coords[Math.floor(m.coords.length/2)], num+' · '+fmtDist(m.length), m.color)
     );
   } else if (m.type==='poly'||m.type==='rect') {
     const ptsS = m.coords.map(p=>imgToScreen(p.x,p.y));
     const cx = m.coords.reduce((s,p)=>s+p.x,0)/m.coords.length;
     const cy = m.coords.reduce((s,p)=>s+p.y,0)/m.coords.length;
-    const txt = m.type==='rect' ? (m.label+' · '+fmtDist(m.rectW)+'×'+fmtDist(m.rectH)) : (m.label+' · '+fmtArea(m.area));
     g.append(
       mkEl('polygon',{points:ptsS.map(p=>p.x+','+p.y).join(' '),stroke:m.color,'stroke-width':sStroke,fill:m.color,'fill-opacity':'0.1','stroke-linejoin':'round'}),
-      ...m.coords.map((_,i)=>vertexHandle(m,i,editing)),
-      drawLabelScreen({x:cx,y:cy}, txt, m.color)
+      ...m.coords.map((_,i)=>vertexHandle(m,i,editing))
     );
+    if (m.type==='rect') {
+      for (let i=0;i<m.coords.length;i++){
+        const j=(i+1)%m.coords.length;
+        const sa=imgToScreen(m.coords[i].x,m.coords[i].y), sb=imgToScreen(m.coords[j].x,m.coords[j].y);
+        if (Math.hypot(sb.x-sa.x,sb.y-sa.y) > 46) g.append(drawEdgeLabel(m.coords[i],m.coords[j],fmtDist(dist2(m.coords[i],m.coords[j])),m.color,{x:cx,y:cy}));
+      }
+    }
+    g.append(drawLabelScreen({x:cx,y:cy}, num+' · '+fmtArea(m.area), m.color));
   } else if (m.type==='point') {
     const p=imgToScreen(m.coords[0].x,m.coords[0].y);
     const outer=sCircle(p,vertPx(9),m.color,m.color,strokePx(1)); outer.setAttribute('fill-opacity','0.2');
@@ -1044,8 +1065,18 @@ function drawMeasurement(m) {
       outer,
       mkEl('line',{x1:p.x,y1:p.y-vertPx(11),x2:p.x,y2:p.y-vertPx(22),stroke:m.color,'stroke-width':strokePx(1.5)}),
       vertexHandle(m,0,editing),
-      drawLabelScreen({x:m.coords[0].x, y:m.coords[0].y - (22/S.zoom)}, m.label, m.color)
+      drawLabelScreen({x:m.coords[0].x, y:m.coords[0].y - (22/S.zoom)}, String(num), m.color)
     );
+  }
+  if (editing && (m.type==='poly'||m.type==='rect'||m.type==='pline')) {
+    editEdges(m).forEach(([i,j])=>{
+      const a=imgToScreen(m.coords[i].x,m.coords[i].y), b=imgToScreen(m.coords[j].x,m.coords[j].y);
+      const mp={x:(a.x+b.x)/2,y:(a.y+b.y)/2}, rr2=vertPx(4.5);
+      const c=sCircle(mp, rr2, 'rgba(255,255,255,0.55)', m.color, strokePx(1.3));
+      c.setAttribute('stroke-dasharray','2.5,2.5');
+      const pl=mkEl('path',{d:`M${mp.x-rr2*0.55},${mp.y} H${mp.x+rr2*0.55} M${mp.x},${mp.y-rr2*0.55} V${mp.y+rr2*0.55}`,stroke:m.color,'stroke-width':strokePx(1.1),'stroke-linecap':'round'});
+      g.append(c, pl);
+    });
   }
   svg.appendChild(g);
 }
@@ -1082,21 +1113,30 @@ function drawAnnotation(a) {
 /* ── Rubber-band preview ── */
 function renderPreview() {
   const dash = mkEl('g', {});
+  const DW = strokePx(2), DA = '6,4';   // thin dashes — precise to align against a stone (a touch bigger than the original)
   if (S.tool==='dist' && S.distA && S.cursorImg) {
     const a=imgToScreen(S.distA.x,S.distA.y), b=imgToScreen(S.cursorImg.x,S.cursorImg.y);
-    dash.append(mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:COLORS.dist,'stroke-width':strokePx(1.5),'stroke-dasharray':'6,4',fill:'none'}));
+    dash.append(mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:COLORS.dist,'stroke-width':DW,'stroke-dasharray':DA,fill:'none'}));
+    dash.append(drawLabelScreen({x:(S.distA.x+S.cursorImg.x)/2,y:(S.distA.y+S.cursorImg.y)/2}, fmtDist(dist2(S.distA,S.cursorImg)), COLORS.dist));
   } else if ((S.tool==='poly'||S.tool==='pline') && S.polyPts.length) {
     const pts = S.cursorImg ? [...S.polyPts, S.cursorImg] : S.polyPts;
-    const ptsS = pts.map(p=>imgToScreen(p.x,p.y));
-    dash.append(mkEl('polyline',{points:ptsS.map(p=>p.x+','+p.y).join(' '),stroke:S.tool==='pline'?COLORS.pline:COLORS.poly,'stroke-width':strokePx(1.5),'stroke-dasharray':'6,4',fill:'none'}));
-    ptsS.forEach(p=>dash.append(sCircle(p,vertPx(3),'white',S.tool==='pline'?COLORS.pline:COLORS.poly,1.2)));
+    const ptsS = pts.map(p=>imgToScreen(p.x,p.y)), col = S.tool==='pline'?COLORS.pline:COLORS.poly;
+    dash.append(mkEl('polyline',{points:ptsS.map(p=>p.x+','+p.y).join(' '),stroke:col,'stroke-width':DW,'stroke-dasharray':DA,fill:'none','stroke-linejoin':'round','stroke-linecap':'round'}));
+    ptsS.forEach(p=>dash.append(sCircle(p,vertPx(3),'white',col,1.3)));
+    if (S.cursorImg) {
+      if (S.tool==='pline') dash.append(drawLabelScreen(S.cursorImg, fmtDist(pathLen(pts)), COLORS.pline));
+      else if (pts.length>=3) { const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length, cy=pts.reduce((s,p)=>s+p.y,0)/pts.length; dash.append(drawLabelScreen({x:cx,y:cy}, fmtArea(polyArea(pts)), COLORS.poly)); }
+    }
   } else if (S.tool==='rect' && S.rectA && S.cursorImg) {
     const a=imgToScreen(S.rectA.x,S.rectA.y), b=imgToScreen(S.cursorImg.x,S.cursorImg.y);
-    dash.append(mkEl('rect',{x:Math.min(a.x,b.x),y:Math.min(a.y,b.y),width:Math.abs(b.x-a.x),height:Math.abs(b.y-a.y),stroke:COLORS.rect,'stroke-width':strokePx(1.5),'stroke-dasharray':'6,4',fill:'none'}));
+    dash.append(mkEl('rect',{x:Math.min(a.x,b.x),y:Math.min(a.y,b.y),width:Math.abs(b.x-a.x),height:Math.abs(b.y-a.y),stroke:COLORS.rect,'stroke-width':DW,'stroke-dasharray':DA,fill:'none'}));
+    const w=Math.abs(S.cursorImg.x-S.rectA.x), h=Math.abs(S.cursorImg.y-S.rectA.y);
+    dash.append(drawLabelScreen({x:(S.rectA.x+S.cursorImg.x)/2,y:(S.rectA.y+S.cursorImg.y)/2}, fmtDist(w)+'×'+fmtDist(h), COLORS.rect));
   } else if (S.tool==='calib' && S.calibA && S.cursorImg) {
     const a=imgToScreen(S.calibA.x,S.calibA.y), b=imgToScreen(S.cursorImg.x,S.cursorImg.y);
-    dash.append(mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#1e4a7a','stroke-width':strokePx(1.6),'stroke-dasharray':'7,4',fill:'none'}));
-    dash.append(sCircle(a,vertPx(3.2),'white','#1e4a7a',1.4), sCircle(b,vertPx(3.2),'white','#1e4a7a',1.4));
+    dash.append(mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#1e4a7a','stroke-width':DW,'stroke-dasharray':DA,fill:'none'}));
+    dash.append(sCircle(a,vertPx(3),'white','#1e4a7a',1.3), sCircle(b,vertPx(3),'white','#1e4a7a',1.3));
+    dash.append(drawLabelScreen({x:(S.calibA.x+S.cursorImg.x)/2,y:(S.calibA.y+S.cursorImg.y)/2}, Math.round(dist2(S.calibA,S.cursorImg))+' px', '#1e4a7a'));
   }
   svg.appendChild(dash);
 }
@@ -1122,7 +1162,7 @@ function setTool(t) {
       dist:'Click start — click end. Pan anytime with Space-drag or middle-mouse.',
       pline:'Click points along the crack — double-click or Enter to finish.',
       poly:'Click vertices — double-click or Enter to close.',
-      rect:'Click and drag.',
+      rect:'Click one corner, then the opposite corner. Pan with Space-drag or middle-mouse.',
       point:'Click to place.',
       annot:'Click to annotate.',
       calib:'Click the two ends of a known distance, then enter its real length.',
@@ -1157,6 +1197,9 @@ wrap.addEventListener('mousedown', e => {
   if (S.tool==='edit') {
     const hit = hitVertex(e.clientX, e.clientY);
     if (hit) { pushH(); S.dragVert=hit; wrap.style.cursor='grabbing'; return; }
+    // click a midpoint (＋) on the edited shape → insert a new vertex there and grab it
+    const ins = hitMidpoint(e.clientX, e.clientY);
+    if (ins) { pushH(); insertVertex(S.editId, ins.index, ins.point); S.dragVert={id:S.editId, index:ins.index}; refreshMList(); wrap.style.cursor='grabbing'; scheduleRender(); return; }
     // clicked empty space in edit mode → try to select a measurement under cursor to edit
     const mid = measurementAt(e.clientX, e.clientY);
     if (mid) { enterEdit(mid); return; }
@@ -1199,11 +1242,6 @@ window.addEventListener('mouseup', e => {
   if (S.panning) { S.panning=false; setCursor(); return; }
   if (S.dragVert) { S.dragVert=null; setCursor(); scheduleRender(); return; }
   if (!S.loaded||e.button!==0) return;
-  if (S.tool==='rect'&&S.drawing&&S.rectA) {
-    const p=clamp(toImg(e.clientX,e.clientY));
-    if (Math.abs(p.x-S.rectA.x)>3||Math.abs(p.y-S.rectA.y)>3) finishRect(S.rectA,p);
-    S.drawing=false; S.rectA=null; S.cursorImg=null; hideBanner(); scheduleRender();
-  }
 });
 
 wrap.addEventListener('dblclick', e => {
@@ -1225,8 +1263,8 @@ function toolDown(p, e) {
       : 'Drawing <b>area</b> · click vertices · <span class="kbd">double-click</span>/<span class="kbd">Enter</span> closes · pan with <span class="kbd">Space</span>/<span class="kbd">middle-mouse</span>');
     scheduleRender();
   } else if (S.tool==='rect') {
-    S.drawing=true; S.rectA=p; S.cursorImg=p;
-    showBanner('Drawing <b>rectangle</b> · drag to size · release to finish'); scheduleRender();
+    if (!S.drawing){ S.drawing=true; S.rectA=p; S.cursorImg=p; showBanner('Placing <b>rectangle</b> · click the opposite corner · pan with <span class="kbd">Space</span>-drag or <span class="kbd">middle-mouse</span>'); scheduleRender(); }
+    else if (Math.abs(p.x-S.rectA.x)>3||Math.abs(p.y-S.rectA.y)>3){ finishRect(S.rectA,p); S.drawing=false; S.rectA=null; S.cursorImg=null; hideBanner(); scheduleRender(); }
   } else if (S.tool==='point') {
     addPoint(p);
   } else if (S.tool==='annot') {
@@ -1250,6 +1288,47 @@ function hitVertex(clientX, clientY) {
     if (Math.hypot(clientX-r.left-s.x, clientY-r.top-s.y)<=tol) return {id:m.id,index:i};
   }
   return null;
+}
+function editEdges(m){
+  const n=m.coords.length;
+  if(m.type==='pline') return Array.from({length:n-1},(_,i)=>[i,i+1]);
+  return Array.from({length:n},(_,i)=>[i,(i+1)%n]);   // poly / rect are closed loops
+}
+function hitMidpoint(clientX, clientY){
+  if(!S.editId) return null;
+  const m=S.measurements.find(x=>x.id===S.editId); if(!m) return null;
+  if(!(m.type==='poly'||m.type==='rect'||m.type==='pline')) return null;
+  const r=wrap.getBoundingClientRect(), tol=12;
+  for(const [i,j] of editEdges(m)){
+    const a=imgToScreen(m.coords[i].x,m.coords[i].y), b=imgToScreen(m.coords[j].x,m.coords[j].y);
+    const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+    if(Math.hypot(clientX-r.left-mx, clientY-r.top-my)<=tol)
+      return {index:i+1, point:{x:(m.coords[i].x+m.coords[j].x)/2, y:(m.coords[i].y+m.coords[j].y)/2}};
+  }
+  return null;
+}
+function insertVertex(id, index, point){
+  const m=S.measurements.find(x=>x.id===id); if(!m) return;
+  m.coords.splice(index,0,point);
+  if(m.type==='rect' && m.coords.length>4){          // 5th vertex -> it's a polygon now
+    m.type='poly'; delete m.rectW; delete m.rectH;
+    if(/^Rect\b/.test(m.label)) m.label=m.label.replace(/^Rect/,'Area');
+    tweenColor(m, COLORS.poly);                       // quick fade purple -> blue
+  }
+  recompute(m);
+}
+function hexToRgb(h){ h=String(h).replace('#',''); return {r:parseInt(h.slice(0,2),16),g:parseInt(h.slice(2,4),16),b:parseInt(h.slice(4,6),16)}; }
+function rgbToHex(r,g,b){ const c=v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0'); return '#'+c(r)+c(g)+c(b); }
+function tweenColor(m, to){
+  const fa=hexToRgb(m.color), ta=hexToRgb(to), t0=performance.now(), dur=260;
+  function step(now){
+    const k=Math.min(1,(now-t0)/dur), e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;   // easeInOutQuad
+    m.color=rgbToHex(fa.r+(ta.r-fa.r)*e, fa.g+(ta.g-fa.g)*e, fa.b+(ta.b-fa.b)*e);
+    const badge=document.querySelector('[data-mid="'+m.id+'"] .m-dot'); if(badge) badge.style.background=m.color;
+    scheduleRender();
+    if(k<1) requestAnimationFrame(step); else m.color=to;
+  }
+  requestAnimationFrame(step);
 }
 function measurementAt(clientX, clientY) {
   const r=wrap.getBoundingClientRect();
@@ -1346,6 +1425,10 @@ function recompute(m){
     m.area=polyArea(c);
   }
 }
+/* The 4 edge lengths of a rectangle, in order top·right·bottom·left (image px). */
+function rectSides(m){ const c=m.coords, d=(a,b)=>dist2(c[a],c[b]); return [d(0,1),d(1,2),d(2,3),d(3,0)]; }
+/* True while opposite sides stay equal — i.e. still a clean length × width. */
+function rectSymmetric(m){ const s=rectSides(m), eq=(a,b)=>Math.abs(a-b)<=0.5; return eq(s[0],s[2])&&eq(s[1],s[3]); }   // perfectly rectangular or not
 
 /* ═══════════════════════════════════════════════════
    EDIT MODE
@@ -1356,7 +1439,8 @@ function enterEdit(id){
   document.getElementById('tool-edit').classList.add('active');
   const m=S.measurements.find(x=>x.id===id);
   sTool.textContent='Edit points';
-  showBanner('Editing <b>'+esc(m?m.label:'')+'</b> · drag the handles to adjust · <span class="kbd">Esc</span> to finish');
+  const canAdd = m && (m.type==='poly'||m.type==='rect'||m.type==='pline');
+  showBanner('Editing <b>'+esc(m?m.label:'')+'</b> · drag handles'+(canAdd?' · click a <span class="kbd">＋</span> midpoint to add a vertex':'')+' · <span class="kbd">Esc</span> to finish');
   refreshMList(); scheduleRender(); setCursor();
 }
 function exitEdit(){
@@ -1397,12 +1481,13 @@ function showAnnotForm(p){
 
 /* Set the scale by marking a known real-world distance on the image. */
 function openScaleDialog(pixelDist){
-  const cur=['mm','cm','m','ft','in'].includes(S.unit)?S.unit:'m';
+  const TO_MM={mm:1,cm:10,m:1000,ft:304.8,in:25.4};
+  const cur=['mm','cm','m','ft','in'].includes(S._calibUnit)?S._calibUnit:'m';
   const ov=document.createElement('div'); ov.className='modal-overlay';
   ov.innerHTML=`
     <div class="modal-card">
       <div class="modal-title">Set scale from image</div>
-      <div class="modal-sub">You marked a reference line of <b>${Math.round(pixelDist)} px</b>. Enter the real-world distance it represents — for example the length of a scale bar.</div>
+      <div class="modal-sub">You marked a reference of <b>${Math.round(pixelDist)} px</b>. Enter the real-world distance it represents — e.g. a scale bar. Measurements are always shown in <b>mm</b> (metres for large spans).</div>
       <div class="modal-row">
         <input type="number" id="cal-len" min="0.0001" step="any" placeholder="length">
         <select id="cal-unit">
@@ -1419,17 +1504,19 @@ function openScaleDialog(pixelDist){
   document.body.appendChild(ov);
   const lenInp=ov.querySelector('#cal-len'), uSel=ov.querySelector('#cal-unit'), hint=ov.querySelector('#cal-hint');
   uSel.value=cur; setTimeout(()=>lenInp.focus(),0);
-  const preview=()=>{ const L=parseFloat(lenInp.value); hint.textContent=(L>0)?('→ 1 '+uSel.value+' = '+(pixelDist/L).toFixed(3)+' px'):''; };
+  const preview=()=>{ const L=parseFloat(lenInp.value); hint.textContent=(L>0)?('→ measuring in mm · 1 mm = '+(pixelDist/(L*TO_MM[uSel.value])).toPrecision(4)+' px'):''; };
   lenInp.addEventListener('input',preview); uSel.addEventListener('change',preview);
   const close=()=>{ ov.remove(); setTool('pan'); };
   const apply=()=>{
     const L=parseFloat(lenInp.value);
     if(!(L>0)){ lenInp.focus(); return; }
-    S.pxPerUnit=pixelDist/L; S.unit=uSel.value;
-    pxInp.value=Math.round(S.pxPerUnit*1e4)/1e4; unitSel.value=S.unit;
+    const mm=L*TO_MM[uSel.value];
+    S._calibUnit=uSel.value;
+    S.pxPerUnit=pixelDist/mm; S.unit='mm';
+    pxInp.value=Number(S.pxPerUnit.toPrecision(6)); unitSel.value='mm';
     refreshMList(); scheduleRender();
     if(S._lastFile) updateInfoPanel(S._lastFile);
-    msg('Scale set — 1 '+S.unit+' = '+S.pxPerUnit.toFixed(3)+' px (from a '+Math.round(pixelDist)+' px reference)');
+    msg('Scale set — measuring in mm (1 mm = '+S.pxPerUnit.toPrecision(4)+' px, from a '+Math.round(pixelDist)+' px reference)');
     close();
   };
   ov.querySelector('#cal-set').onclick=apply;
@@ -1445,12 +1532,16 @@ function refreshMList(){
   if(!S.measurements.length){ mList.innerHTML='<div class="empty-state">No measurements yet.<br>Choose a tool and click on the image.</div>'; return; }
   mList.innerHTML='';
   const types={dist:'Distance',pline:'Crack',poly:'Polygon',rect:'Rectangle',point:'Point'};
-  S.measurements.forEach(m=>{
-    let val='';
+  S.measurements.forEach((m,i)=>{
+    let val='', detail='';
     if(m.type==='dist') val=fmtDist(m.value);
     if(m.type==='pline') val=fmtDist(m.length);
     if(m.type==='poly') val=fmtArea(m.area);
-    if(m.type==='rect') val=fmtDist(m.rectW)+' × '+fmtDist(m.rectH)+'  =  '+fmtArea(m.area);
+    if(m.type==='rect'){
+      const sd=rectSides(m);
+      if(rectSymmetric(m)){ val=fmtDist(sd[0])+' × '+fmtDist(sd[1])+'  =  '+fmtArea(m.area); }
+      else { val=fmtArea(m.area); detail=sd.map(fmtDist).join(' · '); }
+    }
     if(m.type==='point') val='('+Math.round(m.coords[0].x)+', '+Math.round(m.coords[0].y)+') px';
     const editing=(m.id===S.editId);
     const div=document.createElement('div');
@@ -1460,11 +1551,12 @@ function refreshMList(){
     div.addEventListener('mouseleave',()=>{ if(S._hover===m.id){ S._hover=null; scheduleRender(); }});
     div.innerHTML=`
       <div class="m-head">
-        <div class="m-dot" style="background:${m.color}"></div>
+        <div class="m-dot" style="background:${m.color}">${i+1}</div>
         <span class="m-label" id="lbl${m.id}">${esc(m.label)}</span>
         <span class="m-tag">${types[m.type]||m.type}</span>
       </div>
       ${val?`<div class="m-val">${val}</div>`:''}
+      ${detail?`<div class="m-sides">${detail}</div>`:''}
       ${m.note?`<div class="m-note-text">${esc(m.note)}</div>`:''}
       <div class="m-acts">
         <button class="m-act" data-ren="${m.id}">rename</button>
@@ -1676,7 +1768,7 @@ function drawTag(g,x,y,txt,color,fs){
   g.save(); g.globalAlpha=0.92; g.fillStyle=color; rr(g,x-bw/2,y-bh/2,bw,bh,Math.max(2,fs*0.26)); g.fill(); g.restore();
   g.fillStyle='#fff'; g.fillText(txt, x, y+fs*0.06);
 }
-function drawMeasOnCanvas(g,m,mx,my,lw,fs,mode,num){
+function drawMeasOnCanvas(g,m,mx,my,lw,fs,mode,num,edges){
   g.lineWidth=lw; g.strokeStyle=m.color; g.fillStyle=m.color; g.lineJoin='round'; g.lineCap='round';
   const P=m.coords.map(c=>({x:mx(c.x),y:my(c.y)}));
   if(m.type==='dist'){ g.beginPath(); g.moveTo(P[0].x,P[0].y); g.lineTo(P[1].x,P[1].y); g.stroke(); }
@@ -1684,6 +1776,10 @@ function drawMeasOnCanvas(g,m,mx,my,lw,fs,mode,num){
   else if(m.type==='poly'||m.type==='rect'){ g.beginPath(); P.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.closePath(); g.save(); g.globalAlpha=0.13; g.fill(); g.restore(); g.stroke(); }
   else if(m.type==='point'){ g.beginPath(); g.arc(P[0].x,P[0].y,Math.max(3,lw*1.8),0,Math.PI*2); g.fill(); }
   if(m.type!=='point') P.forEach(p=>{ g.beginPath(); g.arc(p.x,p.y,Math.max(2,lw*1.0),0,Math.PI*2); g.fillStyle='#fff'; g.fill(); g.lineWidth=Math.max(1,lw*0.6); g.strokeStyle=m.color; g.stroke(); });
+  if(edges && m.type==='rect'){
+    const efs=Math.max(16, fs*1.5);
+    for(let i=0;i<m.coords.length;i++){ const j=(i+1)%m.coords.length; drawEdgeLabelCanvas(g, mx(m.coords[i].x),my(m.coords[i].y), mx(m.coords[j].x),my(m.coords[j].y), fmtDist(dist2(m.coords[i],m.coords[j])), m.color, efs); }
+  }
   const c=outCentroid(P,m.type);
   if(mode==='label') drawTag(g,c.x,c.y,labelText(m),m.color,fs);
   else if(mode==='badge') drawBadge(g,c.x,c.y,num,m.color,fs);
@@ -1694,6 +1790,12 @@ function drawBadge(g,x,y,txt,color,fs){
   g.lineWidth=Math.max(1.2,fs*0.13); g.strokeStyle='rgba(255,255,255,0.92)'; g.stroke(); g.restore();
   g.fillStyle='#fff'; g.font='700 '+Math.round(fs)+'px Georgia, serif'; g.textAlign='center'; g.textBaseline='middle';
   g.fillText(String(txt), x, y+fs*0.04);
+}
+function drawEdgeLabelCanvas(g, ax, ay, bx, by, txt, color, fs){
+  const mx=(ax+bx)/2, my=(ay+by)/2;
+  g.font='700 '+Math.round(fs)+'px Georgia, serif'; g.textAlign='center'; g.textBaseline='middle'; g.lineJoin='round';
+  g.lineWidth=Math.max(2,fs*0.32); g.strokeStyle='#fff'; g.strokeText(txt,mx,my);
+  g.fillStyle=color; g.fillText(txt,mx,my);
 }
 function drawAnnOnCanvas(g,a,mx,my,fs){
   const x=mx(a.x), y=my(a.y), r=fs*0.95, col=a.color||COLORS.annot;
@@ -1716,9 +1818,29 @@ function compositeRegion(region, outW, items, anns, fullRes, opts){
   g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
   if(src){ try{ g.drawImage(src, region.sx*ss, region.sy*ss, region.sw*ss, region.sh*ss, 0,0,outW,outH); }catch(e){} }
   const mx=ix=>(ix-region.sx)*k, my=iy=>(iy-region.sy)*k;
-  (items||[]).forEach((m,i)=>drawMeasOnCanvas(g,m,mx,my,strokeW,fontS,mode,startNum+i));
+  (items||[]).forEach((m,i)=>drawMeasOnCanvas(g,m,mx,my,strokeW,fontS,mode,startNum+i,opts.edges));
   (anns||[]).forEach(a=>drawAnnOnCanvas(g,a,mx,my,fontS));
+  if(opts.scaleBar) drawScaleBar(g,outW,outH,k);
   return cv.toDataURL('image/jpeg', 0.86);
+}
+function drawScaleBar(g, outW, outH, k){
+  if(!(S.pxPerUnit>0)) return;
+  const outPerUnit=k*S.pxPerUnit;                 // output px per 1 unit
+  if(!isFinite(outPerUnit)||outPerUnit<=0) return;
+  const units0=(outW*0.20)/outPerUnit;            // ~20% of width, in real units
+  const p=Math.pow(10,Math.floor(Math.log10(units0))), n=units0/p;
+  const nice=(n>=5?5:n>=2?2:1)*p, barPx=nice*outPerUnit;
+  const fs=Math.max(12,Math.round(outW/80)), h=Math.max(5,Math.round(fs*0.5)), pad=Math.max(12,outW*0.014);
+  const x0=pad, y0=outH-pad-fs, labelTxt=fmtDist(nice*S.pxPerUnit);
+  g.save();
+  g.font='700 '+fs+'px Georgia, serif'; g.textAlign='center'; g.textBaseline='alphabetic';
+  const tw=g.measureText(labelTxt).width, cx=x0+barPx/2, bgW=Math.max(barPx,tw)+18;
+  g.fillStyle='rgba(255,255,255,0.86)'; rr(g,cx-bgW/2,y0-h-7,bgW,h+fs+13,5); g.fill();
+  g.fillStyle='#1a1714';
+  g.fillRect(x0,y0-h,barPx,h);
+  g.fillRect(x0,y0-h-3,2,h+6); g.fillRect(x0+barPx-2,y0-h-3,2,h+6);
+  g.fillText(labelTxt,cx,y0+fs*0.9);
+  g.restore();
 }
 function itemBBox(m){ const xs=m.coords.map(p=>p.x), ys=m.coords.map(p=>p.y); return {x0:Math.min(...xs),y0:Math.min(...ys),x1:Math.max(...xs),y1:Math.max(...ys)}; }
 function paddedRegion(b){
@@ -1740,14 +1862,14 @@ function buildReportHTML(){
     if(m.type==='dist') return fmtDist(m.value);
     if(m.type==='pline') return fmtDist(m.length);
     if(m.type==='poly') return fmtArea(m.area);
-    if(m.type==='rect') return fmtDist(m.rectW)+'×'+fmtDist(m.rectH);
+    if(m.type==='rect') return rectSymmetric(m) ? (fmtDist(rectSides(m)[0])+'×'+fmtDist(rectSides(m)[1])) : fmtArea(m.area);
     return '';
   };
   let overviewImg='', legend='';
   if(hasImg){
     const ow=Math.min(2000,S.imgW);
     const url=compositeRegion({sx:0,sy:0,sw:S.imgW,sh:S.imgH}, ow, S.measurements, S.annotations, false,
-      {strokeW:Math.max(3,ow/300), fontS:Math.max(13,Math.round(ow/68)), mode:'badge'});
+      {strokeW:Math.max(3,ow/300), fontS:Math.max(13,Math.round(ow/68)), mode:'badge', scaleBar:true});
     overviewImg=`<div class="figure"><img src="${url}" alt="Annotated facade overview"><div class="cap">Annotated orthophoto — numbered markers keyed to the legend and tables below. Scale ${scaleStr}.</div></div>`;
     if(S.measurements.length||S.annotations.length){
       const mItems=S.measurements.map((m,i)=>`<span class="lg-item"><span class="lg-badge sq" style="background:${m.color}">${i+1}</span>${esc(m.label)}${legendVal(m)?` <span class="lg-val">${esc(legendVal(m))}</span>`:''}</span>`).join('');
@@ -1755,13 +1877,13 @@ function buildReportHTML(){
       legend=`<div class="legend">${S.measurements.length?`<div class="lg-group"><div class="lg-title">Measurements</div>${mItems}</div>`:''}${S.annotations.length?`<div class="lg-group"><div class="lg-title">Defects &amp; notes</div>${aItems}</div>`:''}</div>`;
     }
   }
-  const crop=(items,anns,region)=>compositeRegion(region, 460, items, anns, true, {strokeW:6, fontS:20, mode:'none'});
+  const crop=(items,anns,region)=>compositeRegion(region, 460, items, anns, true, {strokeW:6, fontS:20, mode:'none', edges:true});
   const mRows=S.measurements.map((m,i)=>{
     let val='';
     if(m.type==='dist')  val=fmtDist(m.value);
     else if(m.type==='pline') val='Length '+fmtDist(m.length);
     else if(m.type==='poly')  val=fmtArea(m.area);
-    else if(m.type==='rect')  val=fmtDist(m.rectW)+' × '+fmtDist(m.rectH)+' = '+fmtArea(m.area);
+    else if(m.type==='rect'){ const sd=rectSides(m); if(rectSymmetric(m)){ val=fmtDist(sd[0])+' × '+fmtDist(sd[1])+' = '+fmtArea(m.area); } else { val=fmtArea(m.area)+'<br><span style="font-weight:400;color:#5a534a;font-size:10px;">'+sd.map(fmtDist).join(' · ')+'</span>'; } }
     else if(m.type==='point') val='('+Math.round(m.coords[0].x)+', '+Math.round(m.coords[0].y)+') px';
     const thumb=hasImg?`<img class="thumb" src="${crop([m],[],paddedRegion(itemBBox(m)))}">`:'';
     return `<tr><td class="num">${i+1}</td><td class="tcell">${thumb}</td><td>${esc(m.label)}</td><td>${types[m.type]||m.type}</td><td class="val">${val}</td><td>${esc(m.note||'')}</td></tr>`;
@@ -1788,9 +1910,9 @@ function buildReportHTML(){
   tr{page-break-inside:avoid;}
   tbody tr:nth-child(even) td{background:#f8f5f1;}
   td.num{font-weight:700;color:var(--g);text-align:center;width:28px;}
-  td.tcell{width:172px;}
+  td.tcell{width:210px;}
   td.val{font-weight:700;white-space:nowrap;}
-  img.thumb{width:160px;height:auto;border:1px solid #d8d3cb;border-radius:4px;display:block;}
+  img.thumb{width:190px;height:auto;border:1px solid #d8d3cb;border-radius:4px;display:block;}
   .empty{color:#8a837a;font-style:italic;}
   .foot{margin-top:26px;font-size:10px;color:#a59e94;border-top:1px solid #e0dbd3;padding-top:8px;line-height:1.6;}
   .legend{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0 2px;padding:10px 12px;background:#faf8f4;border:1px solid #e0dbd3;border-radius:6px;}
