@@ -473,6 +473,19 @@ header {
 .ann-num { box-shadow: 0 1px 2px rgba(40,33,24,0.18); }
 #mode-banner { box-shadow: var(--shadow-lg); border: 1px solid rgba(255,255,255,0.08); }
 #status-coords { color: var(--text2); }
+
+/* Scale-calibration modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(26,23,20,0.55); z-index: 300; display: flex; align-items: center; justify-content: center; }
+.modal-card { background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; box-shadow: var(--shadow-lg); padding: 18px 20px; width: 350px; max-width: 92vw; }
+.modal-title { font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 6px; letter-spacing: .02em; }
+.modal-sub { font-size: 12px; color: var(--text2); line-height: 1.55; margin-bottom: 12px; }
+.modal-sub b { color: var(--text); }
+.modal-row { display: flex; gap: 8px; margin-bottom: 4px; }
+.modal-row input[type=number] { flex: 1; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-family: Georgia, serif; font-size: 13px; color: var(--text); background: var(--surface); }
+.modal-row select { padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-family: Georgia, serif; font-size: 13px; background: var(--surface); color: var(--text); }
+.modal-row input:focus, .modal-row select:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 0 3px var(--accent-light); }
+.modal-hint { font-size: 11px; color: var(--text3); min-height: 15px; margin: 4px 0 12px; font-variant-numeric: tabular-nums; }
+.modal-acts { display: flex; gap: 8px; justify-content: flex-end; }
 </style>
 </head>
 <body>
@@ -494,8 +507,11 @@ header {
       <option value="mm" selected>mm</option>
       <option value="cm">cm</option>
       <option value="m">m</option>
+      <option value="ft">ft</option>
+      <option value="in">in</option>
       <option value="px">px</option>
     </select>
+    <button class="btn-sm" id="btn-calib" title="Set the scale by marking a known distance on the image (e.g. a scale bar)">⤢ Set from image</button>
   </div>
   <div class="export-btns">
     <button class="btn-sm" id="btn-csv">↓ CSV</button>
@@ -668,6 +684,7 @@ const S = {
   dragVert: null,
   mouseImg: { x:0, y:0 },
   cursorImg: null,      // live cursor pos for rubber-band drawing
+  calibA: null,         // first point when setting scale from the image
 };
 
 const COLORS = { dist:'#c0392b', poly:'#2055c0', rect:'#7020b0', point:'#c07020', annot:'#c4991a', pline:'#0a8a6a' };
@@ -750,8 +767,9 @@ async function loadFile(f) {
     dropOvl.classList.add('hidden');
     resizeCanvas();
     fitView();
+    S._lastFile = f;
     updateInfoPanel(f);
-    msg('Loaded: ' + S.imgW + ' × ' + S.imgH + ' px — scale: 1 px = 1 ' + S.unit);
+    msg('Loaded ' + S.imgW + ' × ' + S.imgH + ' px');
   } catch (err) {
     msg('Could not load that image.');
     console.error(err);
@@ -903,6 +921,7 @@ function fmtDist(px){
   const v=pxToU(px);
   if (S.unit==='mm' && v>=1000) return (v/1000).toFixed(3)+' m';
   if (S.unit==='cm' && v>=100)  return (v/100).toFixed(3)+' m';
+  if (S.unit==='ft') return v.toFixed(2)+' ft';
   return v.toFixed(1)+' '+S.unit;
 }
 function fmtArea(px2){
@@ -910,6 +929,8 @@ function fmtArea(px2){
   if (S.unit==='mm'){ if(v>=AREA_M2_THRESHOLD_MM2) return (v/1e6).toFixed(3)+' m²'; return Math.round(v)+' mm²'; }
   if (S.unit==='cm'){ if(v>=AREA_M2_THRESHOLD_MM2/100) return (v/1e4).toFixed(3)+' m²'; return Math.round(v)+' cm²'; }
   if (S.unit==='m') return v.toFixed(3)+' m²';
+  if (S.unit==='ft') return v.toFixed(2)+' ft²';
+  if (S.unit==='in'){ if(v>=144) return (v/144).toFixed(2)+' ft²'; return Math.round(v)+' in²'; }
   return Math.round(v)+' px²';
 }
 
@@ -1072,6 +1093,10 @@ function renderPreview() {
   } else if (S.tool==='rect' && S.rectA && S.cursorImg) {
     const a=imgToScreen(S.rectA.x,S.rectA.y), b=imgToScreen(S.cursorImg.x,S.cursorImg.y);
     dash.append(mkEl('rect',{x:Math.min(a.x,b.x),y:Math.min(a.y,b.y),width:Math.abs(b.x-a.x),height:Math.abs(b.y-a.y),stroke:COLORS.rect,'stroke-width':strokePx(1.5),'stroke-dasharray':'6,4',fill:'none'}));
+  } else if (S.tool==='calib' && S.calibA && S.cursorImg) {
+    const a=imgToScreen(S.calibA.x,S.calibA.y), b=imgToScreen(S.cursorImg.x,S.cursorImg.y);
+    dash.append(mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#1e4a7a','stroke-width':strokePx(1.6),'stroke-dasharray':'7,4',fill:'none'}));
+    dash.append(sCircle(a,vertPx(3.2),'white','#1e4a7a',1.4), sCircle(b,vertPx(3.2),'white','#1e4a7a',1.4));
   }
   svg.appendChild(dash);
 }
@@ -1086,7 +1111,7 @@ function setTool(t) {
   document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
   const btn=document.getElementById('tool-'+t);
   if(btn) btn.classList.add('active');
-  const names={pan:'Pan / Select',edit:'Edit points',dist:'Distance',pline:'Polyline',poly:'Polygon',rect:'Rectangle',point:'Point marker',annot:'Annotation'};
+  const names={pan:'Pan / Select',edit:'Edit points',dist:'Distance',pline:'Polyline',poly:'Polygon',rect:'Rectangle',point:'Point marker',annot:'Annotation',calib:'Set scale'};
   sTool.textContent=names[t]||t;
   if (t==='edit') {
     if (!S.editId && S.selectedId && S.measurements.find(m=>m.id===S.selectedId)) enterEdit(S.selectedId);
@@ -1100,6 +1125,7 @@ function setTool(t) {
       rect:'Click and drag.',
       point:'Click to place.',
       annot:'Click to annotate.',
+      calib:'Click the two ends of a known distance, then enter its real length.',
       pan:'',
     };
     msg(hints[t]||'');
@@ -1165,6 +1191,7 @@ wrap.addEventListener('mousemove', e => {
 
   if (S.drawing) { S.cursorImg=p; scheduleRender();
     if (S.tool==='dist'&&S.distA) msg('Length: '+fmtDist(dist2(S.distA,p)));
+    if (S.tool==='calib'&&S.calibA) msg('Reference: '+Math.round(dist2(S.calibA,p))+' px');
   }
 });
 
@@ -1204,6 +1231,9 @@ function toolDown(p, e) {
     addPoint(p);
   } else if (S.tool==='annot') {
     showAnnotForm(p);
+  } else if (S.tool==='calib') {
+    if(!S.drawing){ S.drawing=true; S.calibA=p; S.cursorImg=p; showBanner('Marking <b>scale reference</b> · click the other end · <span class="kbd">Esc</span> cancels'); scheduleRender(); }
+    else { const d=dist2(S.calibA,p); S.drawing=false; S.cursorImg=null; hideBanner(); S.calibA=null; scheduleRender(); if(d>2) openScaleDialog(d); else msg('That reference is too short — zoom in and try again.'); }
   }
 }
 
@@ -1302,7 +1332,7 @@ function addPoint(p){
   const m={id:nMid(),type:'point',coords:[p],label:'Point '+S.mCtr,note:'',color:COLORS.point};
   pushH(); S.measurements.push(m); refreshMList(); scheduleRender(); selectM(m.id,false);
 }
-function cancelDraw(){ S.drawing=false; S.polyPts=[]; S.distA=null; S.rectA=null; S.cursorImg=null; hideBanner(); scheduleRender(); }
+function cancelDraw(){ S.drawing=false; S.polyPts=[]; S.distA=null; S.rectA=null; S.calibA=null; S.cursorImg=null; hideBanner(); scheduleRender(); }
 function recompute(m){
   if(m.type==='dist') m.value=dist2(m.coords[0],m.coords[1]);
   if(m.type==='pline') m.length=pathLen(m.coords);
@@ -1363,6 +1393,49 @@ function showAnnotForm(p){
     pushH(); S.annotations.push(a); div.remove(); refreshAList(); scheduleRender(); selectA(a.id,false);
   };
   document.getElementById('ann-cancel').onclick=()=>div.remove();
+}
+
+/* Set the scale by marking a known real-world distance on the image. */
+function openScaleDialog(pixelDist){
+  const cur=['mm','cm','m','ft','in'].includes(S.unit)?S.unit:'m';
+  const ov=document.createElement('div'); ov.className='modal-overlay';
+  ov.innerHTML=`
+    <div class="modal-card">
+      <div class="modal-title">Set scale from image</div>
+      <div class="modal-sub">You marked a reference line of <b>${Math.round(pixelDist)} px</b>. Enter the real-world distance it represents — for example the length of a scale bar.</div>
+      <div class="modal-row">
+        <input type="number" id="cal-len" min="0.0001" step="any" placeholder="length">
+        <select id="cal-unit">
+          <option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option>
+          <option value="ft">ft</option><option value="in">in</option>
+        </select>
+      </div>
+      <div class="modal-hint" id="cal-hint"></div>
+      <div class="modal-acts">
+        <button class="btn-sm" id="cal-cancel">Cancel</button>
+        <button class="btn-sm primary" id="cal-set">Set scale</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  const lenInp=ov.querySelector('#cal-len'), uSel=ov.querySelector('#cal-unit'), hint=ov.querySelector('#cal-hint');
+  uSel.value=cur; setTimeout(()=>lenInp.focus(),0);
+  const preview=()=>{ const L=parseFloat(lenInp.value); hint.textContent=(L>0)?('→ 1 '+uSel.value+' = '+(pixelDist/L).toFixed(3)+' px'):''; };
+  lenInp.addEventListener('input',preview); uSel.addEventListener('change',preview);
+  const close=()=>{ ov.remove(); setTool('pan'); };
+  const apply=()=>{
+    const L=parseFloat(lenInp.value);
+    if(!(L>0)){ lenInp.focus(); return; }
+    S.pxPerUnit=pixelDist/L; S.unit=uSel.value;
+    pxInp.value=Math.round(S.pxPerUnit*1e4)/1e4; unitSel.value=S.unit;
+    refreshMList(); scheduleRender();
+    if(S._lastFile) updateInfoPanel(S._lastFile);
+    msg('Scale set — 1 '+S.unit+' = '+S.pxPerUnit.toFixed(3)+' px (from a '+Math.round(pixelDist)+' px reference)');
+    close();
+  };
+  ov.querySelector('#cal-set').onclick=apply;
+  ov.querySelector('#cal-cancel').onclick=close;
+  lenInp.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter')apply(); if(e.key==='Escape')close(); });
+  ov.addEventListener('mousedown',e=>{ if(e.target===ov) close(); });
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1493,6 +1566,7 @@ function switchTab(name){
 document.querySelectorAll('.stab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
 pxInp.addEventListener('change',()=>{ S.pxPerUnit=parseFloat(pxInp.value)||1; refreshMList(); scheduleRender(); });
 unitSel.addEventListener('change',()=>{ S.unit=unitSel.value; refreshMList(); scheduleRender(); });
+document.getElementById('btn-calib').addEventListener('click',()=>{ if(!S.loaded){ msg('Open an image first, then mark a known distance to set the scale.'); return; } setTool('calib'); });
 labelSizeInp.addEventListener('input',()=>{ S.labelScale=parseFloat(labelSizeInp.value); scheduleRender(); });
 
 /* Hover highlight handled in render via S._hover / S._hoverA */
@@ -1516,11 +1590,13 @@ function undo(){
    INFO PANEL
 ═══════════════════════════════════════════════════ */
 function updateInfoPanel(f){
+  const ppu=Math.round(S.pxPerUnit*1000)/1000;
+  const scaleStr=(S.pxPerUnit===1)?('1 px = 1 '+S.unit):('1 '+S.unit+' = '+ppu+' px');
   infoP.innerHTML=`
     <div class="info-row"><span class="info-key">File</span><span class="info-val" style="word-break:break-all;font-size:11px;">${esc(f.name)}</span></div>
     <div class="info-row"><span class="info-key">Size</span><span class="info-val">${(f.size/1024/1024).toFixed(2)} MB</span></div>
     <div class="info-row"><span class="info-key">Dimensions</span><span class="info-val">${S.imgW} × ${S.imgH} px</span></div>
-    <div class="info-row"><span class="info-key">Scale</span><span class="info-val">1 px = 1 ${S.unit}</span></div>
+    <div class="info-row"><span class="info-key">Scale</span><span class="info-val">${scaleStr}</span></div>
     <div class="help-block" style="margin-top:10px;">
       <strong>Keyboard shortcuts</strong><br>
       V — Pan &amp; select<br>E — Edit points<br>D — Distance<br>L — Polyline / crack<br>P — Polygon area<br>R — Rectangle<br>M — Point marker<br>A — Annotation<br>
@@ -1600,7 +1676,7 @@ function drawTag(g,x,y,txt,color,fs){
   g.save(); g.globalAlpha=0.92; g.fillStyle=color; rr(g,x-bw/2,y-bh/2,bw,bh,Math.max(2,fs*0.26)); g.fill(); g.restore();
   g.fillStyle='#fff'; g.fillText(txt, x, y+fs*0.06);
 }
-function drawMeasOnCanvas(g,m,mx,my,lw,fs,showLabels){
+function drawMeasOnCanvas(g,m,mx,my,lw,fs,mode,num){
   g.lineWidth=lw; g.strokeStyle=m.color; g.fillStyle=m.color; g.lineJoin='round'; g.lineCap='round';
   const P=m.coords.map(c=>({x:mx(c.x),y:my(c.y)}));
   if(m.type==='dist'){ g.beginPath(); g.moveTo(P[0].x,P[0].y); g.lineTo(P[1].x,P[1].y); g.stroke(); }
@@ -1608,7 +1684,16 @@ function drawMeasOnCanvas(g,m,mx,my,lw,fs,showLabels){
   else if(m.type==='poly'||m.type==='rect'){ g.beginPath(); P.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.closePath(); g.save(); g.globalAlpha=0.13; g.fill(); g.restore(); g.stroke(); }
   else if(m.type==='point'){ g.beginPath(); g.arc(P[0].x,P[0].y,Math.max(3,lw*1.8),0,Math.PI*2); g.fill(); }
   if(m.type!=='point') P.forEach(p=>{ g.beginPath(); g.arc(p.x,p.y,Math.max(2,lw*1.0),0,Math.PI*2); g.fillStyle='#fff'; g.fill(); g.lineWidth=Math.max(1,lw*0.6); g.strokeStyle=m.color; g.stroke(); });
-  if(showLabels){ const c=outCentroid(P,m.type); drawTag(g,c.x,c.y,labelText(m),m.color,fs); }
+  const c=outCentroid(P,m.type);
+  if(mode==='label') drawTag(g,c.x,c.y,labelText(m),m.color,fs);
+  else if(mode==='badge') drawBadge(g,c.x,c.y,num,m.color,fs);
+}
+function drawBadge(g,x,y,txt,color,fs){
+  const r=fs*0.92, w=r*2;
+  g.save(); g.fillStyle=color; rr(g,x-r,y-r,w,w,Math.max(2,r*0.32)); g.fill();
+  g.lineWidth=Math.max(1.2,fs*0.13); g.strokeStyle='rgba(255,255,255,0.92)'; g.stroke(); g.restore();
+  g.fillStyle='#fff'; g.font='700 '+Math.round(fs)+'px Georgia, serif'; g.textAlign='center'; g.textBaseline='middle';
+  g.fillText(String(txt), x, y+fs*0.04);
 }
 function drawAnnOnCanvas(g,a,mx,my,fs){
   const x=mx(a.x), y=my(a.y), r=fs*0.95, col=a.color||COLORS.annot;
@@ -1619,9 +1704,10 @@ function drawAnnOnCanvas(g,a,mx,my,fs){
 }
 function compositeRegion(region, outW, items, anns, fullRes, opts){
   opts=opts||{};
-  const showLabels = opts.showLabels!==false;
+  const mode = opts.mode || 'none';            // 'label' | 'badge' | 'none'
   const strokeW = opts.strokeW || Math.max(2.5, outW/300);
   const fontS   = opts.fontS   || Math.max(13, Math.round(outW/56));
+  const startNum = opts.startNum || 1;
   const k=outW/region.sw, outH=Math.max(1,Math.round(region.sh*k));
   const cv=document.createElement('canvas'); cv.width=outW; cv.height=outH;
   const g=cv.getContext('2d');
@@ -1630,7 +1716,7 @@ function compositeRegion(region, outW, items, anns, fullRes, opts){
   g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
   if(src){ try{ g.drawImage(src, region.sx*ss, region.sy*ss, region.sw*ss, region.sh*ss, 0,0,outW,outH); }catch(e){} }
   const mx=ix=>(ix-region.sx)*k, my=iy=>(iy-region.sy)*k;
-  (items||[]).forEach(m=>drawMeasOnCanvas(g,m,mx,my,strokeW,fontS,showLabels));
+  (items||[]).forEach((m,i)=>drawMeasOnCanvas(g,m,mx,my,strokeW,fontS,mode,startNum+i));
   (anns||[]).forEach(a=>drawAnnOnCanvas(g,a,mx,my,fontS));
   return cv.toDataURL('image/jpeg', 0.86);
 }
@@ -1648,14 +1734,28 @@ function paddedRegion(b){
 function buildReportHTML(){
   const types={dist:'Distance',pline:'Crack',poly:'Polygon',rect:'Rectangle',point:'Point'};
   const hasImg = S.loaded && sourceBitmap;
-  let overviewImg='';
+  const ppu = Math.round(S.pxPerUnit*1000)/1000;
+  const scaleStr = (S.pxPerUnit===1) ? ('1 px = 1 '+S.unit) : ('1 '+S.unit+' = '+ppu+' px');
+  const legendVal=(m)=>{
+    if(m.type==='dist') return fmtDist(m.value);
+    if(m.type==='pline') return fmtDist(m.length);
+    if(m.type==='poly') return fmtArea(m.area);
+    if(m.type==='rect') return fmtDist(m.rectW)+'×'+fmtDist(m.rectH);
+    return '';
+  };
+  let overviewImg='', legend='';
   if(hasImg){
     const ow=Math.min(2000,S.imgW);
     const url=compositeRegion({sx:0,sy:0,sw:S.imgW,sh:S.imgH}, ow, S.measurements, S.annotations, false,
-      {strokeW:Math.max(3,ow/300), fontS:Math.max(14,Math.round(ow/60)), showLabels:true});
-    overviewImg=`<div class="figure"><img src="${url}" alt="Annotated facade overview"><div class="cap">Annotated orthophoto — every measurement and defect marker shown in position. Scale 1 px = 1 ${S.unit}.</div></div>`;
+      {strokeW:Math.max(3,ow/300), fontS:Math.max(13,Math.round(ow/68)), mode:'badge'});
+    overviewImg=`<div class="figure"><img src="${url}" alt="Annotated facade overview"><div class="cap">Annotated orthophoto — numbered markers keyed to the legend and tables below. Scale ${scaleStr}.</div></div>`;
+    if(S.measurements.length||S.annotations.length){
+      const mItems=S.measurements.map((m,i)=>`<span class="lg-item"><span class="lg-badge sq" style="background:${m.color}">${i+1}</span>${esc(m.label)}${legendVal(m)?` <span class="lg-val">${esc(legendVal(m))}</span>`:''}</span>`).join('');
+      const aItems=S.annotations.map(a=>`<span class="lg-item"><span class="lg-badge ci" style="background:${a.color||COLORS.annot}">${a.num}</span>${esc(a.category)}</span>`).join('');
+      legend=`<div class="legend">${S.measurements.length?`<div class="lg-group"><div class="lg-title">Measurements</div>${mItems}</div>`:''}${S.annotations.length?`<div class="lg-group"><div class="lg-title">Defects &amp; notes</div>${aItems}</div>`:''}</div>`;
+    }
   }
-  const crop=(items,anns,region)=>compositeRegion(region, 460, items, anns, true, {strokeW:6, fontS:20, showLabels:false});
+  const crop=(items,anns,region)=>compositeRegion(region, 460, items, anns, true, {strokeW:6, fontS:20, mode:'none'});
   const mRows=S.measurements.map((m,i)=>{
     let val='';
     if(m.type==='dist')  val=fmtDist(m.value);
@@ -1693,11 +1793,20 @@ function buildReportHTML(){
   img.thumb{width:160px;height:auto;border:1px solid #d8d3cb;border-radius:4px;display:block;}
   .empty{color:#8a837a;font-style:italic;}
   .foot{margin-top:26px;font-size:10px;color:#a59e94;border-top:1px solid #e0dbd3;padding-top:8px;line-height:1.6;}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0 2px;padding:10px 12px;background:#faf8f4;border:1px solid #e0dbd3;border-radius:6px;}
+  .lg-group{font-size:11px;}
+  .lg-title{font-weight:700;color:var(--g);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;}
+  .lg-item{display:inline-flex;align-items:center;gap:5px;margin:0 12px 5px 0;font-size:11.5px;}
+  .lg-badge{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;color:#fff;font-size:10px;font-weight:700;flex-shrink:0;}
+  .lg-badge.sq{border-radius:4px;}
+  .lg-badge.ci{border-radius:50%;}
+  .lg-val{color:#5a534a;}
   @media print{ @page{margin:14mm;} }
 </style></head><body>
 <h1>FACADE SURVEY — MEASUREMENT REPORT</h1>
-<div class="meta">Generated ${new Date().toLocaleString()} &nbsp;·&nbsp; Image ${S.imgW} × ${S.imgH} px &nbsp;·&nbsp; Scale 1 px = 1 ${S.unit} &nbsp;·&nbsp; ${S.measurements.length} measurement(s), ${S.annotations.length} note(s)</div>
+<div class="meta">Generated ${new Date().toLocaleString()} &nbsp;·&nbsp; Image ${S.imgW} × ${S.imgH} px &nbsp;·&nbsp; Scale ${scaleStr} &nbsp;·&nbsp; ${S.measurements.length} measurement(s), ${S.annotations.length} note(s)</div>
 ${overviewImg}
+${legend}
 <h2>Measurements (${S.measurements.length})</h2>
 ${mRows?`<table><thead><tr><th>#</th><th>View</th><th>Label</th><th>Type</th><th>Value</th><th>Note</th></tr></thead><tbody>${mRows}</tbody></table>`:'<div class="empty">No measurements recorded.</div>'}
 <h2>Annotations &amp; Defects (${S.annotations.length})</h2>
