@@ -458,7 +458,21 @@ header {
   outline: 1px solid var(--accent);
   border-radius: 2px;
 }
-.empty-state { color: var(--text3); font-size: 12px; text-align: center; padding: 22px 8px; line-height: 1.7; }
+.empty-state { color: var(--text3); font-size: 12px; text-align: center; padding: 22px 8px; line-height: 1.8; }
+
+/* ── V5 refinements ── */
+.sidebar-body::-webkit-scrollbar { width: 10px; }
+.sidebar-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 6px; border: 3px solid var(--surface); }
+.sidebar-body::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+.toolbar::-webkit-scrollbar { width: 0; }
+:focus-visible { outline: 2px solid var(--accent2); outline-offset: 2px; border-radius: 5px; }
+.m-item:hover { transform: translateY(-1px); }
+.m-val { letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+.m-tag { border: 1px solid var(--border); background: #fff; text-transform: uppercase; letter-spacing: .05em; font-size: 8.5px; padding: 2px 5px; }
+.m-act { transition: background .1s, color .1s, border-color .1s; }
+.ann-num { box-shadow: 0 1px 2px rgba(40,33,24,0.18); }
+#mode-banner { box-shadow: var(--shadow-lg); border: 1px solid rgba(255,255,255,0.08); }
+#status-coords { color: var(--text2); }
 </style>
 </head>
 <body>
@@ -1145,22 +1159,7 @@ wrap.addEventListener('mousemove', e => {
 
   if (S.dragVert) {
     const m=S.measurements.find(x=>x.id===S.dragVert.id);
-    if (m) {
-      if (m.type==='rect') {
-        // Rectangle stays axis-aligned: drag this corner, pin the diagonally-opposite one.
-        const opp=m.coords[(S.dragVert.index+2)%4];
-        const x=Math.min(p.x,opp.x), y=Math.min(p.y,opp.y);
-        const w=Math.abs(p.x-opp.x), h=Math.abs(p.y-opp.y);
-        m.coords=[{x,y},{x:x+w,y},{x:x+w,y:y+h},{x,y:y+h}];
-        // keep grabbing the corner now under the cursor (handles dragging past the anchor)
-        let best=0,bd=Infinity;
-        m.coords.forEach((c,i)=>{const d=(c.x-p.x)**2+(c.y-p.y)**2; if(d<bd){bd=d;best=i;}});
-        S.dragVert.index=best;
-      } else {
-        m.coords[S.dragVert.index]=p;
-      }
-      recompute(m); refreshMList(); scheduleRender();
-    }
+    if (m) { m.coords[S.dragVert.index]=p; recompute(m); refreshMList(); scheduleRender(); }
     return;
   }
 
@@ -1308,7 +1307,14 @@ function recompute(m){
   if(m.type==='dist') m.value=dist2(m.coords[0],m.coords[1]);
   if(m.type==='pline') m.length=pathLen(m.coords);
   if(m.type==='poly') m.area=polyArea(m.coords);
-  if(m.type==='rect'){ const xs=m.coords.map(p=>p.x),ys=m.coords.map(p=>p.y); m.rectW=Math.max(...xs)-Math.min(...xs); m.rectH=Math.max(...ys)-Math.min(...ys); m.area=m.rectW*m.rectH; }
+  if(m.type==='rect'){
+    // Vertices edit freely (stones aren't always square). Width/height are the mean of
+    // the opposite edges, and AREA is the true quadrilateral area — accurate when skewed.
+    const c=m.coords, side=(a,b)=>dist2(c[a],c[b]);
+    m.rectW=(side(0,1)+side(2,3))/2;
+    m.rectH=(side(1,2)+side(3,0))/2;
+    m.area=polyArea(c);
+  }
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1570,33 +1576,142 @@ function exportJSON(){
     annotations:S.annotations };
   dl(JSON.stringify(data,null,2),'facade-measurements.json','application/json');
 }
-function exportPDF(){
-  const win=window.open('','_blank');
+/* ── Annotated-image compositing for the PDF report ──────────────────
+   We rasterise the facade (full image for crops, the cheap overview for the
+   whole-facade figure) and draw the overlays on top in OUTPUT pixels, then
+   hand back a JPEG data URL. Source is a local File, so the canvas is never
+   tainted and toDataURL() is safe. */
+function rr(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
+function labelText(m){
+  if(m.type==='dist')  return m.label+' · '+fmtDist(m.value);
+  if(m.type==='pline') return m.label+' · '+fmtDist(m.length);
+  if(m.type==='poly')  return m.label+' · '+fmtArea(m.area);
+  if(m.type==='rect')  return m.label+' · '+fmtDist(m.rectW)+'×'+fmtDist(m.rectH);
+  return m.label;
+}
+function outCentroid(P,type){
+  if(type==='dist')  return {x:(P[0].x+P[1].x)/2, y:(P[0].y+P[1].y)/2};
+  if(type==='pline') return P[Math.floor(P.length/2)];
+  let x=0,y=0; P.forEach(p=>{x+=p.x;y+=p.y;}); return {x:x/P.length, y:y/P.length};
+}
+function drawTag(g,x,y,txt,color,fs){
+  g.font='700 '+fs+'px Georgia, serif'; g.textAlign='center'; g.textBaseline='middle';
+  const w=g.measureText(txt).width, padX=fs*0.5, padY=fs*0.34, bw=w+padX*2, bh=fs+padY*2;
+  g.save(); g.globalAlpha=0.92; g.fillStyle=color; rr(g,x-bw/2,y-bh/2,bw,bh,Math.max(2,fs*0.26)); g.fill(); g.restore();
+  g.fillStyle='#fff'; g.fillText(txt, x, y+fs*0.06);
+}
+function drawMeasOnCanvas(g,m,mx,my,lw,fs,showLabels){
+  g.lineWidth=lw; g.strokeStyle=m.color; g.fillStyle=m.color; g.lineJoin='round'; g.lineCap='round';
+  const P=m.coords.map(c=>({x:mx(c.x),y:my(c.y)}));
+  if(m.type==='dist'){ g.beginPath(); g.moveTo(P[0].x,P[0].y); g.lineTo(P[1].x,P[1].y); g.stroke(); }
+  else if(m.type==='pline'){ g.beginPath(); P.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.stroke(); }
+  else if(m.type==='poly'||m.type==='rect'){ g.beginPath(); P.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.closePath(); g.save(); g.globalAlpha=0.13; g.fill(); g.restore(); g.stroke(); }
+  else if(m.type==='point'){ g.beginPath(); g.arc(P[0].x,P[0].y,Math.max(3,lw*1.8),0,Math.PI*2); g.fill(); }
+  if(m.type!=='point') P.forEach(p=>{ g.beginPath(); g.arc(p.x,p.y,Math.max(2,lw*1.0),0,Math.PI*2); g.fillStyle='#fff'; g.fill(); g.lineWidth=Math.max(1,lw*0.6); g.strokeStyle=m.color; g.stroke(); });
+  if(showLabels){ const c=outCentroid(P,m.type); drawTag(g,c.x,c.y,labelText(m),m.color,fs); }
+}
+function drawAnnOnCanvas(g,a,mx,my,fs){
+  const x=mx(a.x), y=my(a.y), r=fs*0.95, col=a.color||COLORS.annot;
+  g.beginPath(); g.arc(x,y,r,0,Math.PI*2); g.fillStyle=col; g.fill();
+  g.lineWidth=Math.max(1,fs*0.1); g.strokeStyle='rgba(0,0,0,0.35)'; g.stroke();
+  g.fillStyle='#fff'; g.font='700 '+Math.round(fs)+'px Georgia, serif'; g.textAlign='center'; g.textBaseline='middle';
+  g.fillText(String(a.num), x, y+fs*0.04);
+}
+function compositeRegion(region, outW, items, anns, fullRes, opts){
+  opts=opts||{};
+  const showLabels = opts.showLabels!==false;
+  const strokeW = opts.strokeW || Math.max(2.5, outW/300);
+  const fontS   = opts.fontS   || Math.max(13, Math.round(outW/56));
+  const k=outW/region.sw, outH=Math.max(1,Math.round(region.sh*k));
+  const cv=document.createElement('canvas'); cv.width=outW; cv.height=outH;
+  const g=cv.getContext('2d');
+  g.fillStyle='#efece7'; g.fillRect(0,0,outW,outH);
+  const useOv=(!fullRes)&&overviewBitmap, src=useOv?overviewBitmap:sourceBitmap, ss=useOv?overviewScale:1;
+  g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
+  if(src){ try{ g.drawImage(src, region.sx*ss, region.sy*ss, region.sw*ss, region.sh*ss, 0,0,outW,outH); }catch(e){} }
+  const mx=ix=>(ix-region.sx)*k, my=iy=>(iy-region.sy)*k;
+  (items||[]).forEach(m=>drawMeasOnCanvas(g,m,mx,my,strokeW,fontS,showLabels));
+  (anns||[]).forEach(a=>drawAnnOnCanvas(g,a,mx,my,fontS));
+  return cv.toDataURL('image/jpeg', 0.86);
+}
+function itemBBox(m){ const xs=m.coords.map(p=>p.x), ys=m.coords.map(p=>p.y); return {x0:Math.min(...xs),y0:Math.min(...ys),x1:Math.max(...xs),y1:Math.max(...ys)}; }
+function paddedRegion(b){
+  const w=b.x1-b.x0, h=b.y1-b.y0, pad=Math.max(60, Math.max(w,h)*0.55);
+  let sx=b.x0-pad, sy=b.y0-pad, sw=w+pad*2, sh=h+pad*2;
+  const minWin=Math.min(S.imgW, S.imgH, 420);
+  if(sw<minWin){ sx-=(minWin-sw)/2; sw=minWin; }
+  if(sh<minWin){ sy-=(minWin-sh)/2; sh=minWin; }
+  sw=Math.min(sw,S.imgW); sh=Math.min(sh,S.imgH);
+  sx=Math.max(0,Math.min(sx,S.imgW-sw)); sy=Math.max(0,Math.min(sy,S.imgH-sh));
+  return {sx,sy,sw,sh};
+}
+function buildReportHTML(){
   const types={dist:'Distance',pline:'Crack',poly:'Polygon',rect:'Rectangle',point:'Point'};
-  const mRows=S.measurements.map(m=>{
+  const hasImg = S.loaded && sourceBitmap;
+  let overviewImg='';
+  if(hasImg){
+    const ow=Math.min(2000,S.imgW);
+    const url=compositeRegion({sx:0,sy:0,sw:S.imgW,sh:S.imgH}, ow, S.measurements, S.annotations, false,
+      {strokeW:Math.max(3,ow/300), fontS:Math.max(14,Math.round(ow/60)), showLabels:true});
+    overviewImg=`<div class="figure"><img src="${url}" alt="Annotated facade overview"><div class="cap">Annotated orthophoto — every measurement and defect marker shown in position. Scale 1 px = 1 ${S.unit}.</div></div>`;
+  }
+  const crop=(items,anns,region)=>compositeRegion(region, 460, items, anns, true, {strokeW:6, fontS:20, showLabels:false});
+  const mRows=S.measurements.map((m,i)=>{
     let val='';
-    if(m.type==='dist') val=fmtDist(m.value);
-    if(m.type==='pline') val='Length '+fmtDist(m.length);
-    if(m.type==='poly') val=fmtArea(m.area);
-    if(m.type==='rect') val=fmtDist(m.rectW)+' × '+fmtDist(m.rectH)+' = '+fmtArea(m.area);
-    if(m.type==='point') val='('+Math.round(m.coords[0].x)+', '+Math.round(m.coords[0].y)+') px';
-    return `<tr><td>${esc(m.id)}</td><td>${esc(m.label)}</td><td>${types[m.type]||m.type}</td><td>${val}</td><td>${esc(m.note||'')}</td></tr>`;
+    if(m.type==='dist')  val=fmtDist(m.value);
+    else if(m.type==='pline') val='Length '+fmtDist(m.length);
+    else if(m.type==='poly')  val=fmtArea(m.area);
+    else if(m.type==='rect')  val=fmtDist(m.rectW)+' × '+fmtDist(m.rectH)+' = '+fmtArea(m.area);
+    else if(m.type==='point') val='('+Math.round(m.coords[0].x)+', '+Math.round(m.coords[0].y)+') px';
+    const thumb=hasImg?`<img class="thumb" src="${crop([m],[],paddedRegion(itemBBox(m)))}">`:'';
+    return `<tr><td class="num">${i+1}</td><td class="tcell">${thumb}</td><td>${esc(m.label)}</td><td>${types[m.type]||m.type}</td><td class="val">${val}</td><td>${esc(m.note||'')}</td></tr>`;
   }).join('');
-  const aRows=S.annotations.map(a=>`<tr><td>${a.num}</td><td>${esc(a.category)}</td><td>${esc(a.text)}</td><td>${Math.round(a.x)}, ${Math.round(a.y)}</td></tr>`).join('');
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Facade Survey Report</title>
-<style>body{font-family:Georgia,serif;max-width:900px;margin:40px auto;color:#1a1714;font-size:13px;}
-h1{font-size:20px;color:#2d5a3d;border-bottom:2px solid #2d5a3d;padding-bottom:8px;margin-bottom:6px;letter-spacing:.04em;}
-h2{font-size:14px;margin:22px 0 8px;color:#2d5a3d;}.meta{color:#5a534a;font-size:11px;margin-bottom:22px;}
-table{width:100%;border-collapse:collapse;font-size:12px;}th{background:#2d5a3d;color:white;padding:6px 10px;text-align:left;}
-td{padding:5px 10px;border-bottom:1px solid #e0dbd3;}tr:nth-child(even) td{background:#f8f5f1;}.empty{color:#8a837a;font-style:italic;}</style></head><body>
+  const aRows=S.annotations.map(a=>{
+    const thumb=hasImg?`<img class="thumb" src="${crop([],[a],paddedRegion({x0:a.x,y0:a.y,x1:a.x,y1:a.y}))}">`:'';
+    return `<tr><td class="num">${a.num}</td><td class="tcell">${thumb}</td><td>${esc(a.category)}</td><td>${esc(a.text)}</td><td>${Math.round(a.x)}, ${Math.round(a.y)}</td></tr>`;
+  }).join('');
+  const printScript = `<script>window.addEventListener('load',function(){var i=[].slice.call(document.images),p=i.filter(function(x){return !x.complete;}).length;function go(){setTimeout(function(){window.focus();window.print();},250);}if(!p)return go();i.forEach(function(x){if(!x.complete){x.addEventListener('load',function(){if(--p<=0)go();});x.addEventListener('error',function(){if(--p<=0)go();});}});setTimeout(go,4000);});<\/script>`;
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Facade Survey Report</title>
+<style>
+  :root{--g:#2d5a3d;}
+  *{box-sizing:border-box;}
+  body{font-family:Georgia,serif;max-width:920px;margin:36px auto;padding:0 24px;color:#1a1714;font-size:13px;}
+  h1{font-size:21px;color:var(--g);border-bottom:2px solid var(--g);padding-bottom:8px;margin:0 0 6px;letter-spacing:.04em;}
+  h2{font-size:14px;margin:26px 0 10px;color:var(--g);border-bottom:1px solid #d8d3cb;padding-bottom:5px;}
+  .meta{color:#5a534a;font-size:11px;margin-bottom:18px;line-height:1.6;}
+  .figure{margin:8px 0 4px;text-align:center;}
+  .figure img{max-width:100%;border:1px solid #d8d3cb;border-radius:6px;}
+  .cap{font-size:10.5px;color:#8a837a;font-style:italic;margin-top:5px;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{background:var(--g);color:#fff;padding:6px 9px;text-align:left;font-weight:700;}
+  td{padding:6px 9px;border-bottom:1px solid #e0dbd3;vertical-align:middle;}
+  tr{page-break-inside:avoid;}
+  tbody tr:nth-child(even) td{background:#f8f5f1;}
+  td.num{font-weight:700;color:var(--g);text-align:center;width:28px;}
+  td.tcell{width:172px;}
+  td.val{font-weight:700;white-space:nowrap;}
+  img.thumb{width:160px;height:auto;border:1px solid #d8d3cb;border-radius:4px;display:block;}
+  .empty{color:#8a837a;font-style:italic;}
+  .foot{margin-top:26px;font-size:10px;color:#a59e94;border-top:1px solid #e0dbd3;padding-top:8px;line-height:1.6;}
+  @media print{ @page{margin:14mm;} }
+</style></head><body>
 <h1>FACADE SURVEY — MEASUREMENT REPORT</h1>
-<div class="meta">Generated: ${new Date().toLocaleString()} &nbsp;|&nbsp; Image: ${S.imgW} × ${S.imgH} px &nbsp;|&nbsp; Scale: 1 px = 1 ${S.unit}</div>
+<div class="meta">Generated ${new Date().toLocaleString()} &nbsp;·&nbsp; Image ${S.imgW} × ${S.imgH} px &nbsp;·&nbsp; Scale 1 px = 1 ${S.unit} &nbsp;·&nbsp; ${S.measurements.length} measurement(s), ${S.annotations.length} note(s)</div>
+${overviewImg}
 <h2>Measurements (${S.measurements.length})</h2>
-${mRows?`<table><tr><th>ID</th><th>Label</th><th>Type</th><th>Value</th><th>Note</th></tr>${mRows}</table>`:'<div class="empty">None</div>'}
-<h2>Annotations / Defects (${S.annotations.length})</h2>
-${aRows?`<table><tr><th>#</th><th>Category</th><th>Description</th><th>Position</th></tr>${aRows}</table>`:'<div class="empty">None</div>'}
-</body></html>`);
-  win.document.close(); setTimeout(()=>win.print(),400);
+${mRows?`<table><thead><tr><th>#</th><th>View</th><th>Label</th><th>Type</th><th>Value</th><th>Note</th></tr></thead><tbody>${mRows}</tbody></table>`:'<div class="empty">No measurements recorded.</div>'}
+<h2>Annotations &amp; Defects (${S.annotations.length})</h2>
+${aRows?`<table><thead><tr><th>#</th><th>View</th><th>Category</th><th>Description</th><th>Position (px)</th></tr></thead><tbody>${aRows}</tbody></table>`:'<div class="empty">No annotations recorded.</div>'}
+<div class="foot">Produced with FacadeMeasure · all processing on-device · measurements are indicative and should be verified on site before ordering material.</div>
+${printScript}
+</body></html>`;
+}
+function exportPDF(){
+  if(!S.loaded){ msg('Open an image first to include the annotated photo in the report.'); }
+  const html=buildReportHTML();
+  const win=window.open('','_blank');
+  if(!win){ msg('Pop-up blocked — allow pop-ups for this site to export the PDF report.'); return; }
+  win.document.open(); win.document.write(html); win.document.close();
 }
 function dl(content,filename,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=filename; a.click(); URL.revokeObjectURL(a.href); }
 
