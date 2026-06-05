@@ -208,10 +208,9 @@ header {
 
 /* Drop overlay */
 #drop-overlay {
-  position: absolute; inset: 0;
+  position: fixed; top: 52px; left: 0; right: 0; bottom: 0;
   display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  z-index: 10;
+  z-index: 55;
 }
 #drop-overlay.hidden { display: none; }
 .drop-box {
@@ -487,6 +486,50 @@ header {
 .modal-row input:focus, .modal-row select:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 0 3px var(--accent-light); }
 .modal-hint { font-size: 11px; color: var(--text3); min-height: 15px; margin: 4px 0 12px; font-variant-numeric: tabular-nums; }
 .modal-acts { display: flex; gap: 8px; justify-content: flex-end; }
+.btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn-danger:hover { background: #7a2626; }
+
+/* Save button states */
+#btn-save.is-saved { color: var(--accent); border-color: var(--accent2); background: var(--accent-light); }
+#btn-save.is-saved svg { stroke: var(--accent); }
+#btn-save.saved-flash { background: var(--accent); color: #fff; border-color: var(--accent); }
+#btn-save.saved-flash svg { stroke: #fff; }
+
+/* Landing screen: drop zone | saved-projects library */
+.landing { flex: 1; min-height: 0; display: flex; }
+.landing-pane { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.drop-pane { flex: 1.5; align-items: center; justify-content: center; padding: 24px;
+  background: radial-gradient(120% 120% at 50% 0%, #2c261d 0%, #211c15 60%, #1b1710 100%); }
+.drop-pane .drop-box { width: min(90%, 620px); padding: 92px 56px; }
+.drop-pane .drop-title { font-size: 24px; margin-top: 6px; }
+.drop-pane .drop-sub { font-size: 13px; max-width: 380px; }
+.projects-pane { background: var(--surface); border-left: 1px solid var(--border); padding: 22px 22px 16px; }
+.projects-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; flex-shrink: 0; }
+.projects-title { font-size: 16px; font-weight: 700; color: var(--accent); letter-spacing: .04em; }
+.proj-usage { font-size: 11px; color: var(--text3); font-variant-numeric: tabular-nums; }
+.projects-grid { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: min-content; gap: 12px; overflow: auto; align-content: start; }
+.proj-card { position: relative; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; cursor: pointer;
+  background: var(--surface2); display: flex; flex-direction: column; transition: border-color .12s, box-shadow .12s, transform .05s; }
+.proj-card:hover { border-color: var(--accent2); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.proj-card.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.proj-thumb { aspect-ratio: 16 / 9; background: #efece7; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.proj-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.proj-meta { padding: 7px 9px; }
+.proj-name { font-size: 12px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.proj-info { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.proj-del, .proj-rename { position: absolute; top: 6px; width: 22px; height: 22px; border-radius: 5px; border: none;
+  background: rgba(26,23,20,0.55); color: #fff; cursor: pointer; font-size: 12px; line-height: 1;
+  display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .12s, background .12s; }
+.proj-del { right: 6px; } .proj-rename { right: 33px; font-size: 11px; }
+.proj-card:hover .proj-del, .proj-card:hover .proj-rename { opacity: 1; }
+.proj-del:hover { background: var(--danger); } .proj-rename:hover { background: var(--accent); }
+.proj-empty { grid-column: 1 / -1; color: var(--text3); font-size: 13px; text-align: center; line-height: 1.9; padding: 44px 12px; }
+.projects-foot { margin-top: 14px; display: flex; gap: 8px; flex-shrink: 0; }
+#landing-bar { display: none; align-items: center; gap: 10px; padding: 9px 16px; background: var(--surface);
+  border-bottom: 1px solid var(--border); flex-shrink: 0; box-shadow: var(--shadow-sm); }
+#landing-back { font-weight: 700; color: var(--accent); border-color: var(--accent2); background: var(--accent-light); }
+#landing-back:hover { background: #dceae0; }
+@media (max-width: 720px){ .landing { flex-direction: column; } .projects-pane { border-left: none; border-top: 1px solid var(--border); } }
 </style>
 </head>
 <body>
@@ -497,6 +540,14 @@ header {
   <button class="file-btn" id="open-btn">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
     Open image
+  </button>
+  <button class="file-btn" id="btn-projects" title="Your saved projects">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Projects
+  </button>
+  <button class="file-btn" id="btn-save" title="Save this survey — it then keeps itself up to date automatically">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+    <span id="save-label">Save project</span>
   </button>
   <input type="file" id="file-input" accept="image/*" style="display:none">
   <div class="sep"></div>
@@ -601,14 +652,28 @@ header {
     <svg id="overlay-svg" xmlns="http://www.w3.org/2000/svg"></svg>
 
     <div id="drop-overlay">
-      <div class="drop-box" id="drop-zone">
-        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#5a4a38" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-          <polyline points="21 15 16 10 5 21"/>
-        </svg>
-        <div class="drop-title">Drop an image here</div>
-        <div class="drop-sub">JPEG · PNG · TIFF · WebP — handles very large facades.<br>All processing happens in your browser. Nothing is uploaded.</div>
-        <button class="btn-sm" onclick="document.getElementById('file-input').click()">Browse files</button>
+      <div id="landing-bar"><button class="btn-sm" id="landing-back">← Back to current survey</button></div>
+      <div class="landing">
+        <div class="landing-pane drop-pane">
+          <div class="drop-box" id="drop-zone">
+            <svg width="68" height="68" viewBox="0 0 24 24" fill="none" stroke="#7a6a52" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            <div class="drop-title">Drop an orthophoto here</div>
+            <div class="drop-sub">JPEG · PNG · TIFF · WebP — handles very large facades.<br>All processing happens in your browser. Nothing is uploaded.</div>
+            <button class="btn-sm" onclick="document.getElementById('file-input').click()">Browse files</button>
+          </div>
+        </div>
+        <div class="landing-pane projects-pane">
+          <div class="projects-head"><span class="projects-title">Saved projects</span><span id="proj-usage" class="proj-usage"></span></div>
+          <div id="projects-grid" class="projects-grid"></div>
+          <div class="projects-foot">
+            <button class="btn-sm" id="btn-import">↥ Open a project file…</button>
+            <button class="btn-sm" id="btn-export-proj">↧ Export current as file</button>
+            <input type="file" id="import-input" accept="application/json,.json" style="display:none">
+          </div>
+        </div>
       </div>
     </div>
 
@@ -747,6 +812,7 @@ window.addEventListener('resize', resizeCanvas);
 ═══════════════════════════════════════════════════ */
 async function loadFile(f) {
   if (!f || !f.type.startsWith('image/')) return;
+  if (!(await leaveCurrent())) return;
   loadingEl.classList.add('show');
   loadingMsg.textContent = 'Decoding image…';
   try {
@@ -765,11 +831,12 @@ async function loadFile(f) {
     S.imgW = bmp.width; S.imgH = bmp.height; S.loaded = true;
     overviewBitmap = null; overviewScale = 1;
     await buildOverview(bmp);
+    S.measurements=[]; S.annotations=[]; S.mCtr=0; S.aCtr=0; S.selectedId=null; S.editId=null; S.history=[];
+    S._lastFile = f; S._imageBlob = f; S.projectId = null;
     dropOvl.classList.add('hidden');
     resizeCanvas();
     fitView();
-    S._lastFile = f;
-    updateInfoPanel(f);
+    refreshMList(); refreshAList(); updateInfoPanel(f); updateSaveBtn();
     msg('Loaded ' + S.imgW + ' × ' + S.imgH + ' px');
   } catch (err) {
     msg('Could not load that image.');
@@ -900,6 +967,18 @@ document.addEventListener('keydown', e => {
     else if (S.annotations.some(a=>a.id===S.selectedId)) delA(S.selectedId);
     return;
   }
+  if (e.key.indexOf('Arrow')===0) {
+    const d=e.shiftKey?10:1; let dx=0,dy=0;
+    if(e.key==='ArrowLeft')dx=-d; else if(e.key==='ArrowRight')dx=d; else if(e.key==='ArrowUp')dy=-d; else if(e.key==='ArrowDown')dy=d;
+    if(dx||dy){
+      const stamp=()=>{ if(!S._lastNudge||Date.now()-S._lastNudge>600) pushH(); S._lastNudge=Date.now(); };
+      if(S.editId && S.selVert){ const m=S.measurements.find(x=>x.id===S.editId); if(m&&m.coords[S.selVert.index]){ e.preventDefault(); stamp(); m.coords[S.selVert.index].x+=dx; m.coords[S.selVert.index].y+=dy; recompute(m); refreshMList(); scheduleRender(); return; } }
+      const mm=S.measurements.find(x=>x.id===S.selectedId);
+      if(mm){ e.preventDefault(); stamp(); mm.coords.forEach(c=>{c.x+=dx;c.y+=dy;}); recompute(mm); refreshMList(); scheduleRender(); return; }
+      const aa=S.annotations.find(x=>x.id===S.selectedId);
+      if(aa){ e.preventDefault(); stamp(); aa.x+=dx; aa.y+=dy; refreshAList(); scheduleRender(); return; }
+    }
+  }
   const k = { v:'pan',e:'edit',d:'dist',l:'pline',p:'poly',r:'rect',m:'point',a:'annot' };
   if (k[e.key.toLowerCase()]) setTool(k[e.key.toLowerCase()]);
 });
@@ -978,6 +1057,12 @@ function renderOverlay() {
 
   S.measurements.forEach((m,i) => drawMeasurement(m, i+1));
   S.annotations.forEach(a => drawAnnotation(a));
+
+  if (S._snapPt && (S.drawing||S.dragVert)) {
+    const s=imgToScreen(S._snapPt.x,S._snapPt.y);
+    const ring=sCircle(s, Math.max(6,vertPx(7)), 'none', '#2d5a3d', strokePx(2));
+    ring.setAttribute('stroke-dasharray','3,2'); svg.appendChild(ring);
+  }
 }
 
 function sCircle(p, r, fill, stroke, sw) {
@@ -1124,7 +1209,7 @@ function renderPreview() {
     dash.append(mkEl('polyline',{points:ptsS.map(p=>p.x+','+p.y).join(' '),stroke:col,'stroke-width':DW,'stroke-dasharray':DA,fill:'none','stroke-linejoin':'round','stroke-linecap':'round'}));
     ptsS.forEach(p=>dash.append(sCircle(p,vertPx(3),'white',col,1.3)));
     if (S.cursorImg) {
-      if (S.tool==='pline') dash.append(drawLabelScreen(S.cursorImg, fmtDist(pathLen(pts)), COLORS.pline));
+      if (S.tool==='pline') dash.append(drawLabelScreen({x:S.cursorImg.x+34/S.zoom, y:S.cursorImg.y-26/S.zoom}, fmtDist(pathLen(pts)), COLORS.pline));
       else if (pts.length>=3) { const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length, cy=pts.reduce((s,p)=>s+p.y,0)/pts.length; dash.append(drawLabelScreen({x:cx,y:cy}, fmtArea(polyArea(pts)), COLORS.poly)); }
     }
   } else if (S.tool==='rect' && S.rectA && S.cursorImg) {
@@ -1191,15 +1276,16 @@ function beginPan(e){ S.panning=true; _px0=e.clientX;_py0=e.clientY;_ppx=S.panX;
 wrap.addEventListener('mousedown', e => {
   if (e.button===1) { e.preventDefault(); beginPan(e); return; }          // middle = pan always
   if (e.button!==0) return;
+  S.shiftDown=e.shiftKey; S.altDown=e.altKey;
 
   if (S.spaceDown) { beginPan(e); return; }                                // space = pan always
 
   if (S.tool==='edit') {
     const hit = hitVertex(e.clientX, e.clientY);
-    if (hit) { pushH(); S.dragVert=hit; wrap.style.cursor='grabbing'; return; }
+    if (hit) { pushH(); S.dragVert=hit; S.selVert=hit; wrap.style.cursor='grabbing'; return; }
     // click a midpoint (＋) on the edited shape → insert a new vertex there and grab it
     const ins = hitMidpoint(e.clientX, e.clientY);
-    if (ins) { pushH(); insertVertex(S.editId, ins.index, ins.point); S.dragVert={id:S.editId, index:ins.index}; refreshMList(); wrap.style.cursor='grabbing'; scheduleRender(); return; }
+    if (ins) { pushH(); insertVertex(S.editId, ins.index, ins.point); S.dragVert={id:S.editId, index:ins.index}; S.selVert={id:S.editId, index:ins.index}; refreshMList(); wrap.style.cursor='grabbing'; scheduleRender(); return; }
     // clicked empty space in edit mode → try to select a measurement under cursor to edit
     const mid = measurementAt(e.clientX, e.clientY);
     if (mid) { enterEdit(mid); return; }
@@ -1222,25 +1308,26 @@ wrap.addEventListener('mousedown', e => {
 wrap.addEventListener('mousemove', e => {
   if (S.panning) { S.panX=_ppx+(e.clientX-_px0); S.panY=_ppy+(e.clientY-_py0); applyXform(); return; }
   if (!S.loaded) return;
+  S.shiftDown=e.shiftKey; S.altDown=e.altKey; S._snapPt=null;
   const p = clamp(toImg(e.clientX, e.clientY));
   S.mouseImg=p;
   sCrd.textContent='x: '+Math.round(p.x)+'  y: '+Math.round(p.y)+' px';
 
   if (S.dragVert) {
     const m=S.measurements.find(x=>x.id===S.dragVert.id);
-    if (m) { m.coords[S.dragVert.index]=p; recompute(m); refreshMList(); scheduleRender(); }
+    if (m) { let q=p; const s=snapVertex(p,m.id); if(s){ S._snapPt=s; q=s; } m.coords[S.dragVert.index]=q; recompute(m); refreshMList(); scheduleRender(); }
     return;
   }
 
-  if (S.drawing) { S.cursorImg=p; scheduleRender();
-    if (S.tool==='dist'&&S.distA) msg('Length: '+fmtDist(dist2(S.distA,p)));
+  if (S.drawing) { S.cursorImg=adjustPoint(p); scheduleRender();
+    if (S.tool==='dist'&&S.distA) msg('Length: '+fmtDist(dist2(S.distA,S.cursorImg)));
     if (S.tool==='calib'&&S.calibA) msg('Reference: '+Math.round(dist2(S.calibA,p))+' px');
   }
 });
 
 window.addEventListener('mouseup', e => {
   if (S.panning) { S.panning=false; setCursor(); return; }
-  if (S.dragVert) { S.dragVert=null; setCursor(); scheduleRender(); return; }
+  if (S.dragVert) { S.dragVert=null; S._snapPt=null; setCursor(); scheduleRender(); return; }
   if (!S.loaded||e.button!==0) return;
 });
 
@@ -1249,10 +1336,32 @@ wrap.addEventListener('dblclick', e => {
   if ((S.tool==='poly'||S.tool==='pline')&&S.drawing) finishPolyish();
 });
 wrap.addEventListener('auxclick', e => { if (e.button===1) e.preventDefault(); });
+wrap.addEventListener('contextmenu', e => {
+  if (S.tool==='edit' && S.editId) { const hit=hitVertex(e.clientX,e.clientY); if(hit){ e.preventDefault(); deleteVertex(hit.id, hit.index); } }
+});
+
+/* ── Snapping & constraints ── */
+function snapVertex(p, excludeId){
+  if(S.altDown) return null;
+  const tol=12/S.zoom; let best=null, bd=tol;
+  for(const m of S.measurements){ if(m.id===excludeId) continue; for(const c of m.coords){ const d=Math.hypot(c.x-p.x,c.y-p.y); if(d<bd){ bd=d; best=c; } } }
+  return best ? {x:best.x,y:best.y} : null;
+}
+function constrainAngle(a,p){ const dx=p.x-a.x, dy=p.y-a.y, L=Math.hypot(dx,dy); if(!L) return p; const step=Math.PI/4, ang=Math.round(Math.atan2(dy,dx)/step)*step; return {x:a.x+Math.cos(ang)*L, y:a.y+Math.sin(ang)*L}; }
+function squareFrom(a,p){ const dx=p.x-a.x, dy=p.y-a.y, s=Math.max(Math.abs(dx),Math.abs(dy)); return {x:a.x+(dx<0?-s:s), y:a.y+(dy<0?-s:s)}; }
+function adjustPoint(p){
+  S._snapPt=null;
+  if(!['dist','pline','poly','rect'].includes(S.tool)) return p;
+  if(S.tool==='rect'){ if(S.rectA && S.shiftDown) p=squareFrom(S.rectA,p); }
+  else { let anchor=null; if(S.tool==='dist'&&S.distA) anchor=S.distA; else if(S.polyPts.length) anchor=S.polyPts[S.polyPts.length-1]; if(S.shiftDown && anchor) p=constrainAngle(anchor,p); }
+  const s=snapVertex(p); if(s){ S._snapPt=s; return s; }
+  return p;
+}
 
 function toolDown(p, e) {
+  p = adjustPoint(p);
   if (S.tool==='dist') {
-    if (!S.drawing){ S.drawing=true; S.distA=p; S.cursorImg=p; showBanner('Placing <b>distance</b> · click the end point · pan with <span class="kbd">Space</span>-drag or <span class="kbd">middle-mouse</span>'); scheduleRender(); }
+    if (!S.drawing){ S.drawing=true; S.distA=p; S.cursorImg=p; showBanner('Placing <b>distance</b> · click the end point · <span class="kbd">Shift</span> straight · <span class="kbd">Alt</span> no-snap · pan with <span class="kbd">Space</span>/<span class="kbd">middle</span>'); scheduleRender(); }
     else finishDist(p);
   } else if (S.tool==='pline'||S.tool==='poly') {
     if (!S.drawing){ S.drawing=true; S.polyPts=[p]; }
@@ -1263,7 +1372,7 @@ function toolDown(p, e) {
       : 'Drawing <b>area</b> · click vertices · <span class="kbd">double-click</span>/<span class="kbd">Enter</span> closes · pan with <span class="kbd">Space</span>/<span class="kbd">middle-mouse</span>');
     scheduleRender();
   } else if (S.tool==='rect') {
-    if (!S.drawing){ S.drawing=true; S.rectA=p; S.cursorImg=p; showBanner('Placing <b>rectangle</b> · click the opposite corner · pan with <span class="kbd">Space</span>-drag or <span class="kbd">middle-mouse</span>'); scheduleRender(); }
+    if (!S.drawing){ S.drawing=true; S.rectA=p; S.cursorImg=p; showBanner('Placing <b>rectangle</b> · click the opposite corner · <span class="kbd">Shift</span> = square · pan with <span class="kbd">Space</span>/<span class="kbd">middle</span>'); scheduleRender(); }
     else if (Math.abs(p.x-S.rectA.x)>3||Math.abs(p.y-S.rectA.y)>3){ finishRect(S.rectA,p); S.drawing=false; S.rectA=null; S.cursorImg=null; hideBanner(); scheduleRender(); }
   } else if (S.tool==='point') {
     addPoint(p);
@@ -1316,6 +1425,15 @@ function insertVertex(id, index, point){
     tweenColor(m, COLORS.poly);                       // quick fade purple -> blue
   }
   recompute(m);
+}
+function deleteVertex(id, index){
+  const m=S.measurements.find(x=>x.id===id); if(!m||m.type==='dist'||m.type==='point') return;
+  const min = m.type==='pline'?2:3;
+  if(m.coords.length<=min){ msg('Can\'t remove — a '+(m.type==='pline'?'line':'shape')+' needs at least '+min+' points.'); return; }
+  pushH(); m.coords.splice(index,1);
+  if(m.type==='rect'){ m.type='poly'; delete m.rectW; delete m.rectH; if(/^Rect\b/.test(m.label)) m.label=m.label.replace(/^Rect/,'Area'); tweenColor(m, COLORS.poly); }
+  if(S.selVert && S.selVert.id===id) S.selVert=null;
+  recompute(m); refreshMList(); scheduleRender();
 }
 function hexToRgb(h){ h=String(h).replace('#',''); return {r:parseInt(h.slice(0,2),16),g:parseInt(h.slice(2,4),16),b:parseInt(h.slice(4,6),16)}; }
 function rgbToHex(r,g,b){ const c=v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0'); return '#'+c(r)+c(g)+c(b); }
@@ -1440,12 +1558,12 @@ function enterEdit(id){
   const m=S.measurements.find(x=>x.id===id);
   sTool.textContent='Edit points';
   const canAdd = m && (m.type==='poly'||m.type==='rect'||m.type==='pline');
-  showBanner('Editing <b>'+esc(m?m.label:'')+'</b> · drag handles'+(canAdd?' · click a <span class="kbd">＋</span> midpoint to add a vertex':'')+' · <span class="kbd">Esc</span> to finish');
+  showBanner('Editing <b>'+esc(m?m.label:'')+'</b> · drag handles · arrows nudge'+(canAdd?' · <span class="kbd">＋</span> midpoint adds · right-click removes a point':'')+' · <span class="kbd">Esc</span> done');
   refreshMList(); scheduleRender(); setCursor();
 }
 function exitEdit(){
   if(!S.editId) return;
-  S.editId=null;
+  S.editId=null; S.selVert=null;
   if(S.tool==='edit'){ S.tool='pan'; document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active')); document.getElementById('tool-pan').classList.add('active'); sTool.textContent='Pan / Select'; }
   hideBanner(); refreshMList(); scheduleRender(); setCursor();
 }
@@ -1454,29 +1572,24 @@ function exitEdit(){
    ANNOTATION FORM
 ═══════════════════════════════════════════════════ */
 function showAnnotForm(p){
-  switchTab('annotations');
   const num=S.annotations.length+1;
-  const div=document.createElement('div');
-  div.className='ann-form-card';
-  div.innerHTML=`
-    <div class="ann-form-title">New annotation at (${Math.round(p.x)}, ${Math.round(p.y)})</div>
-    <div class="note-form">
-      <select id="ann-cat"><option>General note</option><option>Crack</option><option>Spall</option><option>Weathering</option><option>Previous repair</option></select>
-      <textarea id="ann-txt" placeholder="Describe this defect or feature…" rows="3"></textarea>
-      <div style="display:flex;gap:6px;">
-        <button class="btn-sm primary" id="ann-save" style="flex:1;">Add</button>
-        <button class="btn-sm" id="ann-cancel">Cancel</button>
-      </div>
-    </div>`;
-  aList.prepend(div);
-  document.getElementById('ann-txt').focus();
-  document.getElementById('ann-save').onclick=()=>{
-    const cat=document.getElementById('ann-cat').value;
-    const txt=document.getElementById('ann-txt').value.trim()||cat;
-    const a={id:nAid(),x:p.x,y:p.y,category:cat,text:txt,num,color:CAT_COL[cat]||COLORS.annot};
-    pushH(); S.annotations.push(a); div.remove(); refreshAList(); scheduleRender(); selectA(a.id,false);
-  };
-  document.getElementById('ann-cancel').onclick=()=>div.remove();
+  const {ov,card,close}=modalShell(
+    '<div class="modal-title">Add note / defect</div>'+
+    '<div class="modal-sub">Marker '+num+' at ('+Math.round(p.x)+', '+Math.round(p.y)+') on the image.</div>'+
+    '<div class="note-form">'+
+      '<select id="_acat"><option>General note</option><option>Crack</option><option>Spall</option><option>Weathering</option><option>Previous repair</option></select>'+
+      '<textarea id="_atxt" rows="3" placeholder="Describe this defect or feature…"></textarea>'+
+    '</div>'+
+    '<div class="modal-acts"><button class="btn-sm" id="_acancel">Cancel</button><button class="btn-sm primary" id="_asave">Add note</button></div>');
+  const cat=card.querySelector('#_acat'), txt=card.querySelector('#_atxt');
+  const done=()=>{ document.removeEventListener('keydown',key,true); close(); };
+  function key(e){ if(e.key==='Escape'){ e.stopPropagation(); done(); } }
+  card.querySelector('#_asave').onclick=()=>{ const c=cat.value, t=txt.value.trim()||c; const a={id:nAid(),x:p.x,y:p.y,category:c,text:t,num,color:CAT_COL[c]||COLORS.annot}; pushH(); S.annotations.push(a); done(); switchTab('annotations'); refreshAList(); scheduleRender(); selectA(a.id,false); };
+  card.querySelector('#_acancel').onclick=done;
+  ov.addEventListener('mousedown',e=>{ if(e.target===ov)done(); });
+  txt.addEventListener('keydown',e=>e.stopPropagation());
+  document.addEventListener('keydown',key,true);
+  setTimeout(()=>txt.focus(),0);
 }
 
 /* Set the scale by marking a known real-world distance on the image. */
@@ -1562,12 +1675,14 @@ function refreshMList(){
         <button class="m-act" data-ren="${m.id}">rename</button>
         <button class="m-act" data-note="${m.id}">note</button>
         <button class="m-act ${editing?'edit-on':''}" data-edit="${m.id}">${editing?'done':'edit pts'}</button>
+        <button class="m-act" data-dup="${m.id}">duplicate</button>
         <button class="m-act del" data-del="${m.id}">delete</button>
       </div>`;
     div.addEventListener('click',e=>{
       if(e.target.dataset.ren){ renM(m.id); return; }
       if(e.target.dataset.note){ noteM(m.id); return; }
       if(e.target.dataset.edit){ editing?exitEdit():enterEdit(m.id); return; }
+      if(e.target.dataset.dup){ dupM(m.id); return; }
       if(e.target.dataset.del){ delM(m.id); return; }
       selectM(m.id,true);
     });
@@ -1633,14 +1748,21 @@ function renM(id){
 }
 function noteM(id){
   const m=S.measurements.find(x=>x.id===id); if(!m) return;
-  const n=prompt('Note for "'+m.label+'":', m.note||''); if(n===null) return;
-  m.note=n; refreshMList();
+  modalPrompt('Note', 'Add a note to "'+esc(m.label)+'".', {value:m.note||'', multiline:true, placeholder:'e.g. cracked through — to be replaced', ok:'Save note'})
+    .then(n=>{ if(n===null) return; m.note=(n||'').trim(); refreshMList(); scheduleRender(); });
 }
 function delM(id){
   pushH(); S.measurements=S.measurements.filter(x=>x.id!==id);
   if(S.selectedId===id) S.selectedId=null;
   if(S.editId===id) exitEdit();
   refreshMList(); scheduleRender();
+}
+function dupM(id){
+  const m=S.measurements.find(x=>x.id===id); if(!m) return;
+  const c=JSON.parse(JSON.stringify(m)); c.id=nMid();
+  c.coords=c.coords.map(p=>({x:p.x+24,y:p.y+24}));
+  c.label=m.label+' copy';
+  recompute(c); pushH(); S.measurements.push(c); refreshMList(); scheduleRender(); selectM(c.id,false);
 }
 function delA(id){
   pushH(); S.annotations=S.annotations.filter(x=>x.id!==id);
@@ -1961,13 +2083,213 @@ svg.addEventListener('click', e=>{ if(e.target===svg && S.tool!=='edit'){ S.sele
 });
 document.getElementById('btn-undo').addEventListener('click',undo);
 document.getElementById('btn-clear').addEventListener('click',()=>{
-  if(!confirm('Clear ALL measurements and annotations?')) return;
-  pushH(); S.measurements=[]; S.annotations=[]; S.editId=null; refreshMList(); refreshAList(); scheduleRender();
+  modalConfirm('Clear everything?', 'This removes all measurements and notes from the current survey. You can undo with Ctrl+Z.', {ok:'Clear all', cancel:'Cancel', danger:true})
+    .then(ok=>{ if(!ok) return; pushH(); S.measurements=[]; S.annotations=[]; S.editId=null; S.selectedId=null; refreshMList(); refreshAList(); scheduleRender(); });
 });
+
+/* ═══════════════════════════════════════════════════
+   DIALOGS  — reusable modals (same look as the scale dialog)
+═══════════════════════════════════════════════════ */
+function modalShell(inner){
+  const ov=document.createElement('div'); ov.className='modal-overlay';
+  const card=document.createElement('div'); card.className='modal-card'; card.innerHTML=inner;
+  ov.appendChild(card); document.body.appendChild(ov);
+  return {ov, card, close:()=>ov.remove()};
+}
+function modalConfirm(title, body, opts){
+  opts=opts||{};
+  return new Promise(res=>{
+    const {ov,card,close}=modalShell(
+      '<div class="modal-title">'+esc(title)+'</div>'+
+      (body?'<div class="modal-sub">'+body+'</div>':'')+
+      '<div class="modal-acts"><button class="btn-sm" id="_mc">'+esc(opts.cancel||'Cancel')+'</button>'+
+      '<button class="btn-sm '+(opts.danger?'btn-danger':'primary')+'" id="_mo">'+esc(opts.ok||'OK')+'</button></div>');
+    const done=v=>{ document.removeEventListener('keydown',key,true); close(); res(v); };
+    function key(e){ if(e.key==='Escape'){e.stopPropagation();done(false);} else if(e.key==='Enter'){e.stopPropagation();done(true);} }
+    card.querySelector('#_mo').onclick=()=>done(true);
+    card.querySelector('#_mc').onclick=()=>done(false);
+    ov.addEventListener('mousedown',e=>{ if(e.target===ov)done(false); });
+    document.addEventListener('keydown',key,true);
+    setTimeout(()=>card.querySelector('#_mo').focus(),0);
+  });
+}
+function modalPrompt(title, body, opts){
+  opts=opts||{};
+  return new Promise(res=>{
+    const field = opts.multiline
+      ? '<div class="note-form"><textarea id="_mp" rows="3" placeholder="'+esc(opts.placeholder||'')+'"></textarea></div>'
+      : '<div class="modal-row"><input type="text" id="_mp" placeholder="'+esc(opts.placeholder||'')+'"></div>';
+    const {ov,card,close}=modalShell(
+      '<div class="modal-title">'+esc(title)+'</div>'+
+      (body?'<div class="modal-sub">'+body+'</div>':'')+ field +
+      '<div class="modal-acts"><button class="btn-sm" id="_mc">'+esc(opts.cancel||'Cancel')+'</button>'+
+      '<button class="btn-sm primary" id="_mo">'+esc(opts.ok||'Save')+'</button></div>');
+    const inp=card.querySelector('#_mp'); inp.value=opts.value||'';
+    const done=v=>{ document.removeEventListener('keydown',key,true); close(); res(v); };
+    function key(e){ if(e.key==='Escape'){e.stopPropagation();done(null);} }
+    card.querySelector('#_mo').onclick=()=>done(inp.value);
+    card.querySelector('#_mc').onclick=()=>done(null);
+    ov.addEventListener('mousedown',e=>{ if(e.target===ov)done(null); });
+    inp.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Escape')done(null); if(e.key==='Enter'&&!opts.multiline){e.preventDefault();done(inp.value);} });
+    document.addEventListener('keydown',key,true);
+    setTimeout(()=>{inp.focus(); if(inp.select)inp.select();},0);
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   PROJECTS  — on-device storage (IndexedDB). Nothing is uploaded.
+═══════════════════════════════════════════════════ */
+const DB_NAME='facademeasure', MAX_PROJECTS=9;
+let _db=null, _lastSig='', _saving=false;
+function idb(){ return new Promise((res,rej)=>{ if(_db)return res(_db); const r=indexedDB.open(DB_NAME,1);
+  r.onupgradeneeded=e=>{ const db=e.target.result; if(!db.objectStoreNames.contains('meta'))db.createObjectStore('meta',{keyPath:'id'}); if(!db.objectStoreNames.contains('img'))db.createObjectStore('img'); };
+  r.onsuccess=e=>{ _db=e.target.result; res(_db); }; r.onerror=e=>rej(e.target.error); }); }
+function idbDo(store,mode,fn){ return idb().then(db=>new Promise((res,rej)=>{ const tx=db.transaction(store,mode), rq=fn(tx.objectStore(store)); tx.oncomplete=()=>res(rq&&rq.result); tx.onerror=()=>rej(tx.error); tx.onabort=()=>rej(tx.error); })); }
+const metaAll=()=>idbDo('meta','readonly',s=>s.getAll());
+const metaGet=id=>idbDo('meta','readonly',s=>s.get(id));
+const metaPut=rec=>idbDo('meta','readwrite',s=>s.put(rec));
+const metaDel=id=>idbDo('meta','readwrite',s=>s.delete(id));
+const imgGet=id=>idbDo('img','readonly',s=>s.get(id));
+const imgPut=(id,blob)=>idbDo('img','readwrite',s=>s.put(blob,id));
+const imgDel=id=>idbDo('img','readwrite',s=>s.delete(id));
+
+function stateSig(){ return S.unit+'|'+S.pxPerUnit+'|'+JSON.stringify(S.measurements)+'|'+JSON.stringify(S.annotations); }
+function makeThumb(){ try{ if(!sourceBitmap)return ''; const w=300; return compositeRegion({sx:0,sy:0,sw:S.imgW,sh:S.imgH}, w, S.measurements, S.annotations, false, {mode:'badge', fontS:Math.max(11,Math.round(w/15)), strokeW:Math.max(2,w/110)}); }catch(e){ return ''; } }
+async function persistProject(nameOverride){
+  if(!S.projectId) return;
+  let existing=null; try{ existing=await metaGet(S.projectId); }catch(e){}
+  const rec={ id:S.projectId, name:nameOverride||(existing&&existing.name)||'Untitled',
+    created:(existing&&existing.created)||Date.now(), updated:Date.now(),
+    unit:S.unit, pxPerUnit:S.pxPerUnit, calibUnit:S._calibUnit||'m',
+    imgW:S.imgW, imgH:S.imgH, imgName:(S._lastFile&&S._lastFile.name)||'image', imgSize:(S._imageBlob&&S._imageBlob.size)||0,
+    measurements:S.measurements, annotations:S.annotations, mCtr:S.mCtr, aCtr:S.aCtr, thumb:makeThumb() };
+  await metaPut(rec); _lastSig=stateSig();
+}
+async function saveProject(){
+  if(!S.loaded){ msg('Open an image first.'); return; }
+  if(S.projectId){ try{ await persistProject(); flashSaved(); }catch(e){ msg('Could not save.'); } return; }
+  let all=[]; try{ all=await metaAll(); }catch(e){}
+  if(all.length>=MAX_PROJECTS){
+    const go=await modalConfirm('Projects full', 'You can keep up to '+MAX_PROJECTS+' saved projects. Open your projects and delete one to make room for this survey.', {ok:'Open projects', cancel:'Not now'});
+    if(go) openLibrary(); return;
+  }
+  const def=(S._lastFile&&S._lastFile.name)? S._lastFile.name.replace(/\.[^.]+$/,'') : 'Facade survey';
+  const name=await modalPrompt('Save project', 'Name this survey. It then saves itself automatically as you work, and appears in your projects on this device.', {value:def, placeholder:'Project name', ok:'Save'});
+  if(name===null) return;
+  try{ if(navigator.storage&&navigator.storage.persist) await navigator.storage.persist(); }catch(e){}
+  S.projectId='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  try{ if(S._imageBlob) await imgPut(S.projectId,S._imageBlob); await persistProject(((name||'').trim())||def); flashSaved(); }
+  catch(e){ S.projectId=null; msg('Could not save — storage may be full.'); console.error(e); updateSaveBtn(); }
+}
+function flashSaved(){ const btn=document.getElementById('btn-save'), lbl=document.getElementById('save-label'); if(!lbl)return; lbl.textContent='Saved ✓'; btn&&btn.classList.add('saved-flash'); clearTimeout(flashSaved._t); flashSaved._t=setTimeout(()=>{ btn&&btn.classList.remove('saved-flash'); updateSaveBtn(); },1100); }
+function updateSaveBtn(){ const btn=document.getElementById('btn-save'), lbl=document.getElementById('save-label'); if(!btn||!lbl)return;
+  if(S.projectId){ btn.classList.add('is-saved'); lbl.textContent='Autosaving'; btn.title='This survey saves itself automatically. Click to save now.'; }
+  else { btn.classList.remove('is-saved'); lbl.textContent='Save project'; btn.title='Save this survey — it then keeps itself up to date automatically'; } }
+async function guardUnsaved(){
+  if(!S.projectId && S.loaded && (S.measurements.length||S.annotations.length))
+    return await modalConfirm('Discard unsaved work?', 'You have measurements that aren\'t saved to a project. Continuing will discard them.', {ok:'Discard', cancel:'Cancel', danger:true});
+  return true;
+}
+async function leaveCurrent(){
+  if(S.projectId){ try{ await persistProject(); }catch(e){} return true; }   // saved project: flush, safe to leave
+  return await guardUnsaved();                                                 // scratch: confirm if there's unsaved work
+}
+async function decodeBlob(blob){ return window.createImageBitmap ? await createImageBitmap(blob) : await new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=URL.createObjectURL(blob); }); }
+async function loadRestored(blob, rec, projectId){
+  loadingEl.classList.add('show'); loadingMsg.textContent='Opening project…';
+  try{
+    const bmp=await decodeBlob(blob);
+    sourceBitmap=bmp; overviewBitmap=null; overviewScale=1;
+    S.imgW=bmp.width; S.imgH=bmp.height; S.loaded=true; S._imageBlob=blob; S._lastFile={name:rec.imgName||'image',size:rec.imgSize||blob.size};
+    await buildOverview(bmp);
+    S.measurements=rec.measurements||[]; S.annotations=rec.annotations||[]; S.mCtr=rec.mCtr||S.measurements.length; S.aCtr=rec.aCtr||S.annotations.length;
+    S.unit=rec.unit||'mm'; S.pxPerUnit=rec.pxPerUnit||1; S._calibUnit=rec.calibUnit||'m';
+    S.projectId=projectId||null; S.selectedId=null; S.editId=null; S.history=[];
+    pxInp.value=Number(S.pxPerUnit.toPrecision(6)); unitSel.value=(['mm','cm','m','ft','in','px'].includes(S.unit)?S.unit:'mm');
+    hideLibrary(true); dropOvl.classList.add('hidden');
+    resizeCanvas(); fitView(); updateInfoPanel(S._lastFile); refreshMList(); refreshAList(); updateSaveBtn();
+    _lastSig=stateSig();
+  } finally { loadingEl.classList.remove('show'); }
+}
+async function openProject(id){
+  if(!(await leaveCurrent())) return;
+  let rec; try{ rec=await metaGet(id); }catch(e){} if(!rec){ msg('Project not found.'); return; }
+  let blob; try{ blob=await imgGet(id); }catch(e){} if(!blob){ msg('That project\'s image is missing.'); return; }
+  try{ await loadRestored(blob, rec, id); msg('Opened "'+rec.name+'"'); }
+  catch(e){ msg('Could not open that project.'); console.error(e); }
+}
+async function deleteProject(id){
+  let rec; try{ rec=await metaGet(id); }catch(e){}
+  const ok=await modalConfirm('Delete project?', 'This permanently removes "'+esc(rec?rec.name:'this project')+'" from this browser. It can\'t be undone.', {ok:'Delete', cancel:'Keep', danger:true});
+  if(!ok) return;
+  try{ await metaDel(id); await imgDel(id); }catch(e){}
+  if(S.projectId===id){ S.projectId=null; updateSaveBtn(); }
+  renderLibrary();
+}
+async function renameProject(id){
+  let rec; try{ rec=await metaGet(id); }catch(e){} if(!rec) return;
+  const name=await modalPrompt('Rename project', '', {value:rec.name, ok:'Rename'});
+  if(name===null) return; rec.name=((name||'').trim())||rec.name; rec.updated=Date.now();
+  try{ await metaPut(rec); }catch(e){} renderLibrary();
+}
+function openLibrary(){ const ov=document.getElementById('drop-overlay'); ov.classList.remove('hidden'); const bar=document.getElementById('landing-bar'); if(bar) bar.style.display=S.loaded?'flex':'none'; renderLibrary(); }
+function hideLibrary(force){ if(force||S.loaded) document.getElementById('drop-overlay').classList.add('hidden'); }
+async function renderLibrary(){
+  const grid=document.getElementById('projects-grid'), usage=document.getElementById('proj-usage'), expBtn=document.getElementById('btn-export-proj');
+  if(!grid) return;
+  if(expBtn) expBtn.style.display = S.loaded ? '' : 'none';
+  let all=[]; try{ all=await metaAll(); }catch(e){}
+  all.sort((a,b)=>(b.updated||0)-(a.updated||0));
+  const bytes=all.reduce((s,r)=>s+(r.imgSize||0),0);
+  if(usage) usage.textContent=all.length+' / '+MAX_PROJECTS+'  ·  '+(bytes/1048576).toFixed(0)+' MB';
+  if(!all.length){ grid.innerHTML='<div class="proj-empty">No saved projects yet.<br>Open an orthophoto, mark it up, then hit <b>Save&nbsp;project</b>.</div>'; return; }
+  grid.innerHTML='';
+  all.forEach(r=>{
+    const card=document.createElement('div'); card.className='proj-card'+(r.id===S.projectId?' current':'');
+    card.innerHTML='<div class="proj-thumb">'+(r.thumb?'<img src="'+r.thumb+'" alt="">':'')+'</div>'+
+      '<button class="proj-rename" title="Rename">✎</button><button class="proj-del" title="Delete">✕</button>'+
+      '<div class="proj-meta"><div class="proj-name">'+esc(r.name)+'</div>'+
+      '<div class="proj-info">'+(r.measurements?r.measurements.length:0)+' meas · '+(r.annotations?r.annotations.length:0)+' notes · '+new Date(r.updated).toLocaleDateString()+'</div></div>';
+    card.addEventListener('click',e=>{ if(e.target.closest('.proj-del')){ deleteProject(r.id); return; } if(e.target.closest('.proj-rename')){ renameProject(r.id); return; } openProject(r.id); });
+    grid.appendChild(card);
+  });
+}
+function exportProjectFile(){
+  if(!S.loaded||!S._imageBlob){ msg('Open an image first.'); return; }
+  const fr=new FileReader();
+  fr.onload=()=>{ const data={ fmproj:1, exported:new Date().toISOString(),
+    scale:{pxPerUnit:S.pxPerUnit,unit:S.unit,calibUnit:S._calibUnit||'m'},
+    image:{w:S.imgW,h:S.imgH,name:(S._lastFile&&S._lastFile.name)||'image',dataURL:fr.result},
+    measurements:S.measurements, annotations:S.annotations, mCtr:S.mCtr, aCtr:S.aCtr };
+    dl(JSON.stringify(data), (((S._lastFile&&S._lastFile.name)||'facade').replace(/\.[^.]+$/,''))+'.fmproj.json', 'application/json'); };
+  fr.readAsDataURL(S._imageBlob);
+}
+async function importProjectFile(file){
+  if(!file) return; if(!(await leaveCurrent())) return;
+  try{
+    const data=JSON.parse(await file.text());
+    if(!data || !data.image || !data.image.dataURL){ msg('That isn\'t a FacadeMeasure project file.'); return; }
+    const blob=await (await fetch(data.image.dataURL)).blob();
+    const sc=data.scale||{};
+    await loadRestored(blob, { imgName:data.image.name, imgSize:blob.size, measurements:data.measurements, annotations:data.annotations,
+      mCtr:data.mCtr, aCtr:data.aCtr, unit:sc.unit, pxPerUnit:sc.pxPerUnit, calibUnit:sc.calibUnit }, null);
+    msg('Imported — hit Save project to keep it on this device.');
+  }catch(e){ msg('Could not read that project file.'); console.error(e); }
+}
 
 // Init
 resizeCanvas();
 setTool('pan');
+document.getElementById('btn-save').addEventListener('click', saveProject);
+document.getElementById('btn-projects').addEventListener('click', openLibrary);
+const _lb=document.getElementById('landing-back'); if(_lb) _lb.addEventListener('click', ()=>hideLibrary(true));
+document.getElementById('btn-import').addEventListener('click', ()=>document.getElementById('import-input').click());
+document.getElementById('import-input').addEventListener('change', e=>{ importProjectFile(e.target.files[0]); e.target.value=''; });
+document.getElementById('btn-export-proj').addEventListener('click', exportProjectFile);
+window.addEventListener('beforeunload', e=>{ if(!S.projectId && S.loaded && (S.measurements.length||S.annotations.length)){ e.preventDefault(); e.returnValue=''; } });
+setInterval(()=>{ if(S.projectId && S.loaded && !_saving){ const sig=stateSig(); if(sig!==_lastSig){ _saving=true; persistProject().then(()=>{ _saving=false; flashSaved(); }).catch(()=>{ _saving=false; }); } } }, 1500);
+updateSaveBtn();
+renderLibrary();
 </script>
 </body>
 </html>
