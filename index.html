@@ -545,18 +545,6 @@ header {
 .help-grid { display: grid; grid-template-columns: auto 1fr; gap: 5px 14px; font-size: 12px; margin-top: 2px; }
 .help-grid .hk { font-family: monospace; font-size: 11px; color: var(--text); background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; white-space: nowrap; justify-self: start; }
 .help-grid .hv { color: var(--text2); align-self: center; }
-
-/* Dark mode */
-body.dark { --bg:#17140f; --surface:#221e18; --surface2:#2b261f; --border:#3a342b; --border2:#4b4339;
-  --text:#ece6dc; --text2:#b6ad9f; --text3:#867d6f; --accent:#84bf94; --accent2:#5e9a72; --accent-light:#243120; --accent-deep:#3f6b4a;
-  --danger:#d98a8a; --danger-light:#3a2020; }
-body.dark { background-image: radial-gradient(120% 80% at 50% -10%, #221e18 0%, var(--bg) 55%); }
-body.dark header, body.dark .toolbar { background: var(--surface); }
-body.dark #statusbar { background: var(--surface2); }
-body.dark .m-tag { background: var(--surface2); }
-body.dark .m-item:hover, body.dark .ann-item:hover { background: #2b261f; }
-body.dark .tool-btn svg[stroke="#5a534a"] { stroke: var(--text2); }
-body.dark .imp-chip.ok { color:#a6e3ba; background:#1f3326; border-color:#34543f; }
 </style>
 </head>
 <body>
@@ -682,9 +670,6 @@ body.dark .imp-chip.ok { color:#a6e3ba; background:#1f3326; border-color:#34543f
 
     <div class="tool-sep"></div>
 
-    <button class="tool-btn" id="btn-theme" data-tip="Light / dark">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
     <button class="tool-btn" id="btn-help" data-tip="Help &amp; shortcuts  [?]">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9.2a3 3 0 0 1 5.8 1c0 2-3 2.3-3 4"/><line x1="12" y1="17.4" x2="12.01" y2="17.4"/></svg>
     </button>
@@ -1262,8 +1247,10 @@ function drawEdgeLabel(aImg, bImg, txt, color, awayImg) {
 const FRAC={'0':'','0.25':'¼','0.5':'½','0.75':'¾'};
 function impInfo(mm){
   if(!(mm>0)) return null;
-  const q=Math.round(mm/25.4*4)/4, snMM=q*25.4;                 // nearest ¼ inch
-  return { q, mm:snMM, label:impLabel(q), match: Math.abs(mm-snMM) <= Math.max(1.2, mm*0.01) };
+  const q=Math.round(mm/25.4*4)/4, snMM=q*25.4;                 // label: still reads to the nearest ¼″
+  const half=Math.round(mm/25.4*2)/2;                           // reward: only whole + half inches
+  const tol=Math.min(Math.max(1.2, mm*0.01), 2.5);             // capped so it can't swallow the ½″ gap (no more "always green" past 12″)
+  return { q, mm:snMM, label:impLabel(q), match: Math.abs(mm-half*25.4) <= tol };
 }
 function impLabel(q){
   if(S.imp.unit==='indec') return (+q.toFixed(2))+'″';
@@ -1390,33 +1377,52 @@ function drawAnnotation(a) {
 }
 
 /* ── Rubber-band preview ── */
+/* Live readout: the value pill pleasingly fades to green as you cross a true imperial size. */
+const IMP_GREEN='#2f9e57';
+let _impFade=0, _impTarget=0, _impAnim=false;
+function lerpHex(a,b,t){ const A=hexToRgb(a),B=hexToRgb(b); return rgbToHex(A.r+(B.r-A.r)*t, A.g+(B.g-A.g)*t, A.b+(B.b-A.b)*t); }
+function impColor(base){ return _impFade<=0.01 ? base : lerpHex(base, IMP_GREEN, _impFade); }
+function impFadeLoop(){
+  if(!S.drawing){ _impAnim=false; _impFade=0; _impTarget=0; return; }
+  _impFade += (_impTarget-_impFade)*0.22;
+  if(Math.abs(_impTarget-_impFade)<0.01) _impFade=_impTarget;
+  renderOverlay();
+  if(_impFade!==_impTarget) requestAnimationFrame(impFadeLoop); else _impAnim=false;
+}
+function impSetMatch(match){ const t=match?1:0; if(t!==_impTarget){ _impTarget=t; if(!_impAnim && S.drawing){ _impAnim=true; requestAnimationFrame(impFadeLoop); } } }
+
 function renderPreview() {
   const dash = mkEl('g', {});
   const DW = strokePx(2), DA = '6,4';   // thin dashes — precise to align against a stone (a touch bigger than the original)
+  let liveMatch=false;
+  const imp = mm => { if(!S.imp.on) return ''; const r=impInfo(mm); if(!r) return ''; if(r.match) liveMatch=true; return ' · '+r.label; };
   if (S.tool==='dist' && S.distA && S.cursorImg) {
     const a=imgToScreen(S.distA.x,S.distA.y), b=imgToScreen(S.cursorImg.x,S.cursorImg.y);
     dash.append(mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:COLORS.dist,'stroke-width':DW,'stroke-dasharray':DA,fill:'none'}));
-    dash.append(drawLabelScreen({x:(S.distA.x+S.cursorImg.x)/2,y:(S.distA.y+S.cursorImg.y)/2}, fmtDist(dist2(S.distA,S.cursorImg)), COLORS.dist));
+    const len=dist2(S.distA,S.cursorImg);
+    dash.append(drawLabelScreen({x:(S.distA.x+S.cursorImg.x)/2,y:(S.distA.y+S.cursorImg.y)/2}, fmtDist(len)+imp(len), impColor(COLORS.dist)));
   } else if ((S.tool==='poly'||S.tool==='pline') && S.polyPts.length) {
     const pts = S.cursorImg ? [...S.polyPts, S.cursorImg] : S.polyPts;
     const ptsS = pts.map(p=>imgToScreen(p.x,p.y)), col = S.tool==='pline'?COLORS.pline:COLORS.poly;
     dash.append(mkEl('polyline',{points:ptsS.map(p=>p.x+','+p.y).join(' '),stroke:col,'stroke-width':DW,'stroke-dasharray':DA,fill:'none','stroke-linejoin':'round','stroke-linecap':'round'}));
     ptsS.forEach(p=>dash.append(sCircle(p,vertPx(3),'white',col,1.3)));
     if (S.cursorImg) {
-      if (S.tool==='pline') dash.append(drawLabelScreen({x:S.cursorImg.x+34/S.zoom, y:S.cursorImg.y-26/S.zoom}, fmtDist(pathLen(pts)), COLORS.pline));
+      if (S.tool==='pline'){ const L=pathLen(pts); dash.append(drawLabelScreen({x:S.cursorImg.x+34/S.zoom, y:S.cursorImg.y-26/S.zoom}, fmtDist(L)+imp(L), impColor(COLORS.pline))); }
       else if (pts.length>=3) { const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length, cy=pts.reduce((s,p)=>s+p.y,0)/pts.length; dash.append(drawLabelScreen({x:cx,y:cy}, fmtArea(polyArea(pts)), COLORS.poly)); }
     }
   } else if (S.tool==='rect' && S.rectA && S.cursorImg) {
     const a=imgToScreen(S.rectA.x,S.rectA.y), b=imgToScreen(S.cursorImg.x,S.cursorImg.y);
     dash.append(mkEl('rect',{x:Math.min(a.x,b.x),y:Math.min(a.y,b.y),width:Math.abs(b.x-a.x),height:Math.abs(b.y-a.y),stroke:COLORS.rect,'stroke-width':DW,'stroke-dasharray':DA,fill:'none'}));
     const w=Math.abs(S.cursorImg.x-S.rectA.x), h=Math.abs(S.cursorImg.y-S.rectA.y);
-    dash.append(drawLabelScreen({x:(S.rectA.x+S.cursorImg.x)/2,y:(S.rectA.y+S.cursorImg.y)/2}, fmtDist(w)+'×'+fmtDist(h), COLORS.rect));
+    let it=''; if(S.imp.on){ const r1=impInfo(w), r2=impInfo(h); if(r1&&r2){ it=' · '+r1.label+'×'+r2.label; if(r1.match&&r2.match) liveMatch=true; } }
+    dash.append(drawLabelScreen({x:(S.rectA.x+S.cursorImg.x)/2,y:(S.rectA.y+S.cursorImg.y)/2}, fmtDist(w)+'×'+fmtDist(h)+it, impColor(COLORS.rect)));
   } else if (S.tool==='calib' && S.calibA && S.cursorImg) {
     const a=imgToScreen(S.calibA.x,S.calibA.y), b=imgToScreen(S.cursorImg.x,S.cursorImg.y);
     dash.append(mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#1e4a7a','stroke-width':DW,'stroke-dasharray':DA,fill:'none'}));
     dash.append(sCircle(a,vertPx(3),'white','#1e4a7a',1.3), sCircle(b,vertPx(3),'white','#1e4a7a',1.3));
     dash.append(drawLabelScreen({x:(S.calibA.x+S.cursorImg.x)/2,y:(S.calibA.y+S.cursorImg.y)/2}, Math.round(dist2(S.calibA,S.cursorImg))+' px', '#1e4a7a'));
   }
+  impSetMatch(liveMatch);
   svg.appendChild(dash);
 }
 
@@ -1509,7 +1515,10 @@ wrap.addEventListener('mousemove', e => {
 
   if (S.dragVert) {
     const m=S.measurements.find(x=>x.id===S.dragVert.id);
-    if (m) { let q=p; const s=snapVertex(p,m.id); if(s){ S._snapPt=s; q=s; } m.coords[S.dragVert.index]=q; recompute(m); refreshMList(); scheduleRender(); }
+    if (m) { let q=p; const s=snapVertex(p,m.id); if(s){ S._snapPt=s; q=s; }
+      if (S.shiftDown && m.type==='rect' && m.coords.length===4) dragRectCorner(m, S.dragVert.index, q);
+      else m.coords[S.dragVert.index]=q;
+      recompute(m); refreshMList(); scheduleRender(); }
     return;
   }
 
@@ -1554,6 +1563,7 @@ function adjustPoint(p){
 
 function toolDown(p, e) {
   p = adjustPoint(p);
+  if(!S.drawing){ _impFade=0; _impTarget=0; }
   if (S.tool==='dist') {
     if (!S.drawing){ S.drawing=true; S.distA=p; S.cursorImg=p; showBanner('Placing <b>distance</b> · click the end point · <span class="kbd">Shift</span> straight · <span class="kbd">Alt</span> no-snap · pan with <span class="kbd">Space</span>/<span class="kbd">middle</span>'); scheduleRender(); }
     else finishDist(p);
@@ -1741,6 +1751,14 @@ function recompute(m){
 function rectSides(m){ const c=m.coords, d=(a,b)=>dist2(c[a],c[b]); return [d(0,1),d(1,2),d(2,3),d(3,0)]; }
 /* True while opposite sides stay equal — i.e. still a clean length × width. */
 function rectSymmetric(m){ const s=rectSides(m), eq=(a,b)=>Math.abs(a-b)<=0.5; return eq(s[0],s[2])&&eq(s[1],s[3]); }   // perfectly rectangular or not
+/* Shift-dragging a rect corner: pin the diagonally-opposite corner and hold all four corners
+   at 90° (axis-aligned). Width & height stay free — it does NOT force a square. coords are [TL,TR,BR,BL]. */
+function dragRectCorner(m, i, D){
+  const c=m.coords, O=c[(i+2)%4], next=(i+1)%4, prev=(i+3)%4;
+  c[i]={x:D.x, y:D.y};
+  if(i%2===0){ c[next]={x:O.x, y:D.y}; c[prev]={x:D.x, y:O.y}; }
+  else       { c[next]={x:D.x, y:O.y}; c[prev]={x:O.x, y:D.y}; }
+}
 
 /* ═══════════════════════════════════════════════════
    EDIT MODE
@@ -1752,7 +1770,8 @@ function enterEdit(id){
   const m=S.measurements.find(x=>x.id===id);
   sTool.textContent='Edit points';
   const canAdd = m && (m.type==='poly'||m.type==='rect'||m.type==='pline');
-  showBanner('Editing <b>'+esc(m?m.label:'')+'</b> · drag handles · arrows nudge'+(canAdd?' · <span class="kbd">＋</span> midpoint adds · right-click removes a point':'')+' · <span class="kbd">Esc</span> done');
+  const rectHint = (m && m.type==='rect') ? ' · <span class="kbd">Shift</span>-drag keeps corners square' : '';
+  showBanner('Editing <b>'+esc(m?m.label:'')+'</b> · drag handles'+rectHint+' · arrows nudge'+(canAdd?' · <span class="kbd">＋</span> midpoint adds · right-click removes a point':'')+' · <span class="kbd">Esc</span> done');
   refreshMList(); scheduleRender(); setCursor();
 }
 function exitEdit(){
@@ -1978,8 +1997,6 @@ unitSel.addEventListener('change',()=>{ S.unit=unitSel.value; refreshMList(); sc
 document.getElementById('btn-calib').addEventListener('click',()=>{ if(!S.loaded){ msg('Open an image first, then mark a known distance to set the scale.'); return; } setTool('calib'); });
 document.getElementById('imp-on').addEventListener('change', e=>{ S.imp.on=e.target.checked; document.getElementById('imp-unit').disabled=!S.imp.on; refreshMList(); scheduleRender(); });
 document.getElementById('imp-unit').addEventListener('change', e=>{ S.imp.unit=e.target.value; refreshMList(); scheduleRender(); });
-function setTheme(dark){ document.body.classList.toggle('dark', !!dark); }
-document.getElementById('btn-theme').addEventListener('click', ()=> setTheme(!document.body.classList.contains('dark')));
 document.getElementById('btn-help').addEventListener('click', showHelp);
 function showHelp(){
   const rows=[
