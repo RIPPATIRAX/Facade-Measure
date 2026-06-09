@@ -530,6 +530,33 @@ header {
 #landing-back { font-weight: 700; color: var(--accent); border-color: var(--accent2); background: var(--accent-light); }
 #landing-back:hover { background: #dceae0; }
 @media (max-width: 720px){ .landing { flex-direction: column; } .projects-pane { border-left: none; border-top: 1px solid var(--border); } }
+
+/* Imperial confirmation companion */
+.imp-ctrl { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text2); white-space: nowrap; cursor: pointer; }
+.imp-ctrl input { cursor: pointer; }
+.imp-unit { padding: 5px 7px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--text); font-size: 12px; font-family: Georgia, serif; }
+.imp-unit:disabled { opacity: .45; }
+.m-imp { margin: 3px 0 0 24px; }
+.imp-chip { display: inline-block; font-size: 10.5px; color: var(--text3); font-variant-numeric: tabular-nums; }
+.imp-chip.ok { color: #1f7a44; font-weight: 700; background: #e3f3e8; border: 1px solid #bfe3cc; border-radius: 10px; padding: 1px 8px; }
+
+/* Help dialog */
+.modal-wide { width: 540px; }
+.help-grid { display: grid; grid-template-columns: auto 1fr; gap: 5px 14px; font-size: 12px; margin-top: 2px; }
+.help-grid .hk { font-family: monospace; font-size: 11px; color: var(--text); background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; white-space: nowrap; justify-self: start; }
+.help-grid .hv { color: var(--text2); align-self: center; }
+
+/* Dark mode */
+body.dark { --bg:#17140f; --surface:#221e18; --surface2:#2b261f; --border:#3a342b; --border2:#4b4339;
+  --text:#ece6dc; --text2:#b6ad9f; --text3:#867d6f; --accent:#84bf94; --accent2:#5e9a72; --accent-light:#243120; --accent-deep:#3f6b4a;
+  --danger:#d98a8a; --danger-light:#3a2020; }
+body.dark { background-image: radial-gradient(120% 80% at 50% -10%, #221e18 0%, var(--bg) 55%); }
+body.dark header, body.dark .toolbar { background: var(--surface); }
+body.dark #statusbar { background: var(--surface2); }
+body.dark .m-tag { background: var(--surface2); }
+body.dark .m-item:hover, body.dark .ann-item:hover { background: #2b261f; }
+body.dark .tool-btn svg[stroke="#5a534a"] { stroke: var(--text2); }
+body.dark .imp-chip.ok { color:#a6e3ba; background:#1f3326; border-color:#34543f; }
 </style>
 </head>
 <body>
@@ -549,7 +576,7 @@ header {
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
     <span id="save-label">Save project</span>
   </button>
-  <input type="file" id="file-input" accept="image/*" style="display:none">
+  <input type="file" id="file-input" accept="image/*,.tif,.tiff" style="display:none">
   <div class="sep"></div>
   <div class="scale-row">
     <span>Scale:</span>
@@ -564,6 +591,13 @@ header {
       <option value="px">px</option>
     </select>
     <button class="btn-sm" id="btn-calib" title="Set the scale by marking a known distance on the image (e.g. a scale bar)">⤢ Set from image</button>
+    <div class="sep"></div>
+    <label class="imp-ctrl" title="Show a confirming imperial reading beside each measurement — handy for heritage brick/stone sizes. Measurements are always recorded in mm."><input type="checkbox" id="imp-on"> imperial</label>
+    <select id="imp-unit" class="imp-unit" disabled title="Imperial confirmation unit">
+      <option value="in">inches</option>
+      <option value="ftin">feet + in</option>
+      <option value="indec">in (decimal)</option>
+    </select>
   </div>
   <div class="export-btns">
     <button class="btn-sm" id="btn-csv">↓ CSV</button>
@@ -644,6 +678,15 @@ header {
         <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
         <path d="M10 11v6m4-6v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
       </svg>
+    </button>
+
+    <div class="tool-sep"></div>
+
+    <button class="tool-btn" id="btn-theme" data-tip="Light / dark">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <button class="tool-btn" id="btn-help" data-tip="Help &amp; shortcuts  [?]">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9.2a3 3 0 0 1 5.8 1c0 2-3 2.3-3 4"/><line x1="12" y1="17.4" x2="12.01" y2="17.4"/></svg>
     </button>
   </div>
 
@@ -750,6 +793,9 @@ const S = {
   dragVert: null,
   mouseImg: { x:0, y:0 },
   cursorImg: null,      // live cursor pos for rubber-band drawing
+  imgScale: 1,          // working-bitmap px ÷ original px (1 for normal images; <1 for a COG's base layer)
+  cog: null,            // parsed tiled pyramid (Cloud-Optimized GeoTIFF), or null for a normal image
+  imp: { on:false, unit:'in' },   // read-only imperial confirmation companion (mm always stays the truth)
   calibA: null,         // first point when setting scale from the image
 };
 
@@ -810,36 +856,147 @@ window.addEventListener('resize', resizeCanvas);
 /* ═══════════════════════════════════════════════════
    IMAGE LOAD
 ═══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   COG — tiled GeoTIFF pyramid reader (gigapixel orthophotos)
+   Reads a tiled TIFF (classic or BigTIFF) and draws only the visible 512px
+   tiles at the zoom-matched pyramid level → full sharpness, tiny memory.
+═══════════════════════════════════════════════════ */
+function isTiff(buf){
+  const b=new Uint8Array(buf,0,4);
+  return (b[0]===0x49&&b[1]===0x49&&(b[2]===42||b[2]===43)&&b[3]===0) || (b[0]===0x4D&&b[1]===0x4D&&b[2]===0&&(b[3]===42||b[3]===43));
+}
+function parseCOG(buf){
+  try{
+    const dv=new DataView(buf), le=dv.getUint8(0)===0x49, big=dv.getUint16(2,le)===43;
+    const TS={1:1,2:1,3:2,4:4,5:8,6:1,7:1,8:2,9:4,10:8,11:4,12:8,16:8,17:8,18:8};
+    const off=o=> big?Number(dv.getBigUint64(o,le)):dv.getUint32(o,le);
+    function vals(typ,count,fo){
+      const tsz=TS[typ]||1, base = (tsz*count<=(big?8:4)) ? fo : off(fo), out=new Array(count);
+      for(let i=0;i<count;i++){ const a=base+i*tsz;
+        out[i]= typ===3?dv.getUint16(a,le): typ===4?dv.getUint32(a,le): typ===16?Number(dv.getBigUint64(a,le)): dv.getUint8(a); }
+      return out;
+    }
+    let ifd = big?Number(dv.getBigUint64(8,le)):dv.getUint32(4,le);
+    const eSize=big?20:12, levels=[]; let g=0;
+    while(ifd && g++<64){
+      const n = big?Number(dv.getBigUint64(ifd,le)):dv.getUint16(ifd,le);
+      let p=ifd+(big?8:2); const t={};
+      for(let i=0;i<n;i++){
+        const tag=dv.getUint16(p,le), typ=dv.getUint16(p+2,le);
+        const cnt = big?Number(dv.getBigUint64(p+4,le)):dv.getUint32(p+4,le);
+        t[tag]=vals(typ,cnt,p+(big?12:8)); p+=eSize;
+      }
+      ifd = big?Number(dv.getBigUint64(p,le)):dv.getUint32(p,le);
+      if(t[322]&&t[324]&&t[325]){
+        const w=t[256][0], h=t[257][0], tw=t[322][0], th=t[323][0];
+        levels.push({ w,h,tileW:tw,tileH:th, cols:Math.ceil(w/tw), rows:Math.ceil(h/th),
+          offsets:t[324], byteCounts:t[325], compression:(t[259]||[1])[0],
+          jpegTables: t[347]?Uint8Array.from(t[347]):null, predictor:(t[317]||[1])[0], samples:(t[277]||[3])[0] });
+      }
+    }
+    if(!levels.length) return null;
+    levels.sort((a,b)=>b.w-a.w); levels.forEach(L=>L.f=L.w/levels[0].w);
+    return { levels, w:levels[0].w, h:levels[0].h, buf };
+  }catch(e){ console.error('COG parse failed', e); return null; }
+}
+async function cogTile(cog,lvl,col,row){
+  const L=cog.levels[lvl], idx=row*L.cols+col;
+  if(idx<0||idx>=L.offsets.length) return null;
+  const len=L.byteCounts[idx]; if(!len) return null;
+  const bytes=new Uint8Array(cog.buf, L.offsets[idx], len);
+  try{
+    if(L.compression===7||L.compression===6){
+      let jpeg=bytes;
+      if(L.jpegTables){ const tb=L.jpegTables.subarray(2,L.jpegTables.length-2), bd=bytes.subarray(2);
+        jpeg=new Uint8Array(2+tb.length+bd.length); jpeg[0]=0xFF; jpeg[1]=0xD8; jpeg.set(tb,2); jpeg.set(bd,2+tb.length); }
+      return await createImageBitmap(new Blob([jpeg],{type:'image/jpeg'}));
+    }
+    if(L.compression===8||L.compression===32946){
+      const raw=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer());
+      if(L.predictor===2) cogUnpredict(raw,L);
+      return cogRawBitmap(raw,L);
+    }
+    if(L.compression===1) return cogRawBitmap(bytes,L);
+  }catch(e){}
+  return null;
+}
+function cogUnpredict(raw,L){ const tw=L.tileW,th=L.tileH,sp=L.samples;
+  for(let y=0;y<th;y++){ const b=y*tw*sp; for(let x=1;x<tw;x++) for(let s=0;s<sp;s++) raw[b+x*sp+s]=(raw[b+x*sp+s]+raw[b+(x-1)*sp+s])&255; } }
+function cogRawBitmap(raw,L){ const tw=L.tileW,th=L.tileH,sp=L.samples;
+  const cv=document.createElement('canvas'); cv.width=tw; cv.height=th; const cx=cv.getContext('2d'), id=cx.createImageData(tw,th), d=id.data;
+  for(let i=0,j=0;i<tw*th;i++,j+=4){ if(sp>=3){d[j]=raw[i*sp];d[j+1]=raw[i*sp+1];d[j+2]=raw[i*sp+2];} else {d[j]=d[j+1]=d[j+2]=raw[i*sp];} d[j+3]=255; }
+  cx.putImageData(id,0,0); return createImageBitmap(cv);
+}
+async function assembleLevel(cog,lvl){
+  const L=cog.levels[lvl];
+  const cv=document.createElement('canvas'); cv.width=L.w; cv.height=L.h; const cx=cv.getContext('2d');
+  for(let r=0;r<L.rows;r++) for(let c=0;c<L.cols;c++){ const bm=await cogTile(cog,lvl,c,r); if(bm){ cx.drawImage(bm,c*L.tileW,r*L.tileH); bm.close&&bm.close(); } }
+  return await createImageBitmap(cv);
+}
+const cogCache=new Map(), cogPending=new Set();
+function cogClear(){ cogCache.forEach(b=>b&&b.close&&b.close()); cogCache.clear(); cogPending.clear(); }
+function cogGet(cog,lvl,col,row){
+  const k=lvl+':'+col+':'+row;
+  if(cogCache.has(k)){ const v=cogCache.get(k); cogCache.delete(k); cogCache.set(k,v); return v; }
+  if(!cogPending.has(k)){ cogPending.add(k);
+    cogTile(cog,lvl,col,row).then(bm=>{ cogPending.delete(k); if(bm){ cogCache.set(k,bm);
+      while(cogCache.size>160){ const fk=cogCache.keys().next().value, fb=cogCache.get(fk); cogCache.delete(fk); fb&&fb.close&&fb.close(); }
+      scheduleRender(); } }).catch(()=>cogPending.delete(k)); }
+  return null;
+}
+function cogOverlay(sx,sy,sx2,sy2,offX,offY,z){
+  const cog=S.cog; if(!cog) return;
+  let lvl=cog.levels.length-1;
+  for(let i=cog.levels.length-1;i>=0;i--){ if(cog.levels[i].f>=S.zoom){ lvl=i; break; } }
+  if(lvl===cog.levels.length-1) return;                 // base layer already covers the smallest level
+  const L=cog.levels[lvl], f=L.f;
+  ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='medium';
+  const c0=Math.max(0,Math.floor(sx*f/L.tileW)), c1=Math.min(L.cols-1,Math.floor((sx2*f-0.001)/L.tileW));
+  const r0=Math.max(0,Math.floor(sy*f/L.tileH)), r1=Math.min(L.rows-1,Math.floor((sy2*f-0.001)/L.tileH));
+  for(let r=r0;r<=r1;r++) for(let c=c0;c<=c1;c++){
+    const bm=cogGet(cog,lvl,c,r); if(!bm) continue;
+    const ox=c*L.tileW/f, oy=r*L.tileH/f, ow=L.tileW/f, oh=L.tileH/f;
+    const oxe=Math.min(ox+ow,cog.w), oye=Math.min(oy+oh,cog.h), fxw=(oxe-ox)/ow, fyh=(oye-oy)/oh;
+    try{ ctx.drawImage(bm, 0,0, bm.width*fxw, bm.height*fyh, offX+ox*z, offY+oy*z, (oxe-ox)*z, (oye-oy)*z); }catch(e){}
+  }
+}
+async function decodeAny(fileOrBlob, name){
+  const isTif = /\.tiff?$/i.test(name||'') || fileOrBlob.type==='image/tiff';
+  if(isTif){
+    const buf=await fileOrBlob.arrayBuffer();
+    if(isTiff(buf)){
+      loadingMsg.textContent='Reading tiled image…';
+      const cog=parseCOG(buf);
+      if(cog){ const base=await assembleLevel(cog, cog.levels.length-1); return { bitmap:base, w:cog.w, h:cog.h, scale:base.width/cog.w, cog }; }
+    }
+    throw new Error('This TIFF isn’t a tiled COG — re-export it as a Cloud-Optimized GeoTIFF.');
+  }
+  const bmp = await (window.createImageBitmap ? createImageBitmap(fileOrBlob)
+    : new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=URL.createObjectURL(fileOrBlob); }));
+  return { bitmap:bmp, w:bmp.width, h:bmp.height, scale:1, cog:null };
+}
+
 async function loadFile(f) {
-  if (!f || !f.type.startsWith('image/')) return;
+  if (!f || !(f.type.startsWith('image/') || /\.tiff?$/i.test(f.name))) return;
   if (!(await leaveCurrent())) return;
   loadingEl.classList.add('show');
   loadingMsg.textContent = 'Decoding image…';
   try {
-    let bmp;
-    if (window.createImageBitmap) {
-      bmp = await createImageBitmap(f);
-    } else {
-      bmp = await new Promise((res, rej) => {
-        const im = new Image();
-        im.onload = () => res(im);
-        im.onerror = rej;
-        im.src = URL.createObjectURL(f);
-      });
-    }
-    sourceBitmap = bmp;
-    S.imgW = bmp.width; S.imgH = bmp.height; S.loaded = true;
+    cogClear();
+    const dec = await decodeAny(f, f.name);
+    sourceBitmap = dec.bitmap; S.cog = dec.cog; S.imgScale = dec.scale;
+    S.imgW = dec.w; S.imgH = dec.h; S.loaded = true;
     overviewBitmap = null; overviewScale = 1;
-    await buildOverview(bmp);
+    await buildOverview(sourceBitmap);
     S.measurements=[]; S.annotations=[]; S.mCtr=0; S.aCtr=0; S.selectedId=null; S.editId=null; S.history=[];
     S._lastFile = f; S._imageBlob = f; S.projectId = null;
     dropOvl.classList.add('hidden');
     resizeCanvas();
     fitView();
     refreshMList(); refreshAList(); updateInfoPanel(f); updateSaveBtn();
-    msg('Loaded ' + S.imgW + ' × ' + S.imgH + ' px');
+    msg('Loaded ' + S.imgW + ' × ' + S.imgH + ' px' + (S.cog ? ' · tiled COG (' + S.cog.levels.length + ' levels)' : ''));
   } catch (err) {
-    msg('Could not load that image.');
+    msg(String((err && err.message) || 'Could not load that image.').slice(0, 90));
     console.error(err);
   } finally {
     loadingEl.classList.remove('show');
@@ -869,7 +1026,7 @@ async function buildOverview(bmp){
     octx.imageSmoothingEnabled = true; octx.imageSmoothingQuality = 'high';
     octx.drawImage(bmp, 0, 0, ow, oh);
     overviewBitmap = window.createImageBitmap ? await createImageBitmap(oc) : oc;
-    overviewScale = s;
+    overviewScale = s * S.imgScale;
   } catch (e) { overviewBitmap = null; overviewScale = 1; }
 }
 
@@ -915,11 +1072,13 @@ function renderImage() {
      bitmap (visible slice only) once zoomed in past the overview's resolution. */
   const useOverview = overviewBitmap && S.zoom < overviewScale;
   const src = useOverview ? overviewBitmap : sourceBitmap;
-  const ss  = useOverview ? overviewScale : 1;   // src px per source-image px
+  const ss  = useOverview ? overviewScale : S.imgScale;   // bitmap px per original image px
 
   try {
     ctx.drawImage(src, sx*ss, sy*ss, sW*ss, sH*ss, dx, dy, dW, dH);
   } catch (e) { /* drawImage can throw mid-resize; ignore one frame */ }
+
+  if (S.cog) cogOverlay(sx, sy, sx2, sy2, offX, offY, z);   // draw sharp tiles on top of the base
 }
 
 /* ═══════════════════════════════════════════════════
@@ -979,6 +1138,7 @@ document.addEventListener('keydown', e => {
       if(aa){ e.preventDefault(); stamp(); aa.x+=dx; aa.y+=dy; refreshAList(); scheduleRender(); return; }
     }
   }
+  if (e.key==='?') { showHelp(); return; }
   const k = { v:'pan',e:'edit',d:'dist',l:'pline',p:'poly',r:'rect',m:'point',a:'annot' };
   if (k[e.key.toLowerCase()]) setTool(k[e.key.toLowerCase()]);
 });
@@ -1095,6 +1255,40 @@ function drawEdgeLabel(aImg, bImg, txt, color, awayImg) {
   t.textContent = txt; return t;
 }
 
+/* ── Imperial confirmation (read-only companion; measurements always stay in mm) ──
+   Heritage brick/stone was cut to imperial sizes, so showing the nearest honest
+   imperial reading lets you confirm a slightly-off orthophoto value (e.g. 151.9 mm
+   really means a 6″ brick = 152.4 mm). Goes green when it lands on a round size. */
+const FRAC={'0':'','0.25':'¼','0.5':'½','0.75':'¾'};
+function impInfo(mm){
+  if(!(mm>0)) return null;
+  const q=Math.round(mm/25.4*4)/4, snMM=q*25.4;                 // nearest ¼ inch
+  return { q, mm:snMM, label:impLabel(q), match: Math.abs(mm-snMM) <= Math.max(1.2, mm*0.01) };
+}
+function impLabel(q){
+  if(S.imp.unit==='indec') return (+q.toFixed(2))+'″';
+  if(S.imp.unit==='ftin'){ const ft=Math.floor(q/12), inch=q-ft*12, w=Math.floor(inch), fr=FRAC[inch-w]||'';
+    const ip=(w||fr)?(w+fr+'″'):''; return ft?(ip?ft+'′ '+ip:ft+'′'):(ip||'0″'); }
+  const w=Math.floor(q), fr=FRAC[q-w]||'';                       // fractional inches
+  return (w===0&&fr)?fr+'″':w+fr+'″';
+}
+function f1(v){ return Math.round(v*10)/10; }
+function impTag(mm){ if(!S.imp.on) return ''; const r=impInfo(mm); return r?(' · '+r.label+(r.match?'✓':'')):''; }
+function impPane(m){
+  if(!S.imp.on) return '';
+  let chip='';
+  const one=mm=>{ const r=impInfo(mm); return r?'<span class="imp-chip'+(r.match?' ok':'')+'">'+(r.match?'✓ '+r.label+' = '+f1(r.mm)+' mm':'≈ '+r.label)+'</span>':''; };
+  if(m.type==='dist') chip=one(m.value);
+  else if(m.type==='pline') chip=one(m.length);
+  else if(m.type==='rect'){ const sd=rectSides(m);
+    if(rectSymmetric(m)){ const ra=impInfo(sd[0]), rb=impInfo(sd[1]); if(ra&&rb){ const ok=ra.match&&rb.match;
+      chip='<span class="imp-chip'+(ok?' ok':'')+'">'+(ok?'✓ ':'≈ ')+ra.label+' × '+rb.label+(ok?' = '+f1(ra.mm)+' × '+f1(rb.mm)+' mm':'')+'</span>'; } }
+    else { const allok=sd.every(s=>{const r=impInfo(s);return r&&r.match;});
+      chip='<span class="imp-chip'+(allok?' ok':'')+'">'+(allok?'✓ ':'≈ ')+sd.map(s=>{const r=impInfo(s);return r?r.label:'?';}).join(' · ')+'</span>'; }
+  }
+  return chip?'<div class="m-imp">'+chip+'</div>':'';
+}
+
 function drawMeasurement(m, num) {
   const g = mkEl('g', { 'data-mid': m.id });
   g.style.cursor='pointer';
@@ -1118,14 +1312,14 @@ function drawMeasurement(m, num) {
     g.append(
       mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:m.color,'stroke-width':sStroke,'stroke-linecap':'round'}),
       vertexHandle(m,0,editing), vertexHandle(m,1,editing),
-      drawLabelScreen({x:(m.coords[0].x+m.coords[1].x)/2,y:(m.coords[0].y+m.coords[1].y)/2}, num+' · '+fmtDist(m.value), m.color)
+      drawLabelScreen({x:(m.coords[0].x+m.coords[1].x)/2,y:(m.coords[0].y+m.coords[1].y)/2}, num+' · '+fmtDist(m.value)+impTag(m.value), m.color)
     );
   } else if (m.type==='pline') {
     const ptsS = m.coords.map(p=>imgToScreen(p.x,p.y));
     g.append(
       mkEl('polyline',{points:ptsS.map(p=>p.x+','+p.y).join(' '),stroke:m.color,'stroke-width':strokePx(2.4),fill:'none','stroke-linejoin':'round','stroke-linecap':'round'}),
       ...m.coords.map((_,i)=>vertexHandle(m,i,editing)),
-      drawLabelScreen(m.coords[Math.floor(m.coords.length/2)], num+' · '+fmtDist(m.length), m.color)
+      drawLabelScreen(m.coords[Math.floor(m.coords.length/2)], num+' · '+fmtDist(m.length)+impTag(m.length), m.color)
     );
   } else if (m.type==='poly'||m.type==='rect') {
     const ptsS = m.coords.map(p=>imgToScreen(p.x,p.y));
@@ -1139,7 +1333,7 @@ function drawMeasurement(m, num) {
       for (let i=0;i<m.coords.length;i++){
         const j=(i+1)%m.coords.length;
         const sa=imgToScreen(m.coords[i].x,m.coords[i].y), sb=imgToScreen(m.coords[j].x,m.coords[j].y);
-        if (Math.hypot(sb.x-sa.x,sb.y-sa.y) > 46) g.append(drawEdgeLabel(m.coords[i],m.coords[j],fmtDist(dist2(m.coords[i],m.coords[j])),m.color,{x:cx,y:cy}));
+        if (Math.hypot(sb.x-sa.x,sb.y-sa.y) > 46){ const d=dist2(m.coords[i],m.coords[j]); g.append(drawEdgeLabel(m.coords[i],m.coords[j],fmtDist(d)+impTag(d),m.color,{x:cx,y:cy})); }
       }
     }
     g.append(drawLabelScreen({x:cx,y:cy}, num+' · '+fmtArea(m.area), m.color));
@@ -1669,6 +1863,7 @@ function refreshMList(){
         <span class="m-tag">${types[m.type]||m.type}</span>
       </div>
       ${val?`<div class="m-val">${val}</div>`:''}
+      ${impPane(m)}
       ${detail?`<div class="m-sides">${detail}</div>`:''}
       ${m.note?`<div class="m-note-text">${esc(m.note)}</div>`:''}
       <div class="m-acts">
@@ -1781,6 +1976,43 @@ document.querySelectorAll('.stab').forEach(t=>t.addEventListener('click',()=>swi
 pxInp.addEventListener('change',()=>{ S.pxPerUnit=parseFloat(pxInp.value)||1; refreshMList(); scheduleRender(); });
 unitSel.addEventListener('change',()=>{ S.unit=unitSel.value; refreshMList(); scheduleRender(); });
 document.getElementById('btn-calib').addEventListener('click',()=>{ if(!S.loaded){ msg('Open an image first, then mark a known distance to set the scale.'); return; } setTool('calib'); });
+document.getElementById('imp-on').addEventListener('change', e=>{ S.imp.on=e.target.checked; document.getElementById('imp-unit').disabled=!S.imp.on; refreshMList(); scheduleRender(); });
+document.getElementById('imp-unit').addEventListener('change', e=>{ S.imp.unit=e.target.value; refreshMList(); scheduleRender(); });
+function setTheme(dark){ document.body.classList.toggle('dark', !!dark); }
+document.getElementById('btn-theme').addEventListener('click', ()=> setTheme(!document.body.classList.contains('dark')));
+document.getElementById('btn-help').addEventListener('click', showHelp);
+function showHelp(){
+  const rows=[
+    ['V / E','Pan & select · Edit points'],
+    ['D / R / L','Distance · Rectangle · Crack'],
+    ['P / M / A','Polygon · Point · Annotation'],
+    ['Scroll','Zoom'],
+    ['Space-drag / middle','Pan — even mid-measurement'],
+    ['Shift','Straight lines / square rectangle'],
+    ['Alt','Temporarily turn off vertex snapping'],
+    ['double-click / Enter','Finish a line or polygon'],
+    ['＋ midpoint','Add a vertex (in Edit mode)'],
+    ['right-click point','Remove a vertex (in Edit mode)'],
+    ['arrow keys','Nudge selection 1px (Shift = 10px)'],
+    ['Ctrl+Z','Undo'],
+    ['Delete','Delete the selected item'],
+    ['Esc','Cancel / finish'],
+  ];
+  const grid=rows.map(r=>'<div class="hk">'+esc(r[0])+'</div><div class="hv">'+esc(r[1])+'</div>').join('');
+  const {ov,card,close}=modalShell(
+    '<div class="modal-title">Help &amp; shortcuts</div>'+
+    '<div class="help-grid">'+grid+'</div>'+
+    '<div class="modal-sub" style="margin-top:13px;line-height:1.65;">'+
+      '<b>Imperial confirm</b> — tick “imperial” to show the nearest historical size next to each measurement. It turns green when a reading lands on a round imperial brick/stone size. You always record mm.<br>'+
+      '<b>Huge orthophotos</b> — if a JPEG is too big to open, export it from QGIS as a tiled <b>COG</b> (.tif) and drop that in; it opens at full sharpness.'+
+    '</div>'+
+    '<div class="modal-acts"><button class="btn-sm primary" id="_hok">Got it</button></div>');
+  card.classList.add('modal-wide');
+  const done=()=>{ document.removeEventListener('keydown',key,true); close(); };
+  function key(e){ if(e.key==='Escape'){ e.stopPropagation(); done(); } }
+  card.querySelector('#_hok').onclick=done; ov.addEventListener('mousedown',e=>{ if(e.target===ov) done(); });
+  document.addEventListener('keydown',key,true);
+}
 labelSizeInp.addEventListener('input',()=>{ S.labelScale=parseFloat(labelSizeInp.value); scheduleRender(); });
 
 /* Hover highlight handled in render via S._hover / S._hoverA */
@@ -1936,7 +2168,7 @@ function compositeRegion(region, outW, items, anns, fullRes, opts){
   const cv=document.createElement('canvas'); cv.width=outW; cv.height=outH;
   const g=cv.getContext('2d');
   g.fillStyle='#efece7'; g.fillRect(0,0,outW,outH);
-  const useOv=(!fullRes)&&overviewBitmap, src=useOv?overviewBitmap:sourceBitmap, ss=useOv?overviewScale:1;
+  const useOv=(!fullRes)&&overviewBitmap, src=useOv?overviewBitmap:sourceBitmap, ss=useOv?overviewScale:S.imgScale;
   g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
   if(src){ try{ g.drawImage(src, region.sx*ss, region.sy*ss, region.sw*ss, region.sh*ss, 0,0,outW,outH); }catch(e){} }
   const mx=ix=>(ix-region.sx)*k, my=iy=>(iy-region.sy)*k;
@@ -2198,10 +2430,11 @@ async function decodeBlob(blob){ return window.createImageBitmap ? await createI
 async function loadRestored(blob, rec, projectId){
   loadingEl.classList.add('show'); loadingMsg.textContent='Opening project…';
   try{
-    const bmp=await decodeBlob(blob);
-    sourceBitmap=bmp; overviewBitmap=null; overviewScale=1;
-    S.imgW=bmp.width; S.imgH=bmp.height; S.loaded=true; S._imageBlob=blob; S._lastFile={name:rec.imgName||'image',size:rec.imgSize||blob.size};
-    await buildOverview(bmp);
+    cogClear();
+    const dec=await decodeAny(blob, rec.imgName||'');
+    sourceBitmap=dec.bitmap; S.cog=dec.cog; S.imgScale=dec.scale; overviewBitmap=null; overviewScale=1;
+    S.imgW=dec.w; S.imgH=dec.h; S.loaded=true; S._imageBlob=blob; S._lastFile={name:rec.imgName||'image',size:rec.imgSize||blob.size};
+    await buildOverview(sourceBitmap);
     S.measurements=rec.measurements||[]; S.annotations=rec.annotations||[]; S.mCtr=rec.mCtr||S.measurements.length; S.aCtr=rec.aCtr||S.annotations.length;
     S.unit=rec.unit||'mm'; S.pxPerUnit=rec.pxPerUnit||1; S._calibUnit=rec.calibUnit||'m';
     S.projectId=projectId||null; S.selectedId=null; S.editId=null; S.history=[];
