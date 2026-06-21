@@ -58,7 +58,8 @@ header {
   align-items: center;
   gap: 14px;
   flex-shrink: 0;
-  z-index: 50;
+  position: relative;
+  z-index: 250;            /* above main-area content; modals (300) still sit on top */
   box-shadow: var(--shadow-sm);
 }
 .logo {
@@ -131,6 +132,63 @@ header {
   box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,0.12);
 }
 .btn-sm.primary:hover { background: linear-gradient(var(--accent2), var(--accent-deep)); }
+
+/* Header dropdown menus */
+.hdr-spacer { flex: 1 1 auto; min-width: 8px; }
+.menu { position: relative; flex-shrink: 0; }
+.menu-btn { gap: 7px; }
+.menu-btn .caret { font-size: 9px; color: var(--text3); margin-left: -1px; transition: transform .14s; }
+.menu.open .menu-btn { background: var(--surface2); border-color: var(--text3); }
+.menu.open .menu-btn .caret { transform: rotate(180deg); }
+#scale-chip { font-variant-numeric: tabular-nums; color: var(--text2); }
+.menu-panel {
+  position: absolute; top: calc(100% + 9px); right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 11px;
+  box-shadow: var(--shadow-lg);
+  padding: 7px;
+  min-width: 252px;
+  display: none; flex-direction: column; gap: 2px;
+  z-index: 1000;
+  transform-origin: top right;
+  animation: menuPop .13s cubic-bezier(.2,.8,.3,1);
+}
+.menu-panel::before {   /* little pointer up to the button */
+  content: ''; position: absolute; top: -6px; right: 20px;
+  width: 11px; height: 11px; background: var(--surface);
+  border-left: 1px solid var(--border2); border-top: 1px solid var(--border2);
+  transform: rotate(45deg); border-radius: 2px 0 0 0;
+}
+.menu.open .menu-panel { display: flex; }
+@keyframes menuPop { from { opacity: 0; transform: translateY(-5px) scale(.985); } to { opacity: 1; transform: none; } }
+.menu-head { font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--text3); padding: 4px 8px 6px; font-family: Georgia, serif; }
+.menu-row { display: flex; align-items: center; gap: 6px; padding: 4px 8px; font-size: 12px; color: var(--text2); white-space: nowrap; }
+.menu-row.indent { padding-left: 26px; }
+.menu-row input[type=number], .menu-row select {
+  padding: 5px 7px; border: 1px solid var(--border); border-radius: 5px;
+  background: var(--surface); color: var(--text); font-size: 12px; font-family: Georgia, serif;
+  transition: border-color .12s, box-shadow .12s;
+}
+.menu-row input[type=number] { width: 54px; text-align: center; }
+.menu-row input:focus, .menu-row select:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 0 3px var(--accent-light); }
+.menu-div { height: 1px; background: var(--border); margin: 6px 6px; }
+.menu-toggle { padding: 7px 8px; border-radius: 7px; font-size: 12.5px; color: var(--text); transition: background .1s; }
+.menu-toggle:hover { background: var(--surface2); }
+.btn-sm.menu-wide { width: 100%; justify-content: flex-start; text-align: left; box-shadow: none; }
+.menu-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; text-align: left;
+  padding: 8px 10px;
+  border: none; background: none; border-radius: 8px;
+  font-family: Georgia, serif; font-size: 13px; color: var(--text);
+  cursor: pointer; white-space: nowrap; transition: background .1s;
+}
+.menu-item:hover { background: var(--surface2); }
+.menu-item .mi-ic { display: inline-flex; width: 17px; color: var(--text3); }
+.menu-item.primary-item { color: var(--accent); font-weight: 700; }
+.menu-item.primary-item .mi-ic { color: var(--accent); }
+.menu-item.primary-item:hover { background: var(--accent-light); }
 
 /* LAYOUT */
 .main { display: flex; flex: 1; overflow: hidden; }
@@ -565,33 +623,60 @@ header {
     <span id="save-label">Save project</span>
   </button>
   <input type="file" id="file-input" accept="image/*,.tif,.tiff" style="display:none">
-  <div class="sep"></div>
-  <div class="scale-row">
-    <span>Scale:</span>
-    <input type="number" id="px-per-unit" value="1" min="0.0001" step="any">
-    <span>px per</span>
-    <select id="unit-select">
-      <option value="mm" selected>mm</option>
-      <option value="cm">cm</option>
-      <option value="m">m</option>
-      <option value="ft">ft</option>
-      <option value="in">in</option>
-      <option value="px">px</option>
-    </select>
-    <button class="btn-sm" id="btn-calib" title="Set the scale by marking a known distance on the image (e.g. a scale bar)">⤢ Set from image</button>
-    <div class="sep"></div>
-    <label class="imp-ctrl" title="Show a confirming imperial reading beside each measurement — handy for heritage brick/stone sizes. Measurements are always recorded in mm."><input type="checkbox" id="imp-on"> imperial</label>
-    <select id="imp-unit" class="imp-unit" disabled title="Imperial confirmation unit">
-      <option value="in">inches</option>
-      <option value="ftin">feet + in</option>
-      <option value="indec">in (decimal)</option>
-    </select>
+
+  <div class="hdr-spacer"></div>
+
+  <!-- Scale & units menu -->
+  <div class="menu" id="menu-scale">
+    <button class="file-btn menu-btn" title="Scale, units, imperial &amp; curved-facade correction">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="1"/><path d="M6 7v3M10 7v4M14 7v3M18 7v4"/></svg>
+      <span id="scale-chip">1 px/mm</span>
+      <span class="caret">▾</span>
+    </button>
+    <div class="menu-panel">
+      <div class="menu-head">Scale &amp; units</div>
+      <div class="menu-row"><span>Scale</span>
+        <input type="number" id="px-per-unit" value="1" min="0.0001" step="any">
+        <span>px per</span>
+        <select id="unit-select">
+          <option value="mm" selected>mm</option>
+          <option value="cm">cm</option>
+          <option value="m">m</option>
+          <option value="ft">ft</option>
+          <option value="in">in</option>
+          <option value="px">px</option>
+        </select>
+      </div>
+      <button class="btn-sm menu-wide menu-close" id="btn-calib" title="Set the scale by marking a known distance on the image (e.g. a scale bar)">⤢&nbsp; Set scale from image</button>
+      <div class="menu-div"></div>
+      <label class="imp-ctrl menu-toggle" title="Show a confirming imperial reading beside each measurement — handy for heritage brick/stone sizes. Measurements are always recorded in mm."><input type="checkbox" id="imp-on"> Imperial confirmation</label>
+      <div class="menu-row indent"><span>Unit</span>
+        <select id="imp-unit" class="imp-unit" disabled title="Imperial confirmation unit">
+          <option value="in">inches</option>
+          <option value="ftin">feet + in</option>
+          <option value="indec">in (decimal)</option>
+        </select>
+      </div>
+      <div class="menu-div"></div>
+      <label class="imp-ctrl menu-toggle" id="curve-lbl" title="Correct measurements on a curved (cylindrical) facade so stones at the edges read true size"><input type="checkbox" id="curve-on" disabled> Curved-facade correction</label>
+      <button class="btn-sm menu-wide menu-close" id="btn-curve" title="Set up curved-facade correction — wall radius + centre line">◠&nbsp; Curve setup…</button>
+    </div>
   </div>
-  <div class="export-btns">
-    <button class="btn-sm" id="btn-csv">↓ CSV</button>
-    <button class="btn-sm" id="btn-json">↓ JSON</button>
-    <button class="btn-sm" id="btn-schedule">↓ Stone schedule</button>
-    <button class="btn-sm primary" id="btn-pdf">↓ PDF report</button>
+
+  <!-- Export menu -->
+  <div class="menu" id="menu-export">
+    <button class="file-btn menu-btn" title="Export your survey">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+      Export
+      <span class="caret">▾</span>
+    </button>
+    <div class="menu-panel" style="min-width:194px">
+      <div class="menu-head">Export survey</div>
+      <button class="menu-item primary-item menu-close" id="btn-pdf"><span class="mi-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span> PDF report</button>
+      <button class="menu-item menu-close" id="btn-schedule"><span class="mi-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 9h18M3 14h18M9 4v16"/></svg></span> Stone schedule</button>
+      <button class="menu-item menu-close" id="btn-csv"><span class="mi-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg></span> CSV data</button>
+      <button class="menu-item menu-close" id="btn-json"><span class="mi-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg></span> JSON data</button>
+    </div>
   </div>
 </header>
 
@@ -782,6 +867,7 @@ const S = {
   cog: null,            // parsed tiled pyramid (Cloud-Optimized GeoTIFF), or null for a normal image
   imp: { on:false, unit:'in' },   // read-only imperial confirmation companion (mm always stays the truth)
   calibA: null,         // first point when setting scale from the image
+  curve: { on:false, R:0, cx:null, _fit:null, _pts:[] },   // curved-facade (cylinder) correction — R in real units, cx = centre-line x (px)
 };
 
 const COLORS = { dist:'#c0392b', poly:'#2055c0', rect:'#7020b0', point:'#c07020', annot:'#c4991a', pline:'#0a8a6a' };
@@ -963,7 +1049,8 @@ async function decodeAny(fileOrBlob, name){
 
 async function loadFile(f) {
   if (!f || !(f.type.startsWith('image/') || /\.tiff?$/i.test(f.name))) return;
-  if (!(await leaveCurrent())) return;
+  // (Unsaved-work guard runs at each entry point BEFORE the file picker / drop, not here —
+  //  otherwise the confirm pops up as the OS dialog closes and its first click gets eaten.)
   loadingEl.classList.add('show');
   loadingMsg.textContent = 'Decoding image…';
   try {
@@ -975,6 +1062,7 @@ async function loadFile(f) {
     await buildOverview(sourceBitmap);
     S.measurements=[]; S.annotations=[]; S.mCtr=0; S.aCtr=0; S.selectedId=null; S.editId=null; S.history=[];
     S._lastFile = f; S._imageBlob = f; S.projectId = null;
+    S.curve.cx=null; S.curve._fit=null; S.curve._pts=[]; S.curve.on=false; updateCurveUI();   // keep fitted R across the swap; centre line is per-image
     dropOvl.classList.add('hidden');
     resizeCanvas();
     fitView();
@@ -987,13 +1075,13 @@ async function loadFile(f) {
     loadingEl.classList.remove('show');
   }
 }
-document.getElementById('open-btn').onclick = () => fileInp.click();
-fileInp.onchange = e => loadFile(e.target.files[0]);
+document.getElementById('open-btn').onclick = async () => { if (await leaveCurrent()) fileInp.click(); };
+fileInp.onchange = e => { loadFile(e.target.files[0]); e.target.value=''; };
 wrap.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
 wrap.addEventListener('dragleave', () => dropZone.classList.remove('over'));
-wrap.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('over'); loadFile(e.dataTransfer.files[0]); });
+wrap.addEventListener('drop', async e => { e.preventDefault(); dropZone.classList.remove('over'); const f=e.dataTransfer.files[0]; if(f && await leaveCurrent()) loadFile(f); });
 dropZone.addEventListener('dragover', e => e.preventDefault());
-dropZone.addEventListener('drop', e => { e.preventDefault(); loadFile(e.dataTransfer.files[0]); });
+dropZone.addEventListener('drop', async e => { e.preventDefault(); const f=e.dataTransfer.files[0]; if(f && await leaveCurrent()) loadFile(f); });
 
 /* Build a small downsampled copy so zoomed-out pan/zoom on huge orthophotos
    stays smooth: we draw this instead of rescaling the full image every frame.
@@ -1019,6 +1107,11 @@ async function buildOverview(bmp){
    RENDER LOOP  (rAF-throttled, draws only the visible region)
 ═══════════════════════════════════════════════════ */
 let _renderQueued = false;
+/* While the user is actively panning/zooming a very large image, draw the cheap downsampled
+   overview for smoothness, then re-render at full sharpness ~150ms after motion stops. Only
+   engages for big images (>40 MP); small images render exactly as before, both static and moving. */
+let _interacting = false, _settleT = null;
+function markInteracting(){ _interacting = true; if(_settleT) clearTimeout(_settleT); _settleT = setTimeout(()=>{ _interacting=false; scheduleRender(); }, 150); }
 function scheduleRender() {
   if (_renderQueued) return;
   _renderQueued = true;
@@ -1055,7 +1148,8 @@ function renderImage() {
 
   /* Use the cheap downsampled overview while zoomed out; switch to the full
      bitmap (visible slice only) once zoomed in past the overview's resolution. */
-  const useOverview = overviewBitmap && S.zoom < overviewScale;
+  const bigImg = (S.imgW*S.imgH) > 40e6;                  // ~40 MP+ : favour smoothness while moving
+  const useOverview = overviewBitmap && (S.zoom < overviewScale || (_interacting && bigImg));
   const src = useOverview ? overviewBitmap : sourceBitmap;
   const ss  = useOverview ? overviewScale : S.imgScale;   // bitmap px per original image px
 
@@ -1063,7 +1157,7 @@ function renderImage() {
     ctx.drawImage(src, sx*ss, sy*ss, sW*ss, sH*ss, dx, dy, dW, dH);
   } catch (e) { /* drawImage can throw mid-resize; ignore one frame */ }
 
-  if (S.cog) cogOverlay(sx, sy, sx2, sy2, offX, offY, z);   // draw sharp tiles on top of the base
+  if (S.cog && !(_interacting && bigImg)) cogOverlay(sx, sy, sx2, sy2, offX, offY, z);   // sharp tiles on top once motion settles
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1089,7 +1183,7 @@ wrap.addEventListener('wheel', e => {
   const nz = Math.max(0.02, Math.min(80, S.zoom * f));
   S.panX = mx - (mx - S.panX) * nz / S.zoom;
   S.panY = my - (my - S.panY) * nz / S.zoom;
-  S.zoom = nz; applyXform();
+  S.zoom = nz; markInteracting(); applyXform();
 }, { passive:false });
 document.getElementById('btn-zoomin').onclick  = () => { S.zoom = Math.min(80, S.zoom*1.25); applyXform(); };
 document.getElementById('btn-zoomout').onclick = () => { S.zoom = Math.max(0.02, S.zoom/1.25); applyXform(); };
@@ -1102,8 +1196,9 @@ document.addEventListener('keydown', e => {
   const tag = e.target.tagName;
   if (tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
   if (e.code==='Space') { e.preventDefault(); S.spaceDown=true; setCursor(); return; }
-  if (e.key==='Escape') { if (S.editId) exitEdit(); else cancelDraw(); return; }
+  if (e.key==='Escape') { if (S.editId) exitEdit(); else if (S.tool==='curvefit'||S.tool==='curvecentre'){ if(S.curve)S.curve._pts=[]; hideBanner(); setTool('pan'); } else cancelDraw(); return; }
   if (e.key==='Enter' && (S.tool==='poly'||S.tool==='pline') && S.drawing) { finishPolyish(); return; }
+  if (e.key==='Enter' && S.tool==='curvefit') { finishCurveFit(); return; }
   if (e.ctrlKey && e.key==='z') { e.preventDefault(); undo(); return; }
   if ((e.key==='Delete'||e.key==='Backspace') && S.selectedId && !S.editId) {
     e.preventDefault();
@@ -1141,6 +1236,43 @@ function clamp(p) { return { x:Math.max(0,Math.min(S.imgW,p.x)), y:Math.max(0,Ma
 function dist2(a,b) { return Math.sqrt((b.x-a.x)**2+(b.y-a.y)**2); }
 function pathLen(pts){ let L=0; for(let i=0;i<pts.length-1;i++) L+=dist2(pts[i],pts[i+1]); return L; }
 function polyArea(pts){ let a=0; for(let i=0;i<pts.length;i++){const j=(i+1)%pts.length;a+=pts[i].x*pts[j].y-pts[j].x*pts[i].y;} return Math.abs(a)/2; }
+
+/* ── Curved-facade (cylinder) correction ───────────────────────────────────────
+   Orthophotos of round buildings are shot on one flat plane, so a stone reads true
+   size facing the camera but is foreshortened by cos θ toward the edges. devPt
+   "unrolls" the cylinder:  x → cx + R·asin((x−cx)/R)  (true arc length); y is never
+   touched. devPt is the IDENTITY when curve mode is off, so every measurement below
+   is byte-for-byte unchanged until the user switches it on. R is stored in real units. */
+function devPt(p){
+  const c=S.curve;
+  if(!c||!c.on||!(c.R>0)||c.cx==null) return p;
+  const Rpx=c.R*S.pxPerUnit, u=p.x-c.cx, t=Math.max(-1,Math.min(1,u/Rpx));
+  return { x:c.cx + Rpx*Math.asin(t), y:p.y };
+}
+function devX(x){ return devPt({x,y:0}).x; }
+function mDist(a,b){ a=devPt(a); b=devPt(b); return Math.sqrt((b.x-a.x)**2+(b.y-a.y)**2); }
+function mPath(pts){ let L=0; for(let i=0;i<pts.length-1;i++) L+=mDist(pts[i],pts[i+1]); return L; }
+function mArea(pts){ const q=pts.map(devPt); let a=0; for(let i=0;i<q.length;i++){const j=(i+1)%q.length;a+=q[i].x*q[j].y-q[j].x*q[i].y;} return Math.abs(a)/2; }
+/* Least-squares circle through ≥3 points (Kåsa). cx/cy/R in the same px as the input. */
+function fitCircle(pts){
+  const n=pts.length; if(n<3) return null;
+  let Sx=0,Sy=0,Sxx=0,Syy=0,Sxy=0,Sxz=0,Syz=0,Sz=0;
+  for(const p of pts){ const x=p.x,y=p.y,z=x*x+y*y; Sx+=x;Sy+=y;Sxx+=x*x;Syy+=y*y;Sxy+=x*y;Sxz+=x*z;Syz+=y*z;Sz+=z; }
+  const sol=solve3([[Sxx,Sxy,Sx],[Sxy,Syy,Sy],[Sx,Sy,n]],[Sxz,Syz,Sz]); if(!sol) return null;
+  const a=sol[0]/2, b=sol[1]/2, R=Math.sqrt(Math.max(0,sol[2]+a*a+b*b));
+  let e=0; for(const p of pts) e+=(Math.hypot(p.x-a,p.y-b)-R)**2;
+  return { cx:a, cy:b, R, rms:Math.sqrt(e/n) };
+}
+function solve3(m,v){          // 3×3 linear solve, Gaussian elimination with partial pivot
+  const M=m.map((r,i)=>[...r,v[i]]);
+  for(let col=0;col<3;col++){
+    let piv=col; for(let r=col+1;r<3;r++) if(Math.abs(M[r][col])>Math.abs(M[piv][col])) piv=r;
+    if(Math.abs(M[piv][col])<1e-9) return null;
+    [M[col],M[piv]]=[M[piv],M[col]];
+    for(let r=0;r<3;r++) if(r!==col){ const f=M[r][col]/M[col][col]; for(let cc=col;cc<4;cc++) M[r][cc]-=f*M[col][cc]; }
+  }
+  return [M[0][3]/M[0][0], M[1][3]/M[1][1], M[2][3]/M[2][2]];
+}
 function pxToU(px){ return px / S.pxPerUnit; }
 function fmtDist(px){
   const v=pxToU(px);
@@ -1202,6 +1334,7 @@ function renderOverlay() {
 
   S.measurements.forEach((m,i) => drawMeasurement(m, i+1));
   S.annotations.forEach(a => drawAnnotation(a));
+  drawCurveOverlay();
 
   if (S._snapPt && (S.drawing||S.dragVert)) {
     const s=imgToScreen(S._snapPt.x,S._snapPt.y);
@@ -1224,6 +1357,23 @@ function drawLabelScreen(centerImg, txt, color) {
   g.append(
     mkEl('rect',{x:c.x-w/2,y:c.y-h/2,width:w,height:h,rx:Math.max(2,fs*0.22),fill:color,'fill-opacity':'0.9'}),
     (()=>{const t=mkEl('text',{x:c.x,y:c.y+fs*0.04,'text-anchor':'middle','dominant-baseline':'middle',fill:'white','font-family':'Georgia,serif','font-weight':'700','font-size':fs,'pointer-events':'none'});t.textContent=txt;return t;})()
+  );
+  return g;
+}
+/* Live readout pill anchored by its lower-left corner at a fixed screen offset from an image
+   point — used while placing crack/polyline points so the label always grows up-and-away and
+   never sits on the point you're clicking, at any zoom or text length. */
+function drawLabelCorner(anchorImg, txt, color, dx, dy) {
+  const a = imgToScreen(anchorImg.x, anchorImg.y);
+  const fs = labelPx();
+  const padX = fs*0.45, padY = fs*0.3;
+  const w = txt.length*fs*0.56 + padX*2;
+  const h = fs + padY*2;
+  const x = a.x + dx, y = a.y + dy - h;
+  const g = mkEl('g', {});
+  g.append(
+    mkEl('rect',{x,y,width:w,height:h,rx:Math.max(2,fs*0.22),fill:color,'fill-opacity':'0.9'}),
+    (()=>{const t=mkEl('text',{x:x+w/2,y:y+h/2+fs*0.04,'text-anchor':'middle','dominant-baseline':'middle',fill:'white','font-family':'Georgia,serif','font-weight':'700','font-size':fs,'pointer-events':'none'});t.textContent=txt;return t;})()
   );
   return g;
 }
@@ -1320,7 +1470,7 @@ function drawMeasurement(m, num) {
       for (let i=0;i<m.coords.length;i++){
         const j=(i+1)%m.coords.length;
         const sa=imgToScreen(m.coords[i].x,m.coords[i].y), sb=imgToScreen(m.coords[j].x,m.coords[j].y);
-        if (Math.hypot(sb.x-sa.x,sb.y-sa.y) > 46){ const d=dist2(m.coords[i],m.coords[j]); g.append(drawEdgeLabel(m.coords[i],m.coords[j],fmtDist(d)+impTag(d),m.color,{x:cx,y:cy})); }
+        if (Math.hypot(sb.x-sa.x,sb.y-sa.y) > 46){ const d=mDist(m.coords[i],m.coords[j]); g.append(drawEdgeLabel(m.coords[i],m.coords[j],fmtDist(d)+impTag(d),m.color,{x:cx,y:cy})); }
       }
     }
     g.append(drawLabelScreen({x:cx,y:cy}, num+' · '+fmtArea(m.area), m.color));
@@ -1399,7 +1549,7 @@ function renderPreview() {
   if (S.tool==='dist' && S.distA && S.cursorImg) {
     const a=imgToScreen(S.distA.x,S.distA.y), b=imgToScreen(S.cursorImg.x,S.cursorImg.y);
     dash.append(mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:COLORS.dist,'stroke-width':DW,'stroke-dasharray':DA,fill:'none'}));
-    const len=dist2(S.distA,S.cursorImg);
+    const len=mDist(S.distA,S.cursorImg);
     dash.append(drawLabelScreen({x:(S.distA.x+S.cursorImg.x)/2,y:(S.distA.y+S.cursorImg.y)/2}, fmtDist(len)+imp(len), impColor(COLORS.dist)));
   } else if ((S.tool==='poly'||S.tool==='pline') && S.polyPts.length) {
     const pts = S.cursorImg ? [...S.polyPts, S.cursorImg] : S.polyPts;
@@ -1407,13 +1557,13 @@ function renderPreview() {
     dash.append(mkEl('polyline',{points:ptsS.map(p=>p.x+','+p.y).join(' '),stroke:col,'stroke-width':DW,'stroke-dasharray':DA,fill:'none','stroke-linejoin':'round','stroke-linecap':'round'}));
     ptsS.forEach(p=>dash.append(sCircle(p,vertPx(3),'white',col,1.3)));
     if (S.cursorImg) {
-      if (S.tool==='pline'){ const L=pathLen(pts); dash.append(drawLabelScreen({x:S.cursorImg.x+34/S.zoom, y:S.cursorImg.y-26/S.zoom}, fmtDist(L)+imp(L), impColor(COLORS.pline))); }
-      else if (pts.length>=3) { const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length, cy=pts.reduce((s,p)=>s+p.y,0)/pts.length; dash.append(drawLabelScreen({x:cx,y:cy}, fmtArea(polyArea(pts)), COLORS.poly)); }
+      if (S.tool==='pline'){ const L=mPath(pts); dash.append(drawLabelCorner(S.cursorImg, fmtDist(L)+imp(L), impColor(COLORS.pline), 18, -10)); }
+      else if (pts.length>=3) { const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length, cy=pts.reduce((s,p)=>s+p.y,0)/pts.length; dash.append(drawLabelScreen({x:cx,y:cy}, fmtArea(mArea(pts)), COLORS.poly)); }
     }
   } else if (S.tool==='rect' && S.rectA && S.cursorImg) {
     const a=imgToScreen(S.rectA.x,S.rectA.y), b=imgToScreen(S.cursorImg.x,S.cursorImg.y);
     dash.append(mkEl('rect',{x:Math.min(a.x,b.x),y:Math.min(a.y,b.y),width:Math.abs(b.x-a.x),height:Math.abs(b.y-a.y),stroke:COLORS.rect,'stroke-width':DW,'stroke-dasharray':DA,fill:'none'}));
-    const w=Math.abs(S.cursorImg.x-S.rectA.x), h=Math.abs(S.cursorImg.y-S.rectA.y);
+    const w=Math.abs(devX(S.cursorImg.x)-devX(S.rectA.x)), h=Math.abs(S.cursorImg.y-S.rectA.y);
     let it=''; if(S.imp.on){ const r1=impInfo(w), r2=impInfo(h); if(r1&&r2){ it=' · '+r1.label+'×'+r2.label; if(r1.match&&r2.match) liveMatch=true; } }
     dash.append(drawLabelScreen({x:(S.rectA.x+S.cursorImg.x)/2,y:(S.rectA.y+S.cursorImg.y)/2}, fmtDist(w)+'×'+fmtDist(h)+it, impColor(COLORS.rect)));
   } else if (S.tool==='calib' && S.calibA && S.cursorImg) {
@@ -1436,7 +1586,7 @@ function setTool(t) {
   document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
   const btn=document.getElementById('tool-'+t);
   if(btn) btn.classList.add('active');
-  const names={pan:'Pan / Select',edit:'Edit points',dist:'Distance',pline:'Polyline',poly:'Polygon',rect:'Rectangle',point:'Point marker',annot:'Annotation',calib:'Set scale'};
+  const names={pan:'Pan / Select',edit:'Edit points',dist:'Distance',pline:'Polyline',poly:'Polygon',rect:'Rectangle',point:'Point marker',annot:'Annotation',calib:'Set scale',curvefit:'Fit radius',curvecentre:'Set centre line'};
   sTool.textContent=names[t]||t;
   if (t==='edit') {
     if (!S.editId && S.selectedId && S.measurements.find(m=>m.id===S.selectedId)) enterEdit(S.selectedId);
@@ -1506,7 +1656,7 @@ wrap.addEventListener('mousedown', e => {
 });
 
 wrap.addEventListener('mousemove', e => {
-  if (S.panning) { S.panX=_ppx+(e.clientX-_px0); S.panY=_ppy+(e.clientY-_py0); applyXform(); return; }
+  if (S.panning) { S.panX=_ppx+(e.clientX-_px0); S.panY=_ppy+(e.clientY-_py0); markInteracting(); applyXform(); return; }
   if (!S.loaded) return;
   S.shiftDown=e.shiftKey; S.altDown=e.altKey; S._snapPt=null;
   const p = clamp(toImg(e.clientX, e.clientY));
@@ -1523,13 +1673,13 @@ wrap.addEventListener('mousemove', e => {
   }
 
   if (S.drawing) { S.cursorImg=adjustPoint(p); scheduleRender();
-    if (S.tool==='dist'&&S.distA) msg('Length: '+fmtDist(dist2(S.distA,S.cursorImg)));
+    if (S.tool==='dist'&&S.distA) msg('Length: '+fmtDist(mDist(S.distA,S.cursorImg)));
     if (S.tool==='calib'&&S.calibA) msg('Reference: '+Math.round(dist2(S.calibA,p))+' px');
   }
 });
 
 window.addEventListener('mouseup', e => {
-  if (S.panning) { S.panning=false; setCursor(); return; }
+  if (S.panning) { S.panning=false; _interacting=false; if(_settleT)clearTimeout(_settleT); scheduleRender(); setCursor(); return; }
   if (S.dragVert) { S.dragVert=null; S._snapPt=null; setCursor(); scheduleRender(); return; }
   if (!S.loaded||e.button!==0) return;
 });
@@ -1537,6 +1687,7 @@ window.addEventListener('mouseup', e => {
 wrap.addEventListener('dblclick', e => {
   if (!S.loaded) return;
   if ((S.tool==='poly'||S.tool==='pline')&&S.drawing) finishPolyish();
+  else if (S.tool==='curvefit') finishCurveFit();
 });
 wrap.addEventListener('auxclick', e => { if (e.button===1) e.preventDefault(); });
 wrap.addEventListener('contextmenu', e => {
@@ -1585,6 +1736,10 @@ function toolDown(p, e) {
   } else if (S.tool==='calib') {
     if(!S.drawing){ S.drawing=true; S.calibA=p; S.cursorImg=p; showBanner('Marking <b>scale reference</b> · click the other end · <span class="kbd">Esc</span> cancels'); scheduleRender(); }
     else { const d=dist2(S.calibA,p); S.drawing=false; S.cursorImg=null; hideBanner(); S.calibA=null; scheduleRender(); if(d>2) openScaleDialog(d); else msg('That reference is too short — zoom in and try again.'); }
+  } else if (S.tool==='curvefit') {
+    S.curve._pts.push({x:p.x,y:p.y}); S.cursorImg=p; scheduleRender();
+  } else if (S.tool==='curvecentre') {
+    setCurveCentre(p);
   }
 }
 
@@ -1700,7 +1855,7 @@ function nAid(){ return 'A'+(++S.aCtr); }
 
 function finishDist(b){
   S.drawing=false; S.cursorImg=null; hideBanner();
-  const d=dist2(S.distA,b);
+  const d=mDist(S.distA,b);
   const m={id:nMid(),type:'dist',coords:[S.distA,b],label:'Distance '+S.mCtr,note:'',color:COLORS.dist,value:d};
   pushH(); S.measurements.push(m); refreshMList(); scheduleRender();
   msg('Distance: '+fmtDist(d)); selectM(m.id,false);
@@ -1711,12 +1866,12 @@ function finishPolyish(){
   S.drawing=false; S.cursorImg=null; hideBanner();
   const pts=S.polyPts.slice();
   if (isLine){
-    const L=pathLen(pts);
+    const L=mPath(pts);
     const m={id:nMid(),type:'pline',coords:pts,label:'Crack '+S.mCtr,note:'',color:COLORS.pline,length:L};
     pushH(); S.measurements.push(m); refreshMList(); scheduleRender();
     S.polyPts=[]; msg('Crack length: '+fmtDist(L)); selectM(m.id,false);
   } else {
-    const area=polyArea(pts);
+    const area=mArea(pts);
     const m={id:nMid(),type:'poly',coords:pts,label:'Area '+S.mCtr,note:'',color:COLORS.poly,area};
     pushH(); S.measurements.push(m); refreshMList(); scheduleRender();
     S.polyPts=[]; msg('Area: '+fmtArea(area)); selectM(m.id,false);
@@ -1725,30 +1880,120 @@ function finishPolyish(){
 function finishRect(a,b){
   const x=Math.min(a.x,b.x),y=Math.min(a.y,b.y),w=Math.abs(b.x-a.x),h=Math.abs(b.y-a.y);
   const pts=[{x,y},{x:x+w,y},{x:x+w,y:y+h},{x,y:y+h}];
-  const m={id:nMid(),type:'rect',coords:pts,rectW:w,rectH:h,label:'Rect '+S.mCtr,note:'',color:COLORS.rect,area:w*h};
+  const m={id:nMid(),type:'rect',coords:pts,label:'Rect '+S.mCtr,note:'',color:COLORS.rect};
+  recompute(m);   // fills rectW / rectH / area (curve-corrected when curve mode is on)
   pushH(); S.measurements.push(m); refreshMList(); scheduleRender();
-  msg(fmtDist(w)+' × '+fmtDist(h)+' = '+fmtArea(w*h)); selectM(m.id,false);
+  msg(fmtDist(m.rectW)+' × '+fmtDist(m.rectH)+' = '+fmtArea(m.area)); selectM(m.id,false);
 }
 function addPoint(p){
   const m={id:nMid(),type:'point',coords:[p],label:'Point '+S.mCtr,note:'',color:COLORS.point};
   pushH(); S.measurements.push(m); refreshMList(); scheduleRender(); selectM(m.id,false);
 }
-function cancelDraw(){ S.drawing=false; S.polyPts=[]; S.distA=null; S.rectA=null; S.calibA=null; S.cursorImg=null; hideBanner(); scheduleRender(); }
+function cancelDraw(){ S.drawing=false; S.polyPts=[]; S.distA=null; S.rectA=null; S.calibA=null; S.cursorImg=null; if(S.curve)S.curve._pts=[]; hideBanner(); scheduleRender(); }
+
+/* ═══════════════════════════════════════════════════
+   CURVED FACADE  — cylinder-unwrap correction (UI + capture)
+═══════════════════════════════════════════════════ */
+function updateCurveUI(){
+  const cb=document.getElementById('curve-on'); if(!cb) return;
+  const ready=S.curve.R>0;
+  cb.disabled=!ready; cb.checked=!!S.curve.on && ready;
+  const btn=document.getElementById('btn-curve'); if(btn) btn.classList.toggle('active', !!S.curve.on);
+}
+function openCurveDialog(){
+  if(!S.loaded){ msg('Open an image first.'); return; }
+  const c=S.curve, rv=c.R>0?(+c.R.toFixed(1)):'';
+  const centreTxt = c.cx!=null ? ('set · x = '+Math.round(c.cx)+' px') : 'not set — defaults to image centre';
+  const html=
+    '<div class="modal-title">Curved facade correction</div>'+
+    '<div class="modal-sub">For orthophotos of round buildings shot on one flat plane. Set the wall radius and centre line, then measurements read true arc length along the wall. Vertical is unaffected.</div>'+
+    '<div style="display:flex;align-items:center;gap:8px;margin:14px 0 6px;flex-wrap:wrap"><label style="min-width:84px;color:#5a534a">Radius R</label>'+
+      '<input type="number" id="_cr" value="'+rv+'" min="1" step="any" placeholder="e.g. 12450" style="width:120px">'+
+      '<span style="color:#8a7a68">'+esc(S.unit)+'</span>'+
+      '<button class="btn-sm" id="_cfit">⌒ Fit from cross-section…</button></div>'+
+    '<div style="display:flex;align-items:center;gap:8px;margin:6px 0 4px;flex-wrap:wrap"><label style="min-width:84px;color:#5a534a">Centre line</label>'+
+      '<span id="_ccs" style="color:#5a534a;flex:1;min-width:140px">'+centreTxt+'</span>'+
+      '<button class="btn-sm" id="_cset">◎ Set on image…</button></div>'+
+    '<div class="modal-acts"><button class="btn-sm primary" id="_cdone">Done</button></div>';
+  const {ov,card,close}=modalShell(html);
+  const closeIt=()=>{ document.removeEventListener('keydown',key,true); close(); };
+  function key(e){ if(e.key==='Escape'){ e.stopPropagation(); closeIt(); } }
+  card.querySelector('#_cr').addEventListener('change',e=>{ const v=parseFloat(e.target.value); if(v>0){ S.curve.R=v; recomputeAll(); updateCurveUI(); } });
+  card.querySelector('#_cfit').onclick=()=>{ closeIt(); startCurveFit(); };
+  card.querySelector('#_cset').onclick=()=>{ closeIt(); startCurveCentre(); };
+  card.querySelector('#_cdone').onclick=closeIt;
+  ov.addEventListener('mousedown',e=>{ if(e.target===ov) closeIt(); });
+  document.addEventListener('keydown',key,true);
+  setTimeout(()=>{ const i=card.querySelector('#_cr'); if(i) i.focus(); },0);
+}
+function startCurveFit(){
+  S.curve._pts=[]; S.curve._fit=null; setTool('curvefit');
+  showBanner('Fitting radius · click <b>3 or more points</b> along the curved wall (best on the plan cross-section) · <span class="kbd">Enter</span>/<span class="kbd">double-click</span> to fit · <span class="kbd">Esc</span> cancels');
+  msg('Click along the curve, then Enter to fit the radius.'); scheduleRender();
+}
+function finishCurveFit(){
+  const pts=(S.curve._pts||[]).slice();
+  if(pts.length<3){ msg('Need at least 3 points along the curve to fit a radius.'); return; }
+  const fit=fitCircle(pts);
+  if(!fit||!(fit.R>0)||!isFinite(fit.R)){ msg('Could not fit a circle — spread the points along the curve and try again.'); S.curve._pts=[]; setTool('pan'); hideBanner(); scheduleRender(); return; }
+  S.curve.R = fit.R / S.pxPerUnit;                       // store in real units
+  S.curve._fit = { cx:fit.cx, cy:fit.cy, R:fit.R };
+  S.curve._pts=[]; setTool('pan'); hideBanner(); recomputeAll(); updateCurveUI();
+  msg('Radius ≈ '+fmtDist(fit.R)+'  (fit from '+pts.length+' points · residual ±'+fit.rms.toFixed(1)+' px)');
+  openCurveDialog();
+}
+function startCurveCentre(){
+  setTool('curvecentre');
+  showBanner('Click the column/feature that faces straight on — the centre of the curve (θ = 0) · <span class="kbd">Esc</span> cancels');
+  msg('Click the dead-on centre of the facade.');
+}
+function setCurveCentre(p){
+  S.curve.cx=p.x; setTool('pan'); hideBanner(); recomputeAll(); updateCurveUI();
+  msg('Centre line set at x = '+Math.round(p.x)+' px'); openCurveDialog();
+}
+function drawCurveOverlay(){
+  const c=S.curve; if(!c) return;
+  const g=mkEl('g',{});
+  if(S.tool==='curvefit' && c._pts && c._pts.length){
+    const ps=c._pts.map(p=>imgToScreen(p.x,p.y));
+    if(ps.length>1) g.append(mkEl('polyline',{points:ps.map(p=>p.x+','+p.y).join(' '),stroke:'#1e6fae','stroke-width':strokePx(1.5),fill:'none','stroke-dasharray':'5,4'}));
+    ps.forEach(p=>g.append(sCircle(p,Math.max(3,vertPx(3.4)),'#fff','#1e6fae',1.6)));
+  }
+  if(c._fit){
+    const ctr=imgToScreen(c._fit.cx,c._fit.cy), rr=c._fit.R*S.zoom;
+    if(isFinite(rr)&&rr<200000) g.append(mkEl('circle',{cx:ctr.x,cy:ctr.y,r:rr,fill:'none',stroke:'#1e6fae','stroke-width':strokePx(1.4),'stroke-dasharray':'8,6','stroke-opacity':'0.85'}));
+  }
+  if(c.on && c.cx!=null){
+    const x=imgToScreen(c.cx,0).x;
+    g.append(mkEl('line',{x1:x,y1:0,x2:x,y2:wrap.clientHeight,stroke:COLORS.rect,'stroke-width':strokePx(1.2),'stroke-dasharray':'9,7','stroke-opacity':'0.5'}));
+  }
+  if(g.childNodes.length) svg.appendChild(g);
+}
+document.getElementById('btn-curve').addEventListener('click', openCurveDialog);
+document.getElementById('curve-on').addEventListener('change', e=>{
+  if(e.target.checked){
+    if(!(S.curve.R>0)){ e.target.checked=false; msg('Set a radius first — open Curve setup.'); openCurveDialog(); return; }
+    if(S.curve.cx==null) S.curve.cx=S.imgW/2;
+    S.curve.on=true;
+  } else S.curve.on=false;
+  recomputeAll(); updateCurveUI();
+});
 function recompute(m){
-  if(m.type==='dist') m.value=dist2(m.coords[0],m.coords[1]);
-  if(m.type==='pline') m.length=pathLen(m.coords);
-  if(m.type==='poly') m.area=polyArea(m.coords);
+  if(m.type==='dist') m.value=mDist(m.coords[0],m.coords[1]);
+  if(m.type==='pline') m.length=mPath(m.coords);
+  if(m.type==='poly') m.area=mArea(m.coords);
   if(m.type==='rect'){
     // Vertices edit freely (stones aren't always square). Width/height are the mean of
     // the opposite edges, and AREA is the true quadrilateral area — accurate when skewed.
-    const c=m.coords, side=(a,b)=>dist2(c[a],c[b]);
+    const c=m.coords, side=(a,b)=>mDist(c[a],c[b]);
     m.rectW=(side(0,1)+side(2,3))/2;
     m.rectH=(side(1,2)+side(3,0))/2;
-    m.area=polyArea(c);
+    m.area=mArea(c);
   }
 }
+function recomputeAll(){ S.measurements.forEach(recompute); refreshMList(); scheduleRender(); }
 /* The 4 edge lengths of a rectangle, in order top·right·bottom·left (image px). */
-function rectSides(m){ const c=m.coords, d=(a,b)=>dist2(c[a],c[b]); return [d(0,1),d(1,2),d(2,3),d(3,0)]; }
+function rectSides(m){ const c=m.coords, d=(a,b)=>mDist(c[a],c[b]); return [d(0,1),d(1,2),d(2,3),d(3,0)]; }
 /* True while opposite sides stay equal — i.e. still a clean length × width. */
 function rectSymmetric(m){ const s=rectSides(m), eq=(a,b)=>Math.abs(a-b)<=0.5; return eq(s[0],s[2])&&eq(s[1],s[3]); }   // perfectly rectangular or not
 /* Shift-dragging a rect corner: pin the diagonally-opposite corner and hold all four corners
@@ -1840,7 +2085,7 @@ function openScaleDialog(pixelDist){
     S._calibUnit=uSel.value;
     S.pxPerUnit=pixelDist/mm; S.unit='mm';
     pxInp.value=Number(S.pxPerUnit.toPrecision(6)); unitSel.value='mm';
-    refreshMList(); scheduleRender();
+    recomputeAll(); updateScaleChip();
     if(S._lastFile) updateInfoPanel(S._lastFile);
     msg('Scale set — measuring in mm (1 mm = '+S.pxPerUnit.toPrecision(4)+' px, from a '+Math.round(pixelDist)+' px reference)');
     close();
@@ -1992,10 +2237,23 @@ function switchTab(name){
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+name));
 }
 document.querySelectorAll('.stab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
-pxInp.addEventListener('change',()=>{ S.pxPerUnit=parseFloat(pxInp.value)||1; refreshMList(); scheduleRender(); });
-unitSel.addEventListener('change',()=>{ S.unit=unitSel.value; refreshMList(); scheduleRender(); });
+pxInp.addEventListener('change',()=>{ S.pxPerUnit=parseFloat(pxInp.value)||1; recomputeAll(); updateScaleChip(); });
+unitSel.addEventListener('change',()=>{ S.unit=unitSel.value; recomputeAll(); updateScaleChip(); });
 document.getElementById('btn-calib').addEventListener('click',()=>{ if(!S.loaded){ msg('Open an image first, then mark a known distance to set the scale.'); return; } setTool('calib'); });
 document.getElementById('imp-on').addEventListener('change', e=>{ S.imp.on=e.target.checked; document.getElementById('imp-unit').disabled=!S.imp.on; refreshMList(); scheduleRender(); });
+
+/* ── Header dropdown menus (scale & units · export) ── */
+function updateScaleChip(){ const el=document.getElementById('scale-chip'); if(el) el.textContent=(+(+S.pxPerUnit).toPrecision(4))+' px/'+S.unit; }
+function closeAllMenus(){ document.querySelectorAll('.menu.open').forEach(m=>m.classList.remove('open')); }
+document.querySelectorAll('.menu-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{ const menu=btn.closest('.menu'), open=menu.classList.contains('open'); closeAllMenus(); if(!open){ menu.classList.add('open'); if(menu.id==='menu-scale') updateScaleChip(); } });
+});
+document.addEventListener('click', e=>{
+  if(e.target.closest('.menu-btn')) return;                    // the button toggles itself
+  if(e.target.closest('.menu-close') || !e.target.closest('.menu')) closeAllMenus();
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeAllMenus(); }, true);
+updateScaleChip();
 document.getElementById('imp-unit').addEventListener('change', e=>{ S.imp.unit=e.target.value; refreshMList(); scheduleRender(); });
 document.getElementById('btn-help').addEventListener('click', showHelp);
 function showHelp(){
@@ -2149,7 +2407,7 @@ function drawMeasOnCanvas(g,m,mx,my,lw,fs,mode,num,edges){
   if(m.type!=='point') P.forEach(p=>{ g.beginPath(); g.arc(p.x,p.y,Math.max(2,lw*1.0),0,Math.PI*2); g.fillStyle='#fff'; g.fill(); g.lineWidth=Math.max(1,lw*0.6); g.strokeStyle=m.color; g.stroke(); });
   if(edges && m.type==='rect'){
     const efs=Math.max(16, fs*1.5);
-    for(let i=0;i<m.coords.length;i++){ const j=(i+1)%m.coords.length; drawEdgeLabelCanvas(g, mx(m.coords[i].x),my(m.coords[i].y), mx(m.coords[j].x),my(m.coords[j].y), fmtDist(dist2(m.coords[i],m.coords[j])), m.color, efs); }
+    for(let i=0;i<m.coords.length;i++){ const j=(i+1)%m.coords.length; drawEdgeLabelCanvas(g, mx(m.coords[i].x),my(m.coords[i].y), mx(m.coords[j].x),my(m.coords[j].y), fmtDist(mDist(m.coords[i],m.coords[j])), m.color, efs); }
   }
   const c=outCentroid(P,m.type);
   if(mode==='label') drawTag(g,c.x,c.y,labelText(m),m.color,fs);
@@ -2402,7 +2660,7 @@ const imgGet=id=>idbDo('img','readonly',s=>s.get(id));
 const imgPut=(id,blob)=>idbDo('img','readwrite',s=>s.put(blob,id));
 const imgDel=id=>idbDo('img','readwrite',s=>s.delete(id));
 
-function stateSig(){ return S.unit+'|'+S.pxPerUnit+'|'+JSON.stringify(S.measurements)+'|'+JSON.stringify(S.annotations); }
+function stateSig(){ return S.unit+'|'+S.pxPerUnit+'|'+JSON.stringify(S.measurements)+'|'+JSON.stringify(S.annotations)+'|'+JSON.stringify({on:S.curve.on,R:S.curve.R,cx:S.curve.cx}); }
 function makeThumb(){ try{ if(!sourceBitmap)return ''; const w=300; return compositeRegion({sx:0,sy:0,sw:S.imgW,sh:S.imgH}, w, S.measurements, S.annotations, false, {mode:'badge', fontS:Math.max(11,Math.round(w/15)), strokeW:Math.max(2,w/110)}); }catch(e){ return ''; } }
 async function persistProject(nameOverride){
   if(!S.projectId) return;
@@ -2411,7 +2669,7 @@ async function persistProject(nameOverride){
     created:(existing&&existing.created)||Date.now(), updated:Date.now(),
     unit:S.unit, pxPerUnit:S.pxPerUnit, calibUnit:S._calibUnit||'m',
     imgW:S.imgW, imgH:S.imgH, imgName:(S._lastFile&&S._lastFile.name)||'image', imgSize:(S._imageBlob&&S._imageBlob.size)||0,
-    measurements:S.measurements, annotations:S.annotations, mCtr:S.mCtr, aCtr:S.aCtr, thumb:makeThumb() };
+    measurements:S.measurements, annotations:S.annotations, mCtr:S.mCtr, aCtr:S.aCtr, curve:{on:S.curve.on,R:S.curve.R,cx:S.curve.cx}, thumb:makeThumb() };
   await metaPut(rec); _lastSig=stateSig();
 }
 async function saveProject(){
@@ -2454,8 +2712,9 @@ async function loadRestored(blob, rec, projectId){
     await buildOverview(sourceBitmap);
     S.measurements=rec.measurements||[]; S.annotations=rec.annotations||[]; S.mCtr=rec.mCtr||S.measurements.length; S.aCtr=rec.aCtr||S.annotations.length;
     S.unit=rec.unit||'mm'; S.pxPerUnit=rec.pxPerUnit||1; S._calibUnit=rec.calibUnit||'m';
+    S.curve={on:!!(rec.curve&&rec.curve.on), R:(rec.curve&&rec.curve.R)||0, cx:(rec.curve&&rec.curve.cx!=null)?rec.curve.cx:null, _fit:null, _pts:[]}; updateCurveUI();
     S.projectId=projectId||null; S.selectedId=null; S.editId=null; S.history=[];
-    pxInp.value=Number(S.pxPerUnit.toPrecision(6)); unitSel.value=(['mm','cm','m','ft','in','px'].includes(S.unit)?S.unit:'mm');
+    pxInp.value=Number(S.pxPerUnit.toPrecision(6)); unitSel.value=(['mm','cm','m','ft','in','px'].includes(S.unit)?S.unit:'mm'); updateScaleChip();
     hideLibrary(true); dropOvl.classList.add('hidden');
     resizeCanvas(); fitView(); updateInfoPanel(S._lastFile); refreshMList(); refreshAList(); updateSaveBtn();
     _lastSig=stateSig();
