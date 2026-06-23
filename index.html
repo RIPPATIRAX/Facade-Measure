@@ -1422,7 +1422,7 @@ function renderOverlay() {
   // Rubber-band preview while drawing
   if (S.drawing) renderPreview();
 
-  S.measurements.forEach((m,i) => { if(layerVisible(m.layer)) drawMeasurement(m, i+1); });
+  S.measurements.forEach((m,i) => { if(layerVisible(m.layer)) drawMeasurement(m, m.n||(i+1)); });
   if(layerVisible('condition')) S.annotations.forEach(a => drawAnnotation(a));
   drawCurveOverlay();
 
@@ -2240,6 +2240,25 @@ function openScaleDialog(pixelDist){
 /* ═══════════════════════════════════════════════════
    SIDEBAR LISTS
 ═══════════════════════════════════════════════════ */
+/* The number family a default label belongs to (Stone / Defect / Distance …). */
+function defaultPrefix(m){
+  if(m.layer==='proposed') return 'Stone';
+  if(m.layer==='condition') return 'Defect';
+  return ({dist:'Distance',pline:'Crack',poly:'Area',rect:'Rect',point:'Point',refline:'Ref line',refcircle:'Ref circle'})[m.type]||'Item';
+}
+function isAutoLabel(m,p){ return !m.named && (!m.label || new RegExp('^'+p+' \\d+$').test(m.label)); }
+/* Keep auto labels gap-free per family so deleting a stone doesn't leave a hole in the schedule.
+   m.n is the number shown on each item's badge; custom (renamed) labels are left untouched. */
+function renumberLabels(){
+  const seq={};
+  S.measurements.forEach(m=>{
+    const p=defaultPrefix(m);
+    seq[p]=(seq[p]||0)+1;
+    m.n=seq[p];
+    if(isAutoLabel(m,p)) m.label=p+' '+m.n;
+  });
+  S.annotations.forEach((a,i)=>{ a.num=i+1; });
+}
 function layerHint(k){ return k==='proposed'?'Outline a stone, then set its action.':k==='condition'?'Mark cracks, spalls & weathering.':'Use the measurement tools on the left.'; }
 function classRow(m){
   if(m.layer==='proposed') return '<div class="m-class"><select class="m-class-sel" data-class="'+m.id+'">'+ACTIONS.map(a=>'<option value="'+a.key+'"'+(m.action===a.key?' selected':'')+'>'+a.label+'</option>').join('')+'</select></div>';
@@ -2253,6 +2272,7 @@ function setItemClass(id, key){
   refreshMList(); scheduleRender();
 }
 function refreshMList(){
+  renumberLabels();
   const active=S.layers.active;
   const items=S.measurements.filter(m=>(m.layer||'measure')===active);
   if(!items.length){ mList.innerHTML='<div class="empty-state">Nothing in <b>'+esc(layerName(active))+'</b> yet.<br>'+layerHint(active)+'</div>'; return; }
@@ -2279,7 +2299,7 @@ function refreshMList(){
     div.addEventListener('mouseleave',()=>{ if(S._hover===m.id){ S._hover=null; scheduleRender(); }});
     div.innerHTML=`
       <div class="m-head">
-        <div class="m-dot" style="background:${m.color}">${i+1}</div>
+        <div class="m-dot" style="background:${m.color}">${m.n||(i+1)}</div>
         <span class="m-label" id="lbl${m.id}">${esc(m.label)}</span>
         <span class="m-tag">${types[m.type]||m.type}</span>
       </div>
@@ -2363,7 +2383,7 @@ function renM(id){
   const el=document.getElementById('lbl'+id); if(!el) return;
   const inp=document.createElement('input'); inp.className='inline-edit'; inp.value=m.label;
   el.replaceWith(inp); inp.focus(); inp.select();
-  const done=()=>{ m.label=inp.value.trim()||m.label; refreshMList(); scheduleRender(); };
+  const done=()=>{ const v=inp.value.trim(); if(v){ m.label=v; m.named=true; } refreshMList(); scheduleRender(); };
   inp.onblur=done;
   inp.onkeydown=e=>{ e.stopPropagation(); if(e.key==='Enter') done(); if(e.key==='Escape') refreshMList(); };
 }
@@ -2388,7 +2408,7 @@ function dupM(id){
 function delA(id){
   pushH(); S.annotations=S.annotations.filter(x=>x.id!==id);
   if(S.selectedId===id) S.selectedId=null;
-  refreshAList(); scheduleRender();
+  renumberLabels(); refreshAList(); scheduleRender();
 }
 
 /* ═══════════════════════════════════════════════════
