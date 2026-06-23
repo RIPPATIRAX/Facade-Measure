@@ -378,6 +378,30 @@ header {
   box-shadow: var(--shadow-md);
 }
 .label-size-ctrl input[type=range] { width: 80px; }
+.label-size-ctrl { right: 56px; }
+.info-toggle {
+  position: absolute; bottom: 14px; right: 14px;
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--border2); background: var(--surface);
+  color: var(--text2); font-family: Georgia, serif; font-style: italic; font-size: 16px; font-weight: 700;
+  cursor: pointer; z-index: 31; box-shadow: var(--shadow-md);
+  display: flex; align-items: center; justify-content: center;
+}
+.info-toggle:hover, .info-toggle.active { background: var(--surface2); color: var(--accent); border-color: var(--text3); }
+.info-pop {
+  position: absolute; bottom: 56px; right: 14px;
+  width: 258px; max-height: 64%; overflow: auto;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 11px; box-shadow: var(--shadow-lg);
+  padding: 11px 13px; z-index: 32; display: none; font-size: 12px;
+}
+.info-pop.show { display: block; }
+.ip-sec { font-size: 10px; letter-spacing: .07em; text-transform: uppercase; color: var(--text3); margin: 11px 0 4px; }
+.ip-sec:first-child { margin-top: 0; }
+.ip-on { color: var(--accent); text-transform: none; letter-spacing: 0; }
+.ip-row { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; color: var(--text2); }
+.ip-row b { color: var(--text); font-weight: 700; text-align: right; }
+.ip-empty { color: var(--text3); }
 
 /* SIDEBAR */
 .sidebar {
@@ -405,6 +429,20 @@ header {
 }
 .stab:hover { color: var(--text2); background: var(--surface2); }
 .stab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+.layers-panel { padding: 6px 7px; border-bottom: 1px solid var(--border); background: linear-gradient(var(--surface), #fbf9f6); }
+.layers-title { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text3); padding: 3px 5px 5px; }
+.layer-row { display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: 7px; cursor: pointer; transition: background .1s; }
+.layer-row:hover { background: var(--surface2); }
+.layer-row.active { background: var(--accent-light); box-shadow: inset 3px 0 0 var(--accent); }
+.layer-row.hidden-layer .layer-name, .layer-row.hidden-layer .layer-count { opacity: .42; }
+.layer-eye { width: 18px; height: 16px; display: inline-flex; align-items: center; justify-content: center; color: var(--text3); flex-shrink: 0; }
+.layer-eye:hover { color: var(--text); }
+.layer-name { font-size: 13px; flex: 1; color: var(--text); }
+.layer-row.active .layer-name { font-weight: 700; color: var(--accent-deep); }
+.layer-count { font-size: 11px; color: var(--text3); font-variant-numeric: tabular-nums; }
+.m-class { margin: 7px 0 3px; }
+.m-class-sel { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font-size: 12px; font-family: Georgia, serif; cursor: pointer; }
+.m-class-sel:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 0 3px var(--accent-light); }
 .sidebar-body { flex: 1; overflow-y: auto; }
 .tab-panel { display: none; padding: 10px; }
 .tab-panel.active { display: block; }
@@ -698,19 +736,19 @@ header {
 
     <div class="tool-sep"></div>
 
-    <button class="tool-btn" id="tool-dist" data-tip="Distance  [D]">
+    <button class="tool-btn" id="tool-dist" data-layers="measure" data-tip="Distance  [D]">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-dist)" stroke-width="2" stroke-linecap="round">
         <line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="8" x2="4" y2="16"/><line x1="20" y1="8" x2="20" y2="16"/>
       </svg>
     </button>
 
-    <button class="tool-btn" id="tool-rect" data-tip="Rectangle  [R]">
+    <button class="tool-btn" id="tool-rect" data-layers="measure condition proposed" data-tip="Rectangle  [R]">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-rect)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="3" y="6" width="18" height="12" rx="1"/>
       </svg>
     </button>
 
-    <button class="tool-btn" id="tool-pline" data-tip="Crack length / polyline  [L]">
+    <button class="tool-btn" id="tool-pline" data-layers="measure condition" data-tip="Crack length / polyline  [L]">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-pline)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="3,17 8,9 13,14 21,5"/>
         <circle cx="3" cy="17" r="1.4" fill="var(--c-pline)"/><circle cx="8" cy="9" r="1.4" fill="var(--c-pline)"/>
@@ -718,21 +756,33 @@ header {
       </svg>
     </button>
 
-    <button class="tool-btn" id="tool-poly" data-tip="Polygon area  [P]">
+    <button class="tool-btn" id="tool-poly" data-layers="measure condition proposed" data-tip="Polygon area / stone  [P]">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-poly)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="12,3 21,8.5 21,15.5 12,21 3,15.5 3,8.5"/>
       </svg>
     </button>
 
+    <button class="tool-btn" id="tool-refline" data-layers="measure" data-tip="Reference line  [G]">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="20" x2="21" y2="4" stroke-dasharray="3.5,3"/><circle cx="3" cy="20" r="1.6" fill="#5a534a"/><circle cx="21" cy="4" r="1.6" fill="#5a534a"/>
+      </svg>
+    </button>
+
+    <button class="tool-btn" id="tool-refcircle" data-layers="measure" data-tip="Reference circle">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="8" stroke-dasharray="3.5,3"/><circle cx="12" cy="12" r="1.5" fill="#5a534a"/>
+      </svg>
+    </button>
+
     <div class="tool-sep"></div>
 
-    <button class="tool-btn" id="tool-point" data-tip="Point marker  [M]">
+    <button class="tool-btn" id="tool-point" data-layers="measure condition" data-tip="Point marker  [M]">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-point)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
       </svg>
     </button>
 
-    <button class="tool-btn" id="tool-annot" data-tip="Annotation  [A]">
+    <button class="tool-btn" id="tool-annot" data-layers="condition" data-tip="Annotation  [A]">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-annot)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
       </svg>
@@ -804,9 +854,13 @@ header {
       <span>Label size</span>
       <input type="range" id="label-size" min="0.7" max="2" step="0.1" value="1.1">
     </div>
+
+    <div class="info-pop" id="info-pop"></div>
+    <button class="info-toggle" id="info-toggle" title="Image & survey details" aria-label="Image and survey details">i</button>
   </div>
 
   <div class="sidebar">
+    <div class="layers-panel" id="layers-panel"></div>
     <div class="sidebar-tabs">
       <div class="stab active" data-tab="measurements">Measurements</div>
       <div class="stab" data-tab="annotations">Notes</div>
@@ -868,6 +922,7 @@ const S = {
   imp: { on:false, unit:'in' },   // read-only imperial confirmation companion (mm always stays the truth)
   calibA: null,         // first point when setting scale from the image
   curve: { on:false, R:0, cx:null, _fit:null, _pts:[] },   // curved-facade (cylinder) correction — R in real units, cx = centre-line x (px)
+  layers: { active:'measure', vis:{ measure:true, condition:true, proposed:true } },   // V16 working layers
 };
 
 const COLORS = { dist:'#c0392b', poly:'#2055c0', rect:'#7020b0', point:'#c07020', annot:'#c4991a', pline:'#0a8a6a' };
@@ -875,6 +930,40 @@ const CAT_COL = {
   'General note':'#c4991a','Crack':'#c0392b','Spall':'#7020b0','Weathering':'#2055b0','Previous repair':'#207a40',
 };
 const AREA_M2_THRESHOLD_MM2 = 250000;
+
+/* ── V16: layers + classification taxonomy ───────────────────────────────── */
+const LAYER_DEFS = [
+  { key:'measure',   name:'Measurement',       tip:'Dimensions & reference lines' },
+  { key:'condition', name:'Existing condition', tip:'Cracks, spalls, weathering — what’s there now' },
+  { key:'proposed',  name:'Proposed works',     tip:'Stones marked for repair / replacement' },
+];
+/* Proposed-works actions, ordered most → least severe; colours run red → green. WSR is the default. */
+const ACTIONS = [
+  { key:'wsr',     label:'Whole stone replacement', short:'WSR',     color:'#c0392b' },
+  { key:'indent',  label:'Indent / piecing-in',     short:'Indent',  color:'#e07b1a' },
+  { key:'mortar',  label:'Mortar repair',           short:'Repair',  color:'#c9a227' },
+  { key:'repoint', label:'Repoint',                 short:'Repoint', color:'#7f9c2a' },
+  { key:'monitor', label:'Monitor',                 short:'Monitor', color:'#3f8f4f' },
+];
+const ACTION_BY = Object.fromEntries(ACTIONS.map(a=>[a.key,a]));
+/* Existing-condition categories (reuse the defect palette). */
+const CONDITIONS = [
+  { key:'crack',   label:'Crack',           color:'#c0392b' },
+  { key:'spall',   label:'Spall',           color:'#7020b0' },
+  { key:'weather', label:'Weathering',      color:'#2055b0' },
+  { key:'prevrep', label:'Previous repair', color:'#207a40' },
+  { key:'note',    label:'General note',    color:'#c4991a' },
+];
+const COND_BY = Object.fromEntries(CONDITIONS.map(c=>[c.key,c]));
+function layerName(k){ const d=LAYER_DEFS.find(x=>x.key===k); return d?d.name:k; }
+function layerVisible(k){ return S.layers.vis[k||'measure']!==false; }
+/* Stamp a new item with the active layer + its default classification (and the matching colour). */
+function classifyNew(m){
+  m.layer = S.layers.active;
+  if(m.layer==='proposed'){ m.action='wsr'; m.color=ACTION_BY.wsr.color; if(m.label) m.label=m.label.replace(/^\w+/, 'Stone'); }
+  else if(m.layer==='condition'){ m.cond='crack'; m.color=COND_BY.crack.color; if(m.label) m.label=m.label.replace(/^\w+/, 'Defect'); }
+  return m;
+}
 
 /* ═══════════════════════════════════════════════════
    ELEMENTS
@@ -1063,6 +1152,7 @@ async function loadFile(f) {
     S.measurements=[]; S.annotations=[]; S.mCtr=0; S.aCtr=0; S.selectedId=null; S.editId=null; S.history=[];
     S._lastFile = f; S._imageBlob = f; S.projectId = null;
     S.curve.cx=null; S.curve._fit=null; S.curve._pts=[]; S.curve.on=false; updateCurveUI();   // keep fitted R across the swap; centre line is per-image
+    S.layers={active:'measure', vis:{measure:true,condition:true,proposed:true}}; refreshLayers(); updateToolbarForLayer();
     dropOvl.classList.add('hidden');
     resizeCanvas();
     fitView();
@@ -1332,8 +1422,8 @@ function renderOverlay() {
   // Rubber-band preview while drawing
   if (S.drawing) renderPreview();
 
-  S.measurements.forEach((m,i) => drawMeasurement(m, i+1));
-  S.annotations.forEach(a => drawAnnotation(a));
+  S.measurements.forEach((m,i) => { if(layerVisible(m.layer)) drawMeasurement(m, i+1); });
+  if(layerVisible('condition')) S.annotations.forEach(a => drawAnnotation(a));
   drawCurveOverlay();
 
   if (S._snapPt && (S.drawing||S.dragVert)) {
@@ -1483,6 +1573,20 @@ function drawMeasurement(m, num) {
       vertexHandle(m,0,editing),
       drawLabelScreen({x:m.coords[0].x, y:m.coords[0].y - (22/S.zoom)}, String(num), m.color)
     );
+  } else if (m.type==='refline') {
+    const a=imgToScreen(m.coords[0].x,m.coords[0].y), b=imgToScreen(m.coords[1].x,m.coords[1].y);
+    g.append(
+      mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:m.color,'stroke-width':sStroke,'stroke-dasharray':'7,5','stroke-linecap':'round'}),
+      vertexHandle(m,0,editing), vertexHandle(m,1,editing),
+      drawLabelScreen({x:(m.coords[0].x+m.coords[1].x)/2,y:(m.coords[0].y+m.coords[1].y)/2}, num+' · '+fmtDist(m.value)+impTag(m.value), m.color)
+    );
+  } else if (m.type==='refcircle') {
+    const c=imgToScreen(m.coords[0].x,m.coords[0].y), rr=dist2(m.coords[0],m.coords[1])*S.zoom;
+    g.append(
+      mkEl('circle',{cx:c.x,cy:c.y,r:rr,fill:'none',stroke:m.color,'stroke-width':sStroke,'stroke-dasharray':'7,5'}),
+      vertexHandle(m,0,editing), vertexHandle(m,1,editing),
+      drawLabelScreen({x:m.coords[0].x,y:m.coords[0].y}, num+' · r '+fmtDist(m.r), m.color)
+    );
   }
   if (editing && (m.type==='poly'||m.type==='rect'||m.type==='pline')) {
     editEdges(m).forEach(([i,j])=>{
@@ -1571,6 +1675,16 @@ function renderPreview() {
     dash.append(mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#1e4a7a','stroke-width':DW,'stroke-dasharray':DA,fill:'none'}));
     dash.append(sCircle(a,vertPx(3),'white','#1e4a7a',1.3), sCircle(b,vertPx(3),'white','#1e4a7a',1.3));
     dash.append(drawLabelScreen({x:(S.calibA.x+S.cursorImg.x)/2,y:(S.calibA.y+S.cursorImg.y)/2}, Math.round(dist2(S.calibA,S.cursorImg))+' px', '#1e4a7a'));
+  } else if (S.tool==='refline' && S.distA && S.cursorImg) {
+    const a=imgToScreen(S.distA.x,S.distA.y), b=imgToScreen(S.cursorImg.x,S.cursorImg.y);
+    dash.append(mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#3a6ea5','stroke-width':DW,'stroke-dasharray':DA,fill:'none','stroke-linecap':'round'}));
+    dash.append(sCircle(a,vertPx(3),'white','#3a6ea5',1.3), sCircle(b,vertPx(3),'white','#3a6ea5',1.3));
+    dash.append(drawLabelScreen({x:(S.distA.x+S.cursorImg.x)/2,y:(S.distA.y+S.cursorImg.y)/2}, fmtDist(mDist(S.distA,S.cursorImg)), '#3a6ea5'));
+  } else if (S.tool==='refcircle' && S.distA && S.cursorImg) {
+    const c=imgToScreen(S.distA.x,S.distA.y), rr=dist2(S.distA,S.cursorImg)*S.zoom;
+    dash.append(mkEl('circle',{cx:c.x,cy:c.y,r:rr,fill:'none',stroke:'#3a6ea5','stroke-width':DW,'stroke-dasharray':DA}));
+    dash.append(sCircle(c,vertPx(3),'white','#3a6ea5',1.3));
+    dash.append(drawLabelScreen({x:S.distA.x,y:S.distA.y}, 'r '+fmtDist(dist2(S.distA,S.cursorImg)), '#3a6ea5'));
   }
   impSetMatch(liveMatch);
   svg.appendChild(dash);
@@ -1586,7 +1700,7 @@ function setTool(t) {
   document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
   const btn=document.getElementById('tool-'+t);
   if(btn) btn.classList.add('active');
-  const names={pan:'Pan / Select',edit:'Edit points',dist:'Distance',pline:'Polyline',poly:'Polygon',rect:'Rectangle',point:'Point marker',annot:'Annotation',calib:'Set scale',curvefit:'Fit radius',curvecentre:'Set centre line'};
+  const names={pan:'Pan / Select',edit:'Edit points',dist:'Distance',pline:'Polyline',poly:'Polygon',rect:'Rectangle',point:'Point marker',annot:'Annotation',calib:'Set scale',curvefit:'Fit radius',curvecentre:'Set centre line',refline:'Reference line',refcircle:'Reference circle'};
   sTool.textContent=names[t]||t;
   if (t==='edit') {
     if (!S.editId && S.selectedId && S.measurements.find(m=>m.id===S.selectedId)) enterEdit(S.selectedId);
@@ -1705,9 +1819,9 @@ function constrainAngle(a,p){ const dx=p.x-a.x, dy=p.y-a.y, L=Math.hypot(dx,dy);
 function squareFrom(a,p){ const dx=p.x-a.x, dy=p.y-a.y, s=Math.max(Math.abs(dx),Math.abs(dy)); return {x:a.x+(dx<0?-s:s), y:a.y+(dy<0?-s:s)}; }
 function adjustPoint(p){
   S._snapPt=null;
-  if(!['dist','pline','poly','rect'].includes(S.tool)) return p;
+  if(!['dist','pline','poly','rect','refline'].includes(S.tool)) return p;
   if(S.tool==='rect'){ if(S.rectA && S.shiftDown) p=squareFrom(S.rectA,p); }
-  else { let anchor=null; if(S.tool==='dist'&&S.distA) anchor=S.distA; else if(S.polyPts.length) anchor=S.polyPts[S.polyPts.length-1]; if(S.shiftDown && anchor) p=constrainAngle(anchor,p); }
+  else { let anchor=null; if((S.tool==='dist'||S.tool==='refline')&&S.distA) anchor=S.distA; else if(S.polyPts.length) anchor=S.polyPts[S.polyPts.length-1]; if(S.shiftDown && anchor) p=constrainAngle(anchor,p); }
   const s=snapVertex(p); if(s){ S._snapPt=s; return s; }
   return p;
 }
@@ -1740,6 +1854,12 @@ function toolDown(p, e) {
     S.curve._pts.push({x:p.x,y:p.y}); S.cursorImg=p; scheduleRender();
   } else if (S.tool==='curvecentre') {
     setCurveCentre(p);
+  } else if (S.tool==='refline') {
+    if (!S.drawing){ S.drawing=true; S.distA=p; S.cursorImg=p; showBanner('<b>Reference line</b> · click the other end · <span class="kbd">Shift</span> straight · <span class="kbd">Esc</span> cancels'); scheduleRender(); }
+    else finishRefline(p);
+  } else if (S.tool==='refcircle') {
+    if (!S.drawing){ S.drawing=true; S.distA=p; S.cursorImg=p; showBanner('<b>Reference circle</b> · click the edge to set the radius · <span class="kbd">Esc</span> cancels'); scheduleRender(); }
+    else finishRefcircle(p);
   }
 }
 
@@ -1857,6 +1977,7 @@ function finishDist(b){
   S.drawing=false; S.cursorImg=null; hideBanner();
   const d=mDist(S.distA,b);
   const m={id:nMid(),type:'dist',coords:[S.distA,b],label:'Distance '+S.mCtr,note:'',color:COLORS.dist,value:d};
+  classifyNew(m);
   pushH(); S.measurements.push(m); refreshMList(); scheduleRender();
   msg('Distance: '+fmtDist(d)); selectM(m.id,false);
 }
@@ -1868,11 +1989,13 @@ function finishPolyish(){
   if (isLine){
     const L=mPath(pts);
     const m={id:nMid(),type:'pline',coords:pts,label:'Crack '+S.mCtr,note:'',color:COLORS.pline,length:L};
+    classifyNew(m);
     pushH(); S.measurements.push(m); refreshMList(); scheduleRender();
     S.polyPts=[]; msg('Crack length: '+fmtDist(L)); selectM(m.id,false);
   } else {
     const area=mArea(pts);
     const m={id:nMid(),type:'poly',coords:pts,label:'Area '+S.mCtr,note:'',color:COLORS.poly,area};
+    classifyNew(m);
     pushH(); S.measurements.push(m); refreshMList(); scheduleRender();
     S.polyPts=[]; msg('Area: '+fmtArea(area)); selectM(m.id,false);
   }
@@ -1881,13 +2004,29 @@ function finishRect(a,b){
   const x=Math.min(a.x,b.x),y=Math.min(a.y,b.y),w=Math.abs(b.x-a.x),h=Math.abs(b.y-a.y);
   const pts=[{x,y},{x:x+w,y},{x:x+w,y:y+h},{x,y:y+h}];
   const m={id:nMid(),type:'rect',coords:pts,label:'Rect '+S.mCtr,note:'',color:COLORS.rect};
+  classifyNew(m);
   recompute(m);   // fills rectW / rectH / area (curve-corrected when curve mode is on)
   pushH(); S.measurements.push(m); refreshMList(); scheduleRender();
   msg(fmtDist(m.rectW)+' × '+fmtDist(m.rectH)+' = '+fmtArea(m.area)); selectM(m.id,false);
 }
 function addPoint(p){
   const m={id:nMid(),type:'point',coords:[p],label:'Point '+S.mCtr,note:'',color:COLORS.point};
+  classifyNew(m);
   pushH(); S.measurements.push(m); refreshMList(); scheduleRender(); selectM(m.id,false);
+}
+function finishRefline(b){
+  S.drawing=false; S.cursorImg=null; hideBanner();
+  const m={id:nMid(),type:'refline',coords:[S.distA,b],label:'Ref line '+S.mCtr,note:'',color:'#3a6ea5'};
+  classifyNew(m); recompute(m);
+  pushH(); S.measurements.push(m); refreshMList(); refreshLayers(); scheduleRender();
+  S.distA=null; msg('Reference line: '+fmtDist(m.value)); selectM(m.id,false);
+}
+function finishRefcircle(edge){
+  S.drawing=false; S.cursorImg=null; hideBanner();
+  const m={id:nMid(),type:'refcircle',coords:[S.distA,edge],label:'Ref circle '+S.mCtr,note:'',color:'#3a6ea5'};
+  classifyNew(m); recompute(m);
+  pushH(); S.measurements.push(m); refreshMList(); refreshLayers(); scheduleRender();
+  S.distA=null; msg('Reference circle: r '+fmtDist(m.r)); selectM(m.id,false);
 }
 function cancelDraw(){ S.drawing=false; S.polyPts=[]; S.distA=null; S.rectA=null; S.calibA=null; S.cursorImg=null; if(S.curve)S.curve._pts=[]; hideBanner(); scheduleRender(); }
 
@@ -1980,6 +2119,8 @@ document.getElementById('curve-on').addEventListener('change', e=>{
 });
 function recompute(m){
   if(m.type==='dist') m.value=mDist(m.coords[0],m.coords[1]);
+  if(m.type==='refline') m.value=mDist(m.coords[0],m.coords[1]);
+  if(m.type==='refcircle') m.r=dist2(m.coords[0],m.coords[1]);
   if(m.type==='pline') m.length=mPath(m.coords);
   if(m.type==='poly') m.area=mArea(m.coords);
   if(m.type==='rect'){
@@ -2099,14 +2240,30 @@ function openScaleDialog(pixelDist){
 /* ═══════════════════════════════════════════════════
    SIDEBAR LISTS
 ═══════════════════════════════════════════════════ */
+function layerHint(k){ return k==='proposed'?'Outline a stone, then set its action.':k==='condition'?'Mark cracks, spalls & weathering.':'Use the measurement tools on the left.'; }
+function classRow(m){
+  if(m.layer==='proposed') return '<div class="m-class"><select class="m-class-sel" data-class="'+m.id+'">'+ACTIONS.map(a=>'<option value="'+a.key+'"'+(m.action===a.key?' selected':'')+'>'+a.label+'</option>').join('')+'</select></div>';
+  if(m.layer==='condition') return '<div class="m-class"><select class="m-class-sel" data-class="'+m.id+'">'+CONDITIONS.map(a=>'<option value="'+a.key+'"'+(m.cond===a.key?' selected':'')+'>'+a.label+'</option>').join('')+'</select></div>';
+  return '';
+}
+function setItemClass(id, key){
+  const m=S.measurements.find(x=>x.id===id); if(!m) return;
+  if(m.layer==='proposed' && ACTION_BY[key]){ m.action=key; m.color=ACTION_BY[key].color; }
+  else if(m.layer==='condition' && COND_BY[key]){ m.cond=key; m.color=COND_BY[key].color; }
+  refreshMList(); scheduleRender();
+}
 function refreshMList(){
-  if(!S.measurements.length){ mList.innerHTML='<div class="empty-state">No measurements yet.<br>Choose a tool and click on the image.</div>'; return; }
+  const active=S.layers.active;
+  const items=S.measurements.filter(m=>(m.layer||'measure')===active);
+  if(!items.length){ mList.innerHTML='<div class="empty-state">Nothing in <b>'+esc(layerName(active))+'</b> yet.<br>'+layerHint(active)+'</div>'; return; }
   mList.innerHTML='';
-  const types={dist:'Distance',pline:'Crack',poly:'Polygon',rect:'Rectangle',point:'Point'};
-  S.measurements.forEach((m,i)=>{
+  const types={dist:'Distance',pline:'Crack',poly:'Polygon',rect:'Rectangle',point:'Point',refline:'Reference line',refcircle:'Reference circle'};
+  items.forEach((m)=>{
+    const i=S.measurements.indexOf(m);
     let val='', detail='';
-    if(m.type==='dist') val=fmtDist(m.value);
+    if(m.type==='dist'||m.type==='refline') val=fmtDist(m.value);
     if(m.type==='pline') val=fmtDist(m.length);
+    if(m.type==='refcircle') val='r '+fmtDist(m.r)+'  ·  ⌀ '+fmtDist(m.r*2);
     if(m.type==='poly') val=fmtArea(m.area);
     if(m.type==='rect'){
       const sd=rectSides(m);
@@ -2126,6 +2283,7 @@ function refreshMList(){
         <span class="m-label" id="lbl${m.id}">${esc(m.label)}</span>
         <span class="m-tag">${types[m.type]||m.type}</span>
       </div>
+      ${classRow(m)}
       ${val?`<div class="m-val">${val}</div>`:''}
       ${impPane(m)}
       ${detail?`<div class="m-sides">${detail}</div>`:''}
@@ -2145,6 +2303,8 @@ function refreshMList(){
       if(e.target.dataset.del){ delM(m.id); return; }
       selectM(m.id,true);
     });
+    const csel=div.querySelector('.m-class-sel');
+    if(csel){ csel.addEventListener('change',e=>{ e.stopPropagation(); setItemClass(m.id, e.target.value); }); ['click','mousedown'].forEach(ev=>csel.addEventListener(ev,e=>e.stopPropagation())); }
     mList.appendChild(div);
   });
 }
@@ -2171,6 +2331,8 @@ function refreshAList(){
 
 function selectM(id, panTo){
   S.selectedId=id;
+  const _mm=S.measurements.find(x=>x.id===id);
+  if(_mm && (_mm.layer||'measure')!==S.layers.active){ S.layers.active=_mm.layer||'measure'; updateToolbarForLayer(); refreshLayers(); refreshMList(); }
   document.querySelectorAll('.m-item').forEach(el=>el.classList.toggle('selected',el.getAttribute('data-mid')===id && id!==S.editId));
   document.querySelectorAll('.ann-item').forEach(el=>el.classList.remove('selected'));
   switchTab('measurements'); scrollListTo('[data-mid="'+id+'"]');
@@ -2352,20 +2514,29 @@ function exportCSV(){
 }
 function centroid(m){const xs=m.coords.map(p=>p.x),ys=m.coords.map(p=>p.y);return{x:(Math.min(...xs)+Math.max(...xs))/2,y:(Math.min(...ys)+Math.max(...ys))/2};}
 function nearestAnnotation(pt){let best=null,bd=1e9;S.annotations.forEach(a=>{const d=Math.hypot(a.x-pt.x,a.y-pt.y);if(d<bd){bd=d;best=a;}});return bd<=200?best:null;}
-function exportSchedule(){
-  const headers=['Stone ID','Width','Height','Area','Crack length','Defect / category','Comment'];
-  const rows=[headers];
+/* One unified row per item — stones (proposed), defects (condition), measurements & references. */
+function scheduleRows(){
+  const rows=[];
   S.measurements.forEach(m=>{
-    let id=m.label,width='',height='',area='',crack='',defect='',note=m.note||'';
-    if(m.type==='rect'){width=fmtDist(m.rectW);height=fmtDist(m.rectH);area=fmtArea(m.area);}
-    else if(m.type==='poly'){area=fmtArea(m.area);}
-    else if(m.type==='dist'){width=fmtDist(m.value);}
-    else if(m.type==='pline'){crack=fmtDist(m.length);defect='Crack';}
-    const near=nearestAnnotation(centroid(m));
-    if(near){ if(!defect) defect=near.category; note=note?(note+' / '+near.text):near.text; }
-    rows.push([id,width,height,area,crack,defect,note]);
+    const L=m.layer||'measure';
+    let action='', sev='';
+    if(L==='proposed' && m.action){ const a=ACTION_BY[m.action]; action=a?a.label:m.action; sev=String(ACTIONS.findIndex(x=>x.key===m.action)+1); }
+    else if(L==='condition' && m.cond){ const c=COND_BY[m.cond]; action=c?c.label:m.cond; }
+    let w='',h='',area='',len='';
+    if(m.type==='rect'){ w=fmtDist(m.rectW); h=fmtDist(m.rectH); area=fmtArea(m.area); }
+    else if(m.type==='poly'){ area=fmtArea(m.area); }
+    else if(m.type==='dist'||m.type==='refline'){ w=fmtDist(m.value); }
+    else if(m.type==='refcircle'){ w='r '+fmtDist(m.r); }
+    else if(m.type==='pline'){ len=fmtDist(m.length); }
+    rows.push([m.label, layerName(L), m.type, action, sev, w, h, area, len, m.note||'']);
   });
-  dl(rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),'stone-replacement-schedule.csv','text/csv');
+  S.annotations.forEach(a=>{ rows.push(['Note '+a.num, layerName('condition'), 'note', a.category||'', '', '', '', '', '', a.text||'']); });
+  return rows;
+}
+function exportSchedule(){
+  const headers=['Ref','Layer','Type','Action / defect','Severity','Width','Height','Area','Length','Notes'];
+  const rows=[headers, ...scheduleRows()];
+  dl(rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),'stone-schedule.csv','text/csv');
 }
 function exportJSON(){
   const data={ exported:new Date().toISOString(), scale:{pxPerUnit:S.pxPerUnit,unit:S.unit}, image:{width:S.imgW,height:S.imgH},
@@ -2585,9 +2756,83 @@ function msg(s){sMsg.textContent=s;}
 svg.addEventListener('click', e=>{ if(e.target===svg && S.tool!=='edit'){ S.selectedId=null; refreshMList(); refreshAList(); scheduleRender(); } });
 
 /* Toolbar buttons */
-['pan','edit','dist','pline','poly','rect','point','annot'].forEach(id=>{
+['pan','edit','dist','pline','poly','rect','point','annot','refline','refcircle'].forEach(id=>{
   const btn=document.getElementById('tool-'+id); if(btn) btn.addEventListener('click',()=>setTool(id));
 });
+
+/* ── V16 layers: visibility, active layer, toolbar swap ── */
+const EYE_ON='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9 9 0 0 1 12 4c7 0 11 8 11 8a18 18 0 0 1-2.16 3.19M6.06 6.06A18 18 0 0 0 1 12s4 8 11 8a9 9 0 0 0 3.94-.94M9.9 9.9a3 3 0 0 0 4.2 4.2"/><line x1="2" y1="2" x2="22" y2="22"/></svg>';
+function refreshLayers(){
+  const panel=document.getElementById('layers-panel'); if(!panel) return;
+  const counts={measure:0,condition:0,proposed:0};
+  S.measurements.forEach(m=>{ const L=m.layer||'measure'; counts[L]=(counts[L]||0)+1; });
+  counts.condition += S.annotations.length;          // annotations live in the condition layer
+  panel.innerHTML='<div class="layers-title">Layers</div>'+LAYER_DEFS.map(d=>{
+    const on=layerVisible(d.key), active=S.layers.active===d.key;
+    return '<div class="layer-row'+(active?' active':'')+(on?'':' hidden-layer')+'" data-layer="'+d.key+'" title="'+esc(d.tip)+'">'+
+      '<span class="layer-eye" data-eye="'+d.key+'" title="Show / hide layer">'+(on?EYE_ON:EYE_OFF)+'</span>'+
+      '<span class="layer-name">'+esc(d.name)+'</span>'+
+      '<span class="layer-count">'+(counts[d.key]||0)+'</span></div>';
+  }).join('');
+  panel.querySelectorAll('.layer-row').forEach(row=>{
+    row.addEventListener('click',e=>{ if(e.target.closest('.layer-eye')){ e.stopPropagation(); toggleLayer(row.dataset.layer); } else setActiveLayer(row.dataset.layer); });
+  });
+}
+function setActiveLayer(k){
+  if(!LAYER_DEFS.some(d=>d.key===k)) return;
+  S.layers.active=k;
+  const tb=document.getElementById('tool-'+S.tool), dl=tb&&tb.getAttribute('data-layers');
+  if(dl && !dl.split(' ').includes(k)) setTool('pan');     // current tool not in this layer → reset
+  updateToolbarForLayer(); refreshLayers(); refreshMList(); scheduleRender();
+  msg('Layer: '+layerName(k));
+}
+function toggleLayer(k){ S.layers.vis[k]=!layerVisible(k); refreshLayers(); scheduleRender(); }
+function updateToolbarForLayer(){
+  const k=S.layers.active;
+  document.querySelectorAll('.tool-btn[data-layers]').forEach(b=>{ b.style.display=b.getAttribute('data-layers').split(' ').includes(k)?'':'none'; });
+}
+refreshLayers(); updateToolbarForLayer();
+
+/* ── V16 info panel (bottom-right "i") ── */
+function ipRow(k,v){ return '<div class="ip-row"><span>'+esc(k)+'</span><b>'+esc(v)+'</b></div>'; }
+function buildInfo(){
+  if(!S.loaded) return '<div class="ip-empty">Open an orthophoto to see its details here.</div>';
+  let h='<div class="ip-sec">Image</div>';
+  h+=ipRow('File',(S._lastFile&&S._lastFile.name)||'—');
+  h+=ipRow('Dimensions',S.imgW.toLocaleString()+' × '+S.imgH.toLocaleString()+' px');
+  h+=ipRow('Resolution',(S.imgW*S.imgH/1e6).toFixed(1)+' MP');
+  if(S._imageBlob&&S._imageBlob.size) h+=ipRow('File size',(S._imageBlob.size/1048576).toFixed(1)+' MB');
+  if(S.cog) h+=ipRow('Format','Tiled COG · '+S.cog.levels.length+' levels');
+  h+='<div class="ip-sec">Scale &amp; view</div>';
+  h+=ipRow('Scale',(+(+S.pxPerUnit).toPrecision(4))+' px per '+S.unit);
+  h+=ipRow('Zoom',Math.round(S.zoom*100)+'%');
+  if(S.curve.on && S.curve.R>0 && S.curve.cx!=null){
+    const Rpx=S.curve.R*S.pxPerUnit, cl=Math.max(-1,Math.min(1,(S.curve.cx)/Rpx)), cr=Math.max(-1,Math.min(1,(S.imgW-S.curve.cx)/Rpx));
+    const aL=Math.asin(cl)*180/Math.PI, aR=Math.asin(cr)*180/Math.PI, arc=Rpx*(aL+aR)*Math.PI/180;
+    h+='<div class="ip-sec">Curve correction <span class="ip-on">· on</span></div>';
+    h+=ipRow('Radius',fmtDist(Rpx));
+    h+=ipRow('Centre line','x = '+Math.round(S.curve.cx)+' px');
+    h+=ipRow('Edge angle (L / R)',aL.toFixed(1)+'° / '+aR.toFixed(1)+'°');
+    h+=ipRow('Subtended angle',(aL+aR).toFixed(1)+'°');
+    h+=ipRow('Flat width',fmtDist(S.imgW));
+    h+=ipRow('Developed (arc)',fmtDist(arc));
+    if(S.curve._fit) h+=ipRow('Fit residual','±'+S.curve._fit.rms.toFixed(1)+' px');
+  } else {
+    h+='<div class="ip-sec">Curve correction</div>'+ipRow('Status',S.curve.R>0?'off · radius set':'off');
+  }
+  const cm={measure:0,condition:0,proposed:0}; S.measurements.forEach(m=>{cm[m.layer||'measure']=(cm[m.layer||'measure']||0)+1;}); cm.condition+=S.annotations.length;
+  h+='<div class="ip-sec">Items by layer</div>';
+  LAYER_DEFS.forEach(d=>h+=ipRow(d.name,String(cm[d.key]||0)));
+  return h;
+}
+(function(){
+  const tog=document.getElementById('info-toggle'), pop=document.getElementById('info-pop');
+  function show(v){ const open=(v!==undefined)?v:!pop.classList.contains('show'); if(open){ pop.innerHTML=buildInfo(); pop.classList.add('show'); tog.classList.add('active'); } else { pop.classList.remove('show'); tog.classList.remove('active'); } }
+  tog.addEventListener('click',e=>{ e.stopPropagation(); show(); });
+  document.addEventListener('click',e=>{ if(pop.classList.contains('show') && !e.target.closest('#info-pop') && !e.target.closest('#info-toggle')) show(false); });
+})();
+
 document.getElementById('btn-undo').addEventListener('click',undo);
 document.getElementById('btn-clear').addEventListener('click',()=>{
   modalConfirm('Clear everything?', 'This removes all measurements and notes from the current survey. You can undo with Ctrl+Z.', {ok:'Clear all', cancel:'Cancel', danger:true})
@@ -2669,7 +2914,7 @@ async function persistProject(nameOverride){
     created:(existing&&existing.created)||Date.now(), updated:Date.now(),
     unit:S.unit, pxPerUnit:S.pxPerUnit, calibUnit:S._calibUnit||'m',
     imgW:S.imgW, imgH:S.imgH, imgName:(S._lastFile&&S._lastFile.name)||'image', imgSize:(S._imageBlob&&S._imageBlob.size)||0,
-    measurements:S.measurements, annotations:S.annotations, mCtr:S.mCtr, aCtr:S.aCtr, curve:{on:S.curve.on,R:S.curve.R,cx:S.curve.cx}, thumb:makeThumb() };
+    measurements:S.measurements, annotations:S.annotations, mCtr:S.mCtr, aCtr:S.aCtr, curve:{on:S.curve.on,R:S.curve.R,cx:S.curve.cx}, layers:{active:S.layers.active, vis:Object.assign({},S.layers.vis)}, thumb:makeThumb() };
   await metaPut(rec); _lastSig=stateSig();
 }
 async function saveProject(){
@@ -2711,12 +2956,14 @@ async function loadRestored(blob, rec, projectId){
     S.imgW=dec.w; S.imgH=dec.h; S.loaded=true; S._imageBlob=blob; S._lastFile={name:rec.imgName||'image',size:rec.imgSize||blob.size};
     await buildOverview(sourceBitmap);
     S.measurements=rec.measurements||[]; S.annotations=rec.annotations||[]; S.mCtr=rec.mCtr||S.measurements.length; S.aCtr=rec.aCtr||S.annotations.length;
+    S.measurements.forEach(m=>{ if(!m.layer) m.layer='measure'; });   // backward-compat: pre-V16 items
+    S.layers={active:'measure', vis:Object.assign({measure:true,condition:true,proposed:true}, (rec.layers&&rec.layers.vis)||{})};
     S.unit=rec.unit||'mm'; S.pxPerUnit=rec.pxPerUnit||1; S._calibUnit=rec.calibUnit||'m';
     S.curve={on:!!(rec.curve&&rec.curve.on), R:(rec.curve&&rec.curve.R)||0, cx:(rec.curve&&rec.curve.cx!=null)?rec.curve.cx:null, _fit:null, _pts:[]}; updateCurveUI();
     S.projectId=projectId||null; S.selectedId=null; S.editId=null; S.history=[];
     pxInp.value=Number(S.pxPerUnit.toPrecision(6)); unitSel.value=(['mm','cm','m','ft','in','px'].includes(S.unit)?S.unit:'mm'); updateScaleChip();
     hideLibrary(true); dropOvl.classList.add('hidden');
-    resizeCanvas(); fitView(); updateInfoPanel(S._lastFile); refreshMList(); refreshAList(); updateSaveBtn();
+    resizeCanvas(); fitView(); updateInfoPanel(S._lastFile); refreshMList(); refreshAList(); refreshLayers(); updateToolbarForLayer(); updateSaveBtn();
     _lastSig=stateSig();
   } finally { loadingEl.classList.remove('show'); }
 }
