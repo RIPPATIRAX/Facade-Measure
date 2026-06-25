@@ -14,9 +14,9 @@
   --text: #1a1714;
   --text2: #5a534a;
   --text3: #8a837a;
-  --accent: #2d5a3d;
-  --accent2: #4a7c5f;
-  --accent-light: #e8f2eb;
+  --accent: #d06a12;
+  --accent2: #ea8b2c;
+  --accent-light: #fcefe0;
   --danger: #8b2e2e;
   --danger-light: #fdf0f0;
   --warn: #7a5c1a;
@@ -28,7 +28,7 @@
   --c-point: #c07020;
   --c-annot: #c4991a;
   --c-pline: #0a8a6a;
-  --accent-deep: #234a31;
+  --accent-deep: #a4510a;
   --radius: 7px;
   --shadow-sm: 0 1px 2px rgba(40,33,24,0.05), 0 1px 1px rgba(40,33,24,0.04);
   --shadow-md: 0 2px 10px rgba(40,33,24,0.10);
@@ -62,15 +62,11 @@ header {
   z-index: 250;            /* above main-area content; modals (300) still sit on top */
   box-shadow: var(--shadow-sm);
 }
-.logo {
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--accent);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.logo em { color: var(--text3); font-style: normal; font-weight: 400; }
+.logo { display: flex; align-items: center; gap: 9px; white-space: nowrap; flex-shrink: 0; }
+.logo-mark { flex-shrink: 0; display: block; }
+.logo-txt { font-size: 15px; font-weight: 700; letter-spacing: 0.05em; color: var(--text); }
+.logo-txt em { color: var(--accent); font-style: normal; }
+.logo-sub { font-size: 10.5px; color: var(--text3); letter-spacing: 0.03em; padding-left: 9px; border-left: 1px solid var(--border); }
 .sep { width: 1px; height: 26px; background: var(--border); flex-shrink: 0; }
 .file-btn {
   display: flex; align-items: center; gap: 6px;
@@ -189,6 +185,20 @@ header {
 .menu-item.primary-item { color: var(--accent); font-weight: 700; }
 .menu-item.primary-item .mi-ic { color: var(--accent); }
 .menu-item.primary-item:hover { background: var(--accent-light); }
+.area-row { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 7px; cursor: pointer; font-size: 13px; color: var(--text); }
+.area-row:hover { background: var(--surface2); }
+.area-row.active { background: var(--accent-light); }
+.area-row .area-tick { width: 13px; color: var(--accent); flex-shrink: 0; font-size: 12px; }
+.area-row .area-name { flex: 1; }
+.area-del { color: var(--text3); cursor: pointer; font-size: 13px; padding: 0 3px; border-radius: 4px; }
+.area-del:hover { color: var(--danger); background: var(--danger-light); }
+.area-add { display: flex; gap: 6px; padding: 9px 6px 3px; margin-top: 5px; border-top: 1px solid var(--border); }
+.area-add input { flex: 1; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-family: Georgia, serif; font-size: 12px; background: var(--surface); color: var(--text); }
+.area-add input:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 0 3px var(--accent-light); }
+.m-area { margin: 6px 0 2px; }
+.m-area-sel { width: 100%; padding: 5px 7px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text2); font-size: 11.5px; font-family: Georgia, serif; cursor: pointer; }
+.m-bulk-area { display: flex; align-items: center; gap: 6px; padding: 7px 9px; margin: 0 0 8px; background: var(--surface2); border-radius: 7px; font-size: 11.5px; color: var(--text2); }
+.m-bulk-area button { margin-left: auto; }
 
 /* LAYOUT */
 .main { display: flex; flex: 1; overflow: hidden; }
@@ -440,6 +450,23 @@ header {
 .layer-name { font-size: 13px; flex: 1; color: var(--text); }
 .layer-row.active .layer-name { font-weight: 700; color: var(--accent-deep); }
 .layer-count { font-size: 11px; color: var(--text3); font-variant-numeric: tabular-nums; }
+.prop-panel { padding: 8px 9px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.prop-sec { font-size: 10px; letter-spacing: .07em; text-transform: uppercase; color: var(--text3); margin: 2px 2px 6px; }
+.cat-row { display: flex; align-items: center; gap: 8px; padding: 4px 5px; font-size: 12.5px; color: var(--text); cursor: pointer; border-radius: 5px; }
+.cat-row:hover { background: var(--surface2); }
+.cat-row.off { opacity: .5; }
+.cat-row input, .prop-toggle input { cursor: pointer; }
+.cat-sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
+.prop-toggle { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text); cursor: pointer; padding: 8px 5px 4px; margin-top: 6px; border-top: 1px solid var(--border); }
+.prop-row { display: flex; align-items: center; gap: 8px; padding: 7px 5px 2px; font-size: 12px; color: var(--text2); }
+.prop-row input { flex: 1; padding: 5px 7px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--text); font-family: Georgia, serif; font-size: 12px; }
+.prop-row input:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 0 3px var(--accent-light); }
+.prop-cats-btn { width: 100%; text-align: left; display: flex; align-items: center; gap: 6px; padding: 7px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font-family: Georgia, serif; font-size: 12.5px; cursor: pointer; }
+.prop-cats-btn:hover { background: var(--surface2); }
+.prop-cats-btn .caret { margin-left: auto; font-size: 9px; color: var(--text3); transition: transform .12s; }
+.prop-cats-btn.open .caret { transform: rotate(180deg); }
+.cats-badge { font-size: 10px; color: var(--accent); margin-left: 4px; }
+.prop-cats { margin-top: 4px; }
 .m-class { margin: 7px 0 3px; }
 .m-class-sel { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font-size: 12px; font-family: Georgia, serif; cursor: pointer; }
 .m-class-sel:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 0 3px var(--accent-light); }
@@ -646,7 +673,15 @@ header {
 <body>
 
 <header>
-  <div class="logo">FACADE<em>MEASURE</em></div>
+  <div class="logo">
+    <svg class="logo-mark" width="27" height="22" viewBox="0 0 27 22" fill="none" aria-hidden="true">
+      <rect x="1" y="2" width="6" height="5" rx="1" fill="#2a2724"/><rect x="1" y="8.5" width="6" height="5" rx="1" fill="#2a2724"/><rect x="1" y="15" width="6" height="5" rx="1" fill="#2a2724"/>
+      <rect x="8.5" y="2" width="6" height="5" rx="1" fill="#d06a12"/><rect x="8.5" y="8.5" width="6" height="5" rx="1" fill="#d06a12" opacity="0.78"/><rect x="8.5" y="15" width="6" height="5" rx="1" fill="#d06a12" opacity="0.56"/>
+      <circle cx="18.6" cy="4.5" r="1.4" fill="#d06a12"/><circle cx="22.9" cy="4.5" r="1.1" fill="#ea8b2c"/><circle cx="18.6" cy="11" r="1.3" fill="#d06a12" opacity="0.85"/><circle cx="22.9" cy="11" r="1" fill="#ea8b2c" opacity="0.6"/><circle cx="18.6" cy="17.5" r="1.1" fill="#d06a12" opacity="0.7"/>
+    </svg>
+    <span class="logo-txt">BUILDING&nbsp;REALITY&nbsp;<em>3D</em></span>
+    <span class="logo-sub">FacadeMeasure</span>
+  </div>
   <div class="sep"></div>
   <button class="file-btn" id="open-btn">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
@@ -701,6 +736,16 @@ header {
     </div>
   </div>
 
+  <!-- Area / level menu -->
+  <div class="menu" id="menu-area">
+    <button class="file-btn menu-btn" title="Area / level — new measurements inherit the active one">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>
+      <span id="area-chip">No area</span>
+      <span class="caret">▾</span>
+    </button>
+    <div class="menu-panel" id="area-panel" style="min-width:230px"></div>
+  </div>
+
   <!-- Export menu -->
   <div class="menu" id="menu-export">
     <button class="file-btn menu-btn" title="Export your survey">
@@ -711,7 +756,8 @@ header {
     <div class="menu-panel" style="min-width:194px">
       <div class="menu-head">Export survey</div>
       <button class="menu-item primary-item menu-close" id="btn-pdf"><span class="mi-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span> PDF report</button>
-      <button class="menu-item menu-close" id="btn-schedule"><span class="mi-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 9h18M3 14h18M9 4v16"/></svg></span> Stone schedule</button>
+      <button class="menu-item menu-close" id="btn-cutlist"><span class="mi-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span> Cutting list (RWS / indent)</button>
+      <button class="menu-item menu-close" id="btn-schedule"><span class="mi-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 9h18M3 14h18M9 4v16"/></svg></span> Full schedule</button>
       <button class="menu-item menu-close" id="btn-csv"><span class="mi-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg></span> CSV data</button>
       <button class="menu-item menu-close" id="btn-json"><span class="mi-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg></span> JSON data</button>
     </div>
@@ -762,15 +808,27 @@ header {
       </svg>
     </button>
 
-    <button class="tool-btn" id="tool-refline" data-layers="measure" data-tip="Reference line  [G]">
+    <button class="tool-btn" id="tool-refline" data-layers="measure condition proposed" data-tip="Annotate · line">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="3" y1="20" x2="21" y2="4" stroke-dasharray="3.5,3"/><circle cx="3" cy="20" r="1.6" fill="#5a534a"/><circle cx="21" cy="4" r="1.6" fill="#5a534a"/>
       </svg>
     </button>
 
-    <button class="tool-btn" id="tool-refcircle" data-layers="measure" data-tip="Reference circle">
+    <button class="tool-btn" id="tool-refcircle" data-layers="measure condition proposed" data-tip="Annotate · circle">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="8" stroke-dasharray="3.5,3"/><circle cx="12" cy="12" r="1.5" fill="#5a534a"/>
+      </svg>
+    </button>
+
+    <button class="tool-btn" id="tool-arc" data-layers="measure condition proposed" data-tip="Annotate · 3-point arc">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 19 A 13 13 0 0 1 21 7" stroke-dasharray="3.5,3"/><circle cx="3" cy="19" r="1.6" fill="#5a534a"/><circle cx="10.5" cy="9.7" r="1.6" fill="#5a534a"/><circle cx="21" cy="7" r="1.6" fill="#5a534a"/>
+      </svg>
+    </button>
+
+    <button class="tool-btn" id="tool-apoly" data-layers="measure condition proposed" data-tip="Annotate · polyline">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3,16 8,8 14,13 21,5" stroke-dasharray="3.5,3"/><circle cx="3" cy="16" r="1.5" fill="#5a534a"/><circle cx="8" cy="8" r="1.5" fill="#5a534a"/><circle cx="14" cy="13" r="1.5" fill="#5a534a"/><circle cx="21" cy="5" r="1.5" fill="#5a534a"/>
       </svg>
     </button>
 
@@ -861,6 +919,7 @@ header {
 
   <div class="sidebar">
     <div class="layers-panel" id="layers-panel"></div>
+    <div class="prop-panel" id="prop-panel" style="display:none"></div>
     <div class="sidebar-tabs">
       <div class="stab active" data-tab="measurements">Measurements</div>
       <div class="stab" data-tab="annotations">Notes</div>
@@ -923,6 +982,10 @@ const S = {
   calibA: null,         // first point when setting scale from the image
   curve: { on:false, R:0, cx:null, _fit:null, _pts:[] },   // curved-facade (cylinder) correction — R in real units, cx = centre-line x (px)
   layers: { active:'measure', vis:{ measure:true, condition:true, proposed:true } },   // V16 working layers
+  showSideDims: false,   // V17: proposed-layer side W/H edge labels (off = clean drawing)
+  catVis: {},            // V17: per-category visibility in Proposed works (missing key = visible)
+  areas: [],             // V18: user-defined area/level names for this building (custom per project)
+  activeArea: '',        // V18: active area — new measurements inherit it
 };
 
 const COLORS = { dist:'#c0392b', poly:'#2055c0', rect:'#7020b0', point:'#c07020', annot:'#c4991a', pline:'#0a8a6a' };
@@ -958,8 +1021,12 @@ const COND_BY = Object.fromEntries(CONDITIONS.map(c=>[c.key,c]));
 function layerName(k){ const d=LAYER_DEFS.find(x=>x.key===k); return d?d.name:k; }
 function layerVisible(k){ return S.layers.vis[k||'measure']!==false; }
 /* Stamp a new item with the active layer + its default classification (and the matching colour). */
+const ANNOT_TYPES=['refline','refcircle','arc','apoly'];   // drawing-only markup: no measurement, never exported
+function isAnnotType(m){ return ANNOT_TYPES.includes(m.type); }
 function classifyNew(m){
   m.layer = S.layers.active;
+  if(isAnnotType(m)) return m;                          // annotations carry no action / condition / severity colour
+  m.level = S.activeArea||'';                            // V18: inherit the active area/level
   if(m.layer==='proposed'){ m.action='wsr'; m.color=ACTION_BY.wsr.color; if(m.label) m.label=m.label.replace(/^\w+/, 'Stone'); }
   else if(m.layer==='condition'){ m.cond='crack'; m.color=COND_BY.crack.color; if(m.label) m.label=m.label.replace(/^\w+/, 'Defect'); }
   return m;
@@ -1152,7 +1219,7 @@ async function loadFile(f) {
     S.measurements=[]; S.annotations=[]; S.mCtr=0; S.aCtr=0; S.selectedId=null; S.editId=null; S.history=[];
     S._lastFile = f; S._imageBlob = f; S.projectId = null;
     S.curve.cx=null; S.curve._fit=null; S.curve._pts=[]; S.curve.on=false; updateCurveUI();   // keep fitted R across the swap; centre line is per-image
-    S.layers={active:'measure', vis:{measure:true,condition:true,proposed:true}}; refreshLayers(); updateToolbarForLayer();
+    S.layers={active:'measure', vis:{measure:true,condition:true,proposed:true}}; S.catVis={}; S.showSideDims=false; S.areas=[]; S.activeArea=''; updateAreaChip(); refreshLayers(); updateToolbarForLayer();
     dropOvl.classList.add('hidden');
     resizeCanvas();
     fitView();
@@ -1288,6 +1355,7 @@ document.addEventListener('keydown', e => {
   if (e.code==='Space') { e.preventDefault(); S.spaceDown=true; setCursor(); return; }
   if (e.key==='Escape') { if (S.editId) exitEdit(); else if (S.tool==='curvefit'||S.tool==='curvecentre'){ if(S.curve)S.curve._pts=[]; hideBanner(); setTool('pan'); } else cancelDraw(); return; }
   if (e.key==='Enter' && (S.tool==='poly'||S.tool==='pline') && S.drawing) { finishPolyish(); return; }
+  if (e.key==='Enter' && S.tool==='apoly' && S.drawing) { finishApoly(); return; }
   if (e.key==='Enter' && S.tool==='curvefit') { finishCurveFit(); return; }
   if (e.ctrlKey && e.key==='z') { e.preventDefault(); undo(); return; }
   if ((e.key==='Delete'||e.key==='Backspace') && S.selectedId && !S.editId) {
@@ -1373,13 +1441,14 @@ function fmtDist(px){
 }
 function fmtArea(px2){
   const v=px2/(S.pxPerUnit*S.pxPerUnit);
-  if (S.unit==='mm'){ if(v>=AREA_M2_THRESHOLD_MM2) return (v/1e6).toFixed(3)+' m²'; return Math.round(v)+' mm²'; }
-  if (S.unit==='cm'){ if(v>=AREA_M2_THRESHOLD_MM2/100) return (v/1e4).toFixed(3)+' m²'; return Math.round(v)+' cm²'; }
+  if (S.unit==='mm') return (v/1e6).toFixed(3)+' m²';   // always m² for metric work
+  if (S.unit==='cm') return (v/1e4).toFixed(3)+' m²';
   if (S.unit==='m') return v.toFixed(3)+' m²';
   if (S.unit==='ft') return v.toFixed(2)+' ft²';
   if (S.unit==='in'){ if(v>=144) return (v/144).toFixed(2)+' ft²'; return Math.round(v)+' in²'; }
   return Math.round(v)+' px²';
 }
+function areaM2(px2){ return px2/(S.pxPerUnit*S.pxPerUnit)/1e6; }   // bare m² number for exports
 
 /* ═══════════════════════════════════════════════════
    SIZE HELPERS  — PARTIAL ZOOM SCALING
@@ -1422,7 +1491,7 @@ function renderOverlay() {
   // Rubber-band preview while drawing
   if (S.drawing) renderPreview();
 
-  S.measurements.forEach((m,i) => { if(layerVisible(m.layer)) drawMeasurement(m, m.n||(i+1)); });
+  S.measurements.forEach((m,i) => { if(layerVisible(m.layer) && catVisible(m)) drawMeasurement(m, m.n||(i+1)); });
   if(layerVisible('condition')) S.annotations.forEach(a => drawAnnotation(a));
   drawCurveOverlay();
 
@@ -1516,6 +1585,29 @@ function impPane(m){
   return chip?'<div class="m-imp">'+chip+'</div>':'';
 }
 
+/* Prominent stone-number disc, drawn in the stone's centre (proposed works). */
+function drawNumberBadge(centerImg, n, color){
+  const c = imgToScreen(centerImg.x, centerImg.y);
+  const fs = labelPx()*1.3, r = fs*1.05;
+  const g = mkEl('g', {});
+  g.append(
+    mkEl('circle',{cx:c.x,cy:c.y,r:r,fill:color,stroke:'#fff','stroke-width':Math.max(1.5,r*0.13)}),
+    (()=>{const t=mkEl('text',{x:c.x,y:c.y+fs*0.35,'text-anchor':'middle',fill:'#fff','font-family':'Georgia,serif','font-weight':'700','font-size':fs,'pointer-events':'none'});t.textContent=String(n);return t;})()
+  );
+  return g;
+}
+/* Sample a 3-point arc as a polyline (image coords); falls back to the raw points if near-collinear. */
+function arcPts(p0,p1,p2){
+  const f=fitCircle([p0,p1,p2]);
+  if(!f||!isFinite(f.R)||f.R>1e7) return [p0,p1,p2];
+  const ang=p=>Math.atan2(p.y-f.cy,p.x-f.cx);
+  const a0=ang(p0), wrap=x=>{ while(x<=a0) x+=2*Math.PI; while(x>a0+2*Math.PI) x-=2*Math.PI; return x; };
+  const b1=wrap(ang(p1)), b2=wrap(ang(p2));
+  const end=(b1<b2)?b2:b2-2*Math.PI;
+  const out=[], steps=40;
+  for(let i=0;i<=steps;i++){ const t=a0+(end-a0)*(i/steps); out.push({x:f.cx+f.R*Math.cos(t), y:f.cy+f.R*Math.sin(t)}); }
+  return out;
+}
 function drawMeasurement(m, num) {
   const g = mkEl('g', { 'data-mid': m.id });
   g.style.cursor='pointer';
@@ -1556,14 +1648,16 @@ function drawMeasurement(m, num) {
       mkEl('polygon',{points:ptsS.map(p=>p.x+','+p.y).join(' '),stroke:m.color,'stroke-width':sStroke,fill:m.color,'fill-opacity':'0.1','stroke-linejoin':'round'}),
       ...m.coords.map((_,i)=>vertexHandle(m,i,editing))
     );
-    if (m.type==='rect') {
+    const proposed = (m.layer==='proposed');
+    if (m.type==='rect' && (!proposed || S.showSideDims)) {     // proposed: edge dims only when toggled on
       for (let i=0;i<m.coords.length;i++){
         const j=(i+1)%m.coords.length;
         const sa=imgToScreen(m.coords[i].x,m.coords[i].y), sb=imgToScreen(m.coords[j].x,m.coords[j].y);
         if (Math.hypot(sb.x-sa.x,sb.y-sa.y) > 46){ const d=mDist(m.coords[i],m.coords[j]); g.append(drawEdgeLabel(m.coords[i],m.coords[j],fmtDist(d)+impTag(d),m.color,{x:cx,y:cy})); }
       }
     }
-    g.append(drawLabelScreen({x:cx,y:cy}, num+' · '+fmtArea(m.area), m.color));
+    if (proposed) g.append(drawNumberBadge({x:cx,y:cy}, m.n||num, m.color));         // prominent number, no on-image area
+    else g.append(drawLabelScreen({x:cx,y:cy}, num+' · '+fmtArea(m.area), m.color));
   } else if (m.type==='point') {
     const p=imgToScreen(m.coords[0].x,m.coords[0].y);
     const outer=sCircle(p,vertPx(9),m.color,m.color,strokePx(1)); outer.setAttribute('fill-opacity','0.2');
@@ -1577,18 +1671,28 @@ function drawMeasurement(m, num) {
     const a=imgToScreen(m.coords[0].x,m.coords[0].y), b=imgToScreen(m.coords[1].x,m.coords[1].y);
     g.append(
       mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:m.color,'stroke-width':sStroke,'stroke-dasharray':'7,5','stroke-linecap':'round'}),
-      vertexHandle(m,0,editing), vertexHandle(m,1,editing),
-      drawLabelScreen({x:(m.coords[0].x+m.coords[1].x)/2,y:(m.coords[0].y+m.coords[1].y)/2}, num+' · '+fmtDist(m.value)+impTag(m.value), m.color)
+      vertexHandle(m,0,editing), vertexHandle(m,1,editing)
     );
   } else if (m.type==='refcircle') {
     const c=imgToScreen(m.coords[0].x,m.coords[0].y), rr=dist2(m.coords[0],m.coords[1])*S.zoom;
     g.append(
       mkEl('circle',{cx:c.x,cy:c.y,r:rr,fill:'none',stroke:m.color,'stroke-width':sStroke,'stroke-dasharray':'7,5'}),
-      vertexHandle(m,0,editing), vertexHandle(m,1,editing),
-      drawLabelScreen({x:m.coords[0].x,y:m.coords[0].y}, num+' · r '+fmtDist(m.r), m.color)
+      vertexHandle(m,0,editing), vertexHandle(m,1,editing)
+    );
+  } else if (m.type==='arc') {
+    const pts=arcPts(m.coords[0],m.coords[1],m.coords[2]).map(p=>imgToScreen(p.x,p.y));
+    g.append(
+      mkEl('polyline',{points:pts.map(p=>p.x+','+p.y).join(' '),fill:'none',stroke:m.color,'stroke-width':sStroke,'stroke-dasharray':'7,5','stroke-linecap':'round'}),
+      ...m.coords.map((_,i)=>vertexHandle(m,i,editing))
+    );
+  } else if (m.type==='apoly') {
+    const pts=m.coords.map(p=>imgToScreen(p.x,p.y));
+    g.append(
+      mkEl('polyline',{points:pts.map(p=>p.x+','+p.y).join(' '),fill:'none',stroke:m.color,'stroke-width':sStroke,'stroke-dasharray':'7,5','stroke-linejoin':'round','stroke-linecap':'round'}),
+      ...m.coords.map((_,i)=>vertexHandle(m,i,editing))
     );
   }
-  if (editing && (m.type==='poly'||m.type==='rect'||m.type==='pline')) {
+  if (editing && (m.type==='poly'||m.type==='rect'||m.type==='pline'||m.type==='apoly')) {
     editEdges(m).forEach(([i,j])=>{
       const a=imgToScreen(m.coords[i].x,m.coords[i].y), b=imgToScreen(m.coords[j].x,m.coords[j].y);
       const mp={x:(a.x+b.x)/2,y:(a.y+b.y)/2}, rr2=vertPx(4.5);
@@ -1602,12 +1706,12 @@ function drawMeasurement(m, num) {
 }
 
 function vertexHandle(m, index, editing) {
+  if (!editing) return mkEl('g', {});          // V17: corner handles appear only in edit mode
   const p = imgToScreen(m.coords[index].x, m.coords[index].y);
-  const r = editing ? vertPx(6) : vertPx(3.6);
-  const c = sCircle(p, r, editing?'#fff':'white', m.color, strokePx(editing?2:1.5));
+  const c = sCircle(p, vertPx(6), '#fff', m.color, strokePx(2));
   c.setAttribute('data-vid', m.id);
   c.setAttribute('data-vidx', index);
-  if (editing) { c.style.cursor='grab'; c.style.pointerEvents='all'; }
+  c.style.cursor='grab'; c.style.pointerEvents='all';
   return c;
 }
 
@@ -1679,12 +1783,15 @@ function renderPreview() {
     const a=imgToScreen(S.distA.x,S.distA.y), b=imgToScreen(S.cursorImg.x,S.cursorImg.y);
     dash.append(mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#3a6ea5','stroke-width':DW,'stroke-dasharray':DA,fill:'none','stroke-linecap':'round'}));
     dash.append(sCircle(a,vertPx(3),'white','#3a6ea5',1.3), sCircle(b,vertPx(3),'white','#3a6ea5',1.3));
-    dash.append(drawLabelScreen({x:(S.distA.x+S.cursorImg.x)/2,y:(S.distA.y+S.cursorImg.y)/2}, fmtDist(mDist(S.distA,S.cursorImg)), '#3a6ea5'));
   } else if (S.tool==='refcircle' && S.distA && S.cursorImg) {
     const c=imgToScreen(S.distA.x,S.distA.y), rr=dist2(S.distA,S.cursorImg)*S.zoom;
     dash.append(mkEl('circle',{cx:c.x,cy:c.y,r:rr,fill:'none',stroke:'#3a6ea5','stroke-width':DW,'stroke-dasharray':DA}));
     dash.append(sCircle(c,vertPx(3),'white','#3a6ea5',1.3));
-    dash.append(drawLabelScreen({x:S.distA.x,y:S.distA.y}, 'r '+fmtDist(dist2(S.distA,S.cursorImg)), '#3a6ea5'));
+  } else if ((S.tool==='apoly'||S.tool==='arc') && S.polyPts.length) {
+    const pts = S.cursorImg ? [...S.polyPts, S.cursorImg] : S.polyPts;
+    const ptsS = pts.map(p=>imgToScreen(p.x,p.y));
+    dash.append(mkEl('polyline',{points:ptsS.map(p=>p.x+','+p.y).join(' '),stroke:'#3a6ea5','stroke-width':DW,'stroke-dasharray':DA,fill:'none','stroke-linejoin':'round','stroke-linecap':'round'}));
+    ptsS.forEach(p=>dash.append(sCircle(p,vertPx(3),'white','#3a6ea5',1.3)));
   }
   impSetMatch(liveMatch);
   svg.appendChild(dash);
@@ -1700,7 +1807,7 @@ function setTool(t) {
   document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
   const btn=document.getElementById('tool-'+t);
   if(btn) btn.classList.add('active');
-  const names={pan:'Pan / Select',edit:'Edit points',dist:'Distance',pline:'Polyline',poly:'Polygon',rect:'Rectangle',point:'Point marker',annot:'Annotation',calib:'Set scale',curvefit:'Fit radius',curvecentre:'Set centre line',refline:'Reference line',refcircle:'Reference circle'};
+  const names={pan:'Pan / Select',edit:'Edit points',dist:'Distance',pline:'Polyline',poly:'Polygon',rect:'Rectangle',point:'Point marker',annot:'Annotation',calib:'Set scale',curvefit:'Fit radius',curvecentre:'Set centre line',refline:'Annotate line',refcircle:'Annotate circle',arc:'Annotate arc',apoly:'Annotate polyline'};
   sTool.textContent=names[t]||t;
   if (t==='edit') {
     if (!S.editId && S.selectedId && S.measurements.find(m=>m.id===S.selectedId)) enterEdit(S.selectedId);
@@ -1801,6 +1908,7 @@ window.addEventListener('mouseup', e => {
 wrap.addEventListener('dblclick', e => {
   if (!S.loaded) return;
   if ((S.tool==='poly'||S.tool==='pline')&&S.drawing) finishPolyish();
+  else if (S.tool==='apoly'&&S.drawing) finishApoly();
   else if (S.tool==='curvefit') finishCurveFit();
 });
 wrap.addEventListener('auxclick', e => { if (e.button===1) e.preventDefault(); });
@@ -1819,7 +1927,7 @@ function constrainAngle(a,p){ const dx=p.x-a.x, dy=p.y-a.y, L=Math.hypot(dx,dy);
 function squareFrom(a,p){ const dx=p.x-a.x, dy=p.y-a.y, s=Math.max(Math.abs(dx),Math.abs(dy)); return {x:a.x+(dx<0?-s:s), y:a.y+(dy<0?-s:s)}; }
 function adjustPoint(p){
   S._snapPt=null;
-  if(!['dist','pline','poly','rect','refline'].includes(S.tool)) return p;
+  if(!['dist','pline','poly','rect','refline','apoly','arc'].includes(S.tool)) return p;
   if(S.tool==='rect'){ if(S.rectA && S.shiftDown) p=squareFrom(S.rectA,p); }
   else { let anchor=null; if((S.tool==='dist'||S.tool==='refline')&&S.distA) anchor=S.distA; else if(S.polyPts.length) anchor=S.polyPts[S.polyPts.length-1]; if(S.shiftDown && anchor) p=constrainAngle(anchor,p); }
   const s=snapVertex(p); if(s){ S._snapPt=s; return s; }
@@ -1834,11 +1942,14 @@ function toolDown(p, e) {
     else finishDist(p);
   } else if (S.tool==='pline'||S.tool==='poly') {
     if (!S.drawing){ S.drawing=true; S.polyPts=[p]; }
-    else S.polyPts.push(p);
+    else {
+      if (S.tool==='poly' && S.polyPts.length>=3 && dist2(p,S.polyPts[0]) < 12/S.zoom){ finishPolyish(); return; }   // click first vertex to close
+      S.polyPts.push(p);
+    }
     S.cursorImg=p;
     showBanner(S.tool==='pline'
       ? 'Tracing <b>crack</b> · click points · <span class="kbd">double-click</span>/<span class="kbd">Enter</span> finishes · pan with <span class="kbd">Space</span>/<span class="kbd">middle-mouse</span>'
-      : 'Drawing <b>area</b> · click vertices · <span class="kbd">double-click</span>/<span class="kbd">Enter</span> closes · pan with <span class="kbd">Space</span>/<span class="kbd">middle-mouse</span>');
+      : 'Drawing <b>area</b> · click vertices · click the <b>first point</b> or <span class="kbd">double-click</span>/<span class="kbd">Enter</span> to close · pan with <span class="kbd">Space</span>/<span class="kbd">middle</span>');
     scheduleRender();
   } else if (S.tool==='rect') {
     if (!S.drawing){ S.drawing=true; S.rectA=p; S.cursorImg=p; showBanner('Placing <b>rectangle</b> · click the opposite corner · <span class="kbd">Shift</span> = square · pan with <span class="kbd">Space</span>/<span class="kbd">middle</span>'); scheduleRender(); }
@@ -1858,8 +1969,18 @@ function toolDown(p, e) {
     if (!S.drawing){ S.drawing=true; S.distA=p; S.cursorImg=p; showBanner('<b>Reference line</b> · click the other end · <span class="kbd">Shift</span> straight · <span class="kbd">Esc</span> cancels'); scheduleRender(); }
     else finishRefline(p);
   } else if (S.tool==='refcircle') {
-    if (!S.drawing){ S.drawing=true; S.distA=p; S.cursorImg=p; showBanner('<b>Reference circle</b> · click the edge to set the radius · <span class="kbd">Esc</span> cancels'); scheduleRender(); }
+    if (!S.drawing){ S.drawing=true; S.distA=p; S.cursorImg=p; showBanner('<b>Annotate circle</b> · click the edge to set the radius · <span class="kbd">Esc</span> cancels'); scheduleRender(); }
     else finishRefcircle(p);
+  } else if (S.tool==='arc') {
+    if(!S.drawing){ S.drawing=true; S.polyPts=[p]; } else S.polyPts.push(p);
+    S.cursorImg=p;
+    if(S.polyPts.length>=3) finishArc();
+    else { showBanner('<b>Annotate arc</b> · click 3 points: start · through · end · <span class="kbd">Esc</span> cancels'); scheduleRender(); }
+  } else if (S.tool==='apoly') {
+    if(!S.drawing){ S.drawing=true; S.polyPts=[p]; } else S.polyPts.push(p);
+    S.cursorImg=p;
+    showBanner('<b>Annotate polyline</b> · click points · <span class="kbd">double-click</span>/<span class="kbd">Enter</span> finishes · <span class="kbd">Esc</span> cancels');
+    scheduleRender();
   }
 }
 
@@ -2016,17 +2137,35 @@ function addPoint(p){
 }
 function finishRefline(b){
   S.drawing=false; S.cursorImg=null; hideBanner();
-  const m={id:nMid(),type:'refline',coords:[S.distA,b],label:'Ref line '+S.mCtr,note:'',color:'#3a6ea5'};
-  classifyNew(m); recompute(m);
+  const m={id:nMid(),type:'refline',coords:[S.distA,b],label:'Line '+S.mCtr,note:'',color:'#3a6ea5'};
+  classifyNew(m);
   pushH(); S.measurements.push(m); refreshMList(); refreshLayers(); scheduleRender();
-  S.distA=null; msg('Reference line: '+fmtDist(m.value)); selectM(m.id,false);
+  S.distA=null; msg('Annotation line added'); selectM(m.id,false);
 }
 function finishRefcircle(edge){
   S.drawing=false; S.cursorImg=null; hideBanner();
-  const m={id:nMid(),type:'refcircle',coords:[S.distA,edge],label:'Ref circle '+S.mCtr,note:'',color:'#3a6ea5'};
-  classifyNew(m); recompute(m);
+  const m={id:nMid(),type:'refcircle',coords:[S.distA,edge],label:'Circle '+S.mCtr,note:'',color:'#3a6ea5'};
+  classifyNew(m);
   pushH(); S.measurements.push(m); refreshMList(); refreshLayers(); scheduleRender();
-  S.distA=null; msg('Reference circle: r '+fmtDist(m.r)); selectM(m.id,false);
+  S.distA=null; msg('Annotation circle added'); selectM(m.id,false);
+}
+function finishArc(){
+  const pts=S.polyPts.slice(0,3);
+  S.drawing=false; S.polyPts=[]; S.cursorImg=null; hideBanner();
+  if(pts.length<3){ scheduleRender(); return; }
+  const m={id:nMid(),type:'arc',coords:pts,label:'Arc '+S.mCtr,note:'',color:'#3a6ea5'};
+  classifyNew(m);
+  pushH(); S.measurements.push(m); refreshMList(); refreshLayers(); scheduleRender();
+  msg('Annotation arc added'); selectM(m.id,false);
+}
+function finishApoly(){
+  if(S.polyPts.length<2){ cancelDraw(); return; }
+  const pts=S.polyPts.slice();
+  S.drawing=false; S.polyPts=[]; S.cursorImg=null; hideBanner();
+  const m={id:nMid(),type:'apoly',coords:pts,label:'Polyline '+S.mCtr,note:'',color:'#3a6ea5'};
+  classifyNew(m);
+  pushH(); S.measurements.push(m); refreshMList(); refreshLayers(); scheduleRender();
+  msg('Annotation polyline added'); selectM(m.id,false);
 }
 function cancelDraw(){ S.drawing=false; S.polyPts=[]; S.distA=null; S.rectA=null; S.calibA=null; S.cursorImg=null; if(S.curve)S.curve._pts=[]; hideBanner(); scheduleRender(); }
 
@@ -2242,19 +2381,38 @@ function openScaleDialog(pixelDist){
 ═══════════════════════════════════════════════════ */
 /* The number family a default label belongs to (Stone / Defect / Distance …). */
 function defaultPrefix(m){
+  if(isAnnotType(m)) return ({refline:'Line',refcircle:'Circle',arc:'Arc',apoly:'Polyline'})[m.type];
   if(m.layer==='proposed') return 'Stone';
   if(m.layer==='condition') return 'Defect';
-  return ({dist:'Distance',pline:'Crack',poly:'Area',rect:'Rect',point:'Point',refline:'Ref line',refcircle:'Ref circle'})[m.type]||'Item';
+  return ({dist:'Distance',pline:'Crack',poly:'Area',rect:'Rect',point:'Point'})[m.type]||'Item';
 }
 function isAutoLabel(m,p){ return !m.named && (!m.label || new RegExp('^'+p+' \\d+$').test(m.label)); }
 /* Keep auto labels gap-free per family so deleting a stone doesn't leave a hole in the schedule.
    m.n is the number shown on each item's badge; custom (renamed) labels are left untouched. */
+/* Reading order for proposed stones: bottom-left → left-to-right across a course → up. */
+function spatialOrder(items){
+  if(!items.length) return [];
+  const o=items.map(m=>{ const ys=m.coords.map(p=>p.y), xs=m.coords.map(p=>p.x);
+    return {m, cx:(Math.min(...xs)+Math.max(...xs))/2, cy:(Math.min(...ys)+Math.max(...ys))/2, h:Math.max(...ys)-Math.min(...ys)}; });
+  const heights=o.map(x=>x.h).sort((a,b)=>a-b);
+  const band=(heights[Math.floor(heights.length/2)]||40)*0.6;     // same-course vertical tolerance
+  const byY=[...o].sort((a,b)=>b.cy-a.cy);                          // image y grows downward → bottom first
+  const courses=[]; let cur=[byY[0]];
+  for(let i=1;i<byY.length;i++){ const refY=cur.reduce((s,x)=>s+x.cy,0)/cur.length;
+    if(Math.abs(byY[i].cy-refY)<=band) cur.push(byY[i]); else { courses.push(cur); cur=[byY[i]]; } }
+  courses.push(cur);
+  const out=[];
+  courses.forEach(c=>{ c.sort((a,b)=>a.cx-b.cx); c.forEach(x=>out.push(x.m)); });
+  return out;
+}
 function renumberLabels(){
   const seq={};
+  const stoneRank=new Map();
+  spatialOrder(S.measurements.filter(m=>m.layer==='proposed' && !isAnnotType(m))).forEach((m,i)=>stoneRank.set(m.id,i+1));
   S.measurements.forEach(m=>{
     const p=defaultPrefix(m);
-    seq[p]=(seq[p]||0)+1;
-    m.n=seq[p];
+    if(p==='Stone'){ m.n=stoneRank.get(m.id)||0; }   // proposed stones numbered by position
+    else { seq[p]=(seq[p]||0)+1; m.n=seq[p]; }
     if(isAutoLabel(m,p)) m.label=p+' '+m.n;
   });
   S.annotations.forEach((a,i)=>{ a.num=i+1; });
@@ -2265,6 +2423,10 @@ function classRow(m){
   if(m.layer==='condition') return '<div class="m-class"><select class="m-class-sel" data-class="'+m.id+'">'+CONDITIONS.map(a=>'<option value="'+a.key+'"'+(m.cond===a.key?' selected':'')+'>'+a.label+'</option>').join('')+'</select></div>';
   return '';
 }
+function areaRow(m){
+  if(!S.areas.length || isAnnotType(m)) return '';
+  return '<div class="m-area"><select class="m-area-sel" data-areaof="'+m.id+'"><option value="">(no area / level)</option>'+S.areas.map(a=>'<option value="'+esc(a)+'"'+(m.level===a?' selected':'')+'>'+esc(a)+'</option>').join('')+'</select></div>';
+}
 function setItemClass(id, key){
   const m=S.measurements.find(x=>x.id===id); if(!m) return;
   if(m.layer==='proposed' && ACTION_BY[key]){ m.action=key; m.color=ACTION_BY[key].color; }
@@ -2274,10 +2436,16 @@ function setItemClass(id, key){
 function refreshMList(){
   renumberLabels();
   const active=S.layers.active;
-  const items=S.measurements.filter(m=>(m.layer||'measure')===active);
+  const items=S.measurements.filter(m=>(m.layer||'measure')===active && catVisible(m));
   if(!items.length){ mList.innerHTML='<div class="empty-state">Nothing in <b>'+esc(layerName(active))+'</b> yet.<br>'+layerHint(active)+'</div>'; return; }
   mList.innerHTML='';
-  const types={dist:'Distance',pline:'Crack',poly:'Polygon',rect:'Rectangle',point:'Point',refline:'Reference line',refcircle:'Reference circle'};
+  if(S.areas.length){
+    const bb=document.createElement('div'); bb.className='m-bulk-area';
+    bb.innerHTML='<span>Assign all '+items.length+' shown →</span><button class="btn-sm" id="bulk-area-btn">'+esc(S.activeArea||'no area')+'</button>';
+    bb.querySelector('#bulk-area-btn').addEventListener('click',()=>{ items.forEach(m=>{ if(!isAnnotType(m)) m.level=S.activeArea||''; }); refreshMList(); msg('Assigned '+items.length+' item(s) to '+(S.activeArea||'no area')); });
+    mList.appendChild(bb);
+  }
+  const types={dist:'Distance',pline:'Crack',poly:'Polygon',rect:'Rectangle',point:'Point',refline:'Annotation',refcircle:'Annotation',arc:'Annotation',apoly:'Annotation'};
   items.forEach((m)=>{
     const i=S.measurements.indexOf(m);
     let val='', detail='';
@@ -2304,6 +2472,7 @@ function refreshMList(){
         <span class="m-tag">${types[m.type]||m.type}</span>
       </div>
       ${classRow(m)}
+      ${areaRow(m)}
       ${val?`<div class="m-val">${val}</div>`:''}
       ${impPane(m)}
       ${detail?`<div class="m-sides">${detail}</div>`:''}
@@ -2325,6 +2494,8 @@ function refreshMList(){
     });
     const csel=div.querySelector('.m-class-sel');
     if(csel){ csel.addEventListener('change',e=>{ e.stopPropagation(); setItemClass(m.id, e.target.value); }); ['click','mousedown'].forEach(ev=>csel.addEventListener(ev,e=>e.stopPropagation())); }
+    const asel=div.querySelector('.m-area-sel');
+    if(asel){ asel.addEventListener('change',e=>{ e.stopPropagation(); const mm=S.measurements.find(x=>x.id===m.id); if(mm) mm.level=e.target.value; }); ['click','mousedown'].forEach(ev=>asel.addEventListener(ev,e=>e.stopPropagation())); }
     mList.appendChild(div);
   });
 }
@@ -2427,15 +2598,31 @@ document.getElementById('imp-on').addEventListener('change', e=>{ S.imp.on=e.tar
 /* ── Header dropdown menus (scale & units · export) ── */
 function updateScaleChip(){ const el=document.getElementById('scale-chip'); if(el) el.textContent=(+(+S.pxPerUnit).toPrecision(4))+' px/'+S.unit; }
 function closeAllMenus(){ document.querySelectorAll('.menu.open').forEach(m=>m.classList.remove('open')); }
+/* ── V18 area / level ── */
+function updateAreaChip(){ const el=document.getElementById('area-chip'); if(el) el.textContent=S.activeArea||'No area'; }
+function setActiveArea(name){ S.activeArea=name||''; updateAreaChip(); renderAreaMenu(); msg(name?('New measurements → '+name):'New measurements have no area'); }
+function addArea(name){ name=(name||'').trim(); if(!name) return; if(!S.areas.includes(name)) S.areas.push(name); S.activeArea=name; updateAreaChip(); renderAreaMenu(); refreshMList(); }
+function deleteArea(name){ S.areas=S.areas.filter(a=>a!==name); if(S.activeArea===name) S.activeArea=''; S.measurements.forEach(m=>{ if(m.level===name) m.level=''; }); updateAreaChip(); renderAreaMenu(); refreshMList(); }
+function renderAreaMenu(){
+  const el=document.getElementById('area-panel'); if(!el) return;
+  const rows=[{name:'',label:'(no area)'}].concat(S.areas.map(a=>({name:a,label:a}))).map(o=>{
+    const active=S.activeArea===o.name;
+    return '<div class="area-row'+(active?' active':'')+'" data-area="'+esc(o.name)+'"><span class="area-tick">'+(active?'✓':'')+'</span><span class="area-name">'+esc(o.label)+'</span>'+(o.name?'<span class="area-del" data-del="'+esc(o.name)+'" title="Delete area">✕</span>':'')+'</div>';
+  }).join('');
+  el.innerHTML='<div class="menu-head">Area / level — applied to new measurements</div>'+rows+'<div class="area-add"><input id="area-new" placeholder="New area name…" maxlength="40"><button class="btn-sm" id="area-add-btn">Add</button></div>';
+  el.querySelectorAll('.area-row').forEach(r=>r.addEventListener('click',e=>{ if(e.target.closest('.area-del')){ e.stopPropagation(); deleteArea(e.target.closest('.area-del').dataset.del); } else setActiveArea(r.dataset.area); }));
+  const inp=el.querySelector('#area-new'); inp.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') addArea(inp.value); });
+  el.querySelector('#area-add-btn').addEventListener('click',()=>addArea(inp.value));
+}
 document.querySelectorAll('.menu-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{ const menu=btn.closest('.menu'), open=menu.classList.contains('open'); closeAllMenus(); if(!open){ menu.classList.add('open'); if(menu.id==='menu-scale') updateScaleChip(); } });
+  btn.addEventListener('click', ()=>{ const menu=btn.closest('.menu'), open=menu.classList.contains('open'); closeAllMenus(); if(!open){ menu.classList.add('open'); if(menu.id==='menu-scale') updateScaleChip(); if(menu.id==='menu-area') renderAreaMenu(); } });
 });
 document.addEventListener('click', e=>{
   if(e.target.closest('.menu-btn')) return;                    // the button toggles itself
   if(e.target.closest('.menu-close') || !e.target.closest('.menu')) closeAllMenus();
 });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeAllMenus(); }, true);
-updateScaleChip();
+updateScaleChip(); updateAreaChip();
 document.getElementById('imp-unit').addEventListener('change', e=>{ S.imp.unit=e.target.value; refreshMList(); scheduleRender(); });
 document.getElementById('btn-help').addEventListener('click', showHelp);
 function showHelp(){
@@ -2514,14 +2701,16 @@ document.getElementById('btn-csv').addEventListener('click', exportCSV);
 document.getElementById('btn-json').addEventListener('click', exportJSON);
 document.getElementById('btn-pdf').addEventListener('click', exportPDF);
 document.getElementById('btn-schedule').addEventListener('click', exportSchedule);
+document.getElementById('btn-cutlist').addEventListener('click', exportCuttingList);
 
 function exportCSV(){
   const rows=[['ID','Type','Label','Value','Unit','Width','Height','Area','Area_Unit','Length','Length_Unit','X_px','Y_px','Note']];
   S.measurements.forEach(m=>{
+    if(isAnnotType(m)) return;                       // annotations are never exported
     let val='',unit='',w='',h='',area='',aunit='',len='',lunit='',x='',y='';
     if(m.type==='dist'){val=pxToU(m.value).toFixed(2);unit=S.unit;}
     if(m.type==='pline'){len=pxToU(m.length).toFixed(2);lunit=S.unit;}
-    if(m.type==='poly'||m.type==='rect'){const au=m.area/(S.pxPerUnit*S.pxPerUnit);area=au.toFixed(2);aunit=S.unit+'²';}
+    if(m.type==='poly'||m.type==='rect'){area=areaM2(m.area).toFixed(4);aunit='m²';}
     if(m.type==='rect'){w=pxToU(m.rectW).toFixed(2);h=pxToU(m.rectH).toFixed(2);}
     if(m.type==='point'){x=m.coords[0].x.toFixed(1);y=m.coords[0].y.toFixed(1);}
     rows.push([m.id,m.type,m.label,val,unit,w,h,area,aunit,len,lunit,x,y,m.note||'']);
@@ -2538,6 +2727,7 @@ function nearestAnnotation(pt){let best=null,bd=1e9;S.annotations.forEach(a=>{co
 function scheduleRows(){
   const rows=[];
   S.measurements.forEach(m=>{
+    if(isAnnotType(m)) return;                       // annotations are never exported
     const L=m.layer||'measure';
     let action='', sev='';
     if(L==='proposed' && m.action){ const a=ACTION_BY[m.action]; action=a?a.label:m.action; sev=String(ACTIONS.findIndex(x=>x.key===m.action)+1); }
@@ -2548,19 +2738,38 @@ function scheduleRows(){
     else if(m.type==='dist'||m.type==='refline'){ w=fmtDist(m.value); }
     else if(m.type==='refcircle'){ w='r '+fmtDist(m.r); }
     else if(m.type==='pline'){ len=fmtDist(m.length); }
-    rows.push([m.label, layerName(L), m.type, action, sev, w, h, area, len, m.note||'']);
+    rows.push([m.label, layerName(L), m.level||'', m.type, action, sev, w, h, area, len, m.note||'']);
   });
-  S.annotations.forEach(a=>{ rows.push(['Note '+a.num, layerName('condition'), 'note', a.category||'', '', '', '', '', '', a.text||'']); });
+  S.annotations.forEach(a=>{ rows.push(['Note '+a.num, layerName('condition'), '', 'note', a.category||'', '', '', '', '', '', a.text||'']); });
   return rows;
 }
 function exportSchedule(){
-  const headers=['Ref','Layer','Type','Action / defect','Severity','Width','Height','Area','Length','Notes'];
+  const headers=['Ref','Layer','Area / level','Type','Action / defect','Severity','Width','Height','Area','Length','Notes'];
   const rows=[headers, ...scheduleRows()];
   dl(rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),'stone-schedule.csv','text/csv');
 }
+/* Cut dimensions for a stone: rect → its width × height; polygon → bounding-box width × height
+   (you order a rectangular block), with face m² = the true measured face area. */
+function stoneDims(m){
+  let Lpx,Hpx;
+  if(m.type==='rect'){ Lpx=m.rectW; Hpx=m.rectH; }
+  else { const xs=m.coords.map(p=>p.x), ys=m.coords.map(p=>p.y); Lpx=Math.abs(devX(Math.max(...xs))-devX(Math.min(...xs))); Hpx=Math.max(...ys)-Math.min(...ys); }
+  return { L:pxToU(Lpx), H:pxToU(Hpx), face:areaM2(m.area) };
+}
+function exportCuttingList(){
+  renumberLabels();
+  const stones=spatialOrder(S.measurements.filter(m=>m.layer==='proposed' && !isAnnotType(m) && (m.action==='wsr'||m.action==='indent')));
+  if(!stones.length){ msg('No whole-stone-replacement or indent stones to put on a cutting list.'); return; }
+  const rows=[['PROJECT:',''],['BUILDING/AREA:',S.areas.join(', ')],['DATE:',new Date().toISOString().slice(0,10)],[],
+    ['Stone No.','Level','RWS/IND','Length (mm)','Depth (mm)','Height (mm)','m³','face m²','bed m²','Notes']];
+  stones.forEach(m=>{ const d=stoneDims(m);
+    rows.push([ String(m.n||''), (m.level||''), (m.action==='wsr'?'RWS':'IND'),
+      Math.round(d.L), '', Math.round(d.H), '', (+d.face.toFixed(5)), '', (m.note||'') ]); });
+  dl(rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),'cutting-list.csv','text/csv');
+}
 function exportJSON(){
   const data={ exported:new Date().toISOString(), scale:{pxPerUnit:S.pxPerUnit,unit:S.unit}, image:{width:S.imgW,height:S.imgH},
-    measurements:S.measurements.map(m=>({...m,valueFmt:m.type==='dist'?fmtDist(m.value):'',lengthFmt:m.type==='pline'?fmtDist(m.length):'',areaFmt:(m.type==='poly'||m.type==='rect')?fmtArea(m.area):''})),
+    measurements:S.measurements.filter(m=>!isAnnotType(m)).map(m=>({...m,valueFmt:m.type==='dist'?fmtDist(m.value):'',lengthFmt:m.type==='pline'?fmtDist(m.length):'',areaFmt:(m.type==='poly'||m.type==='rect')?fmtArea(m.area):''})),
     annotations:S.annotations };
   dl(JSON.stringify(data,null,2),'facade-measurements.json','application/json');
 }
@@ -2638,7 +2847,7 @@ function compositeRegion(region, outW, items, anns, fullRes, opts){
   g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
   if(src){ try{ g.drawImage(src, region.sx*ss, region.sy*ss, region.sw*ss, region.sh*ss, 0,0,outW,outH); }catch(e){} }
   const mx=ix=>(ix-region.sx)*k, my=iy=>(iy-region.sy)*k;
-  (items||[]).forEach((m,i)=>drawMeasOnCanvas(g,m,mx,my,strokeW,fontS,mode,startNum+i,opts.edges));
+  (items||[]).forEach((m,i)=>drawMeasOnCanvas(g,m,mx,my,strokeW,fontS,mode,m.n||(startNum+i),opts.edges));
   (anns||[]).forEach(a=>drawAnnOnCanvas(g,a,mx,my,fontS));
   if(opts.scaleBar) drawScaleBar(g,outW,outH,k);
   return cv.toDataURL('image/jpeg', 0.86);
@@ -2688,17 +2897,21 @@ function buildReportHTML(){
   let overviewImg='', legend='';
   if(hasImg){
     const ow=Math.min(2000,S.imgW);
-    const url=compositeRegion({sx:0,sy:0,sw:S.imgW,sh:S.imgH}, ow, S.measurements, S.annotations, false,
+    const url=compositeRegion({sx:0,sy:0,sw:S.imgW,sh:S.imgH}, ow, S.measurements.filter(m=>!isAnnotType(m)), S.annotations, false,
       {strokeW:Math.max(3,ow/300), fontS:Math.max(13,Math.round(ow/68)), mode:'badge', scaleBar:true});
     overviewImg=`<div class="figure"><img src="${url}" alt="Annotated facade overview"><div class="cap">Annotated orthophoto — numbered markers keyed to the legend and tables below. Scale ${scaleStr}.</div></div>`;
     if(S.measurements.length||S.annotations.length){
-      const mItems=S.measurements.map((m,i)=>`<span class="lg-item"><span class="lg-badge sq" style="background:${m.color}">${i+1}</span>${esc(m.label)}${legendVal(m)?` <span class="lg-val">${esc(legendVal(m))}</span>`:''}</span>`).join('');
-      const aItems=S.annotations.map(a=>`<span class="lg-item"><span class="lg-badge ci" style="background:${a.color||COLORS.annot}">${a.num}</span>${esc(a.category)}</span>`).join('');
-      legend=`<div class="legend">${S.measurements.length?`<div class="lg-group"><div class="lg-title">Measurements</div>${mItems}</div>`:''}${S.annotations.length?`<div class="lg-group"><div class="lg-title">Defects &amp; notes</div>${aItems}</div>`:''}</div>`;
+      const lgItem=m=>`<span class="lg-item"><span class="lg-badge sq" style="background:${m.color}">${m.n||''}</span>${esc(m.label)}${legendVal(m)?` <span class="lg-val">${esc(legendVal(m))}</span>`:''}</span>`;
+      const grp=(title,items)=>items.length?`<div class="lg-group"><div class="lg-title">${esc(title)}</div>${items.map(lgItem).join('')}</div>`:'';
+      const meas=S.measurements.filter(m=>(m.layer||'measure')==='measure' && !isAnnotType(m));
+      const cond=S.measurements.filter(m=>m.layer==='condition' && !isAnnotType(m));
+      let prop=''; ACTIONS.forEach(a=>{ prop+=grp(a.label, S.measurements.filter(m=>m.layer==='proposed' && !isAnnotType(m) && m.action===a.key)); });
+      const aGrp=S.annotations.length?`<div class="lg-group"><div class="lg-title">Defects &amp; notes</div>${S.annotations.map(a=>`<span class="lg-item"><span class="lg-badge ci" style="background:${a.color||COLORS.annot}">${a.num}</span>${esc(a.category)}</span>`).join('')}</div>`:'';
+      legend=`<div class="legend">${grp('Measurements',meas)}${grp('Existing condition',cond)}${prop}${aGrp}</div>`;
     }
   }
   const crop=(items,anns,region)=>compositeRegion(region, 460, items, anns, true, {strokeW:6, fontS:20, mode:'none', edges:true});
-  const mRows=S.measurements.map((m,i)=>{
+  const rowFor=(m)=>{
     let val='';
     if(m.type==='dist')  val=fmtDist(m.value);
     else if(m.type==='pline') val='Length '+fmtDist(m.length);
@@ -2706,8 +2919,12 @@ function buildReportHTML(){
     else if(m.type==='rect'){ const sd=rectSides(m); if(rectSymmetric(m)){ val=fmtDist(sd[0])+' × '+fmtDist(sd[1])+' = '+fmtArea(m.area); } else { val=fmtArea(m.area)+'<br><span style="font-weight:400;color:#5a534a;font-size:10px;">'+sd.map(fmtDist).join(' · ')+'</span>'; } }
     else if(m.type==='point') val='('+Math.round(m.coords[0].x)+', '+Math.round(m.coords[0].y)+') px';
     const thumb=hasImg?`<img class="thumb" src="${crop([m],[],paddedRegion(itemBBox(m)))}">`:'';
-    return `<tr><td class="num">${i+1}</td><td class="tcell">${thumb}</td><td>${esc(m.label)}</td><td>${types[m.type]||m.type}</td><td class="val">${val}</td><td>${esc(m.note||'')}</td></tr>`;
-  }).join('');
+    return `<tr><td class="num">${m.n||''}</td><td class="tcell">${thumb}</td><td>${esc(m.label)}</td><td>${types[m.type]||m.type}</td><td class="val">${val}</td><td>${esc(m.note||'')}</td></tr>`;
+  };
+  const tableFor=(title,items)=> items.length? `<h2>${esc(title)} (${items.length})</h2><table><thead><tr><th>#</th><th>View</th><th>Label</th><th>Type</th><th>Value</th><th>Note</th></tr></thead><tbody>${items.map(rowFor).join('')}</tbody></table>` : '';
+  const measT=tableFor('Measurements', S.measurements.filter(m=>(m.layer||'measure')==='measure' && !isAnnotType(m)));
+  let propT=''; ACTIONS.forEach(a=>{ propT+=tableFor('Proposed works — '+a.label, S.measurements.filter(m=>m.layer==='proposed' && !isAnnotType(m) && m.action===a.key)); });
+  const condT=tableFor('Existing condition', S.measurements.filter(m=>m.layer==='condition' && !isAnnotType(m)));
   const aRows=S.annotations.map(a=>{
     const thumb=hasImg?`<img class="thumb" src="${crop([],[a],paddedRegion({x0:a.x,y0:a.y,x1:a.x,y1:a.y}))}">`:'';
     return `<tr><td class="num">${a.num}</td><td class="tcell">${thumb}</td><td>${esc(a.category)}</td><td>${esc(a.text)}</td><td>${Math.round(a.x)}, ${Math.round(a.y)}</td></tr>`;
@@ -2715,7 +2932,7 @@ function buildReportHTML(){
   const printScript = `<script>window.addEventListener('load',function(){var i=[].slice.call(document.images),p=i.filter(function(x){return !x.complete;}).length;function go(){setTimeout(function(){window.focus();window.print();},250);}if(!p)return go();i.forEach(function(x){if(!x.complete){x.addEventListener('load',function(){if(--p<=0)go();});x.addEventListener('error',function(){if(--p<=0)go();});}});setTimeout(go,4000);});<\/script>`;
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Facade Survey Report</title>
 <style>
-  :root{--g:#2d5a3d;}
+  :root{--g:#d06a12;}
   *{box-sizing:border-box;}
   body{font-family:Georgia,serif;max-width:920px;margin:36px auto;padding:0 24px;color:#1a1714;font-size:13px;}
   h1{font-size:21px;color:var(--g);border-bottom:2px solid var(--g);padding-bottom:8px;margin:0 0 6px;letter-spacing:.04em;}
@@ -2749,8 +2966,7 @@ function buildReportHTML(){
 <div class="meta">Generated ${new Date().toLocaleString()} &nbsp;·&nbsp; Image ${S.imgW} × ${S.imgH} px &nbsp;·&nbsp; Scale ${scaleStr} &nbsp;·&nbsp; ${S.measurements.length} measurement(s), ${S.annotations.length} note(s)</div>
 ${overviewImg}
 ${legend}
-<h2>Measurements (${S.measurements.length})</h2>
-${mRows?`<table><thead><tr><th>#</th><th>View</th><th>Label</th><th>Type</th><th>Value</th><th>Note</th></tr></thead><tbody>${mRows}</tbody></table>`:'<div class="empty">No measurements recorded.</div>'}
+${(measT||propT||condT)?(measT+propT+condT):'<h2>Items</h2><div class="empty">No measurements recorded.</div>'}
 <h2>Annotations &amp; Defects (${S.annotations.length})</h2>
 ${aRows?`<table><thead><tr><th>#</th><th>View</th><th>Category</th><th>Description</th><th>Position (px)</th></tr></thead><tbody>${aRows}</tbody></table>`:'<div class="empty">No annotations recorded.</div>'}
 <div class="foot">Produced with FacadeMeasure · all processing on-device · measurements are indicative and should be verified on site before ordering material.</div>
@@ -2759,6 +2975,7 @@ ${printScript}
 }
 function exportPDF(){
   if(!S.loaded){ msg('Open an image first to include the annotated photo in the report.'); }
+  renumberLabels();
   const html=buildReportHTML();
   const win=window.open('','_blank');
   if(!win){ msg('Pop-up blocked — allow pop-ups for this site to export the PDF report.'); return; }
@@ -2776,7 +2993,7 @@ function msg(s){sMsg.textContent=s;}
 svg.addEventListener('click', e=>{ if(e.target===svg && S.tool!=='edit'){ S.selectedId=null; refreshMList(); refreshAList(); scheduleRender(); } });
 
 /* Toolbar buttons */
-['pan','edit','dist','pline','poly','rect','point','annot','refline','refcircle'].forEach(id=>{
+['pan','edit','dist','pline','poly','rect','point','annot','refline','refcircle','arc','apoly'].forEach(id=>{
   const btn=document.getElementById('tool-'+id); if(btn) btn.addEventListener('click',()=>setTool(id));
 });
 
@@ -2798,6 +3015,23 @@ function refreshLayers(){
   panel.querySelectorAll('.layer-row').forEach(row=>{
     row.addEventListener('click',e=>{ if(e.target.closest('.layer-eye')){ e.stopPropagation(); toggleLayer(row.dataset.layer); } else setActiveLayer(row.dataset.layer); });
   });
+  renderProposedPanel();
+}
+function catVisible(m){ return !(m.layer==='proposed' && m.action) || S.catVis[m.action]!==false; }
+function renderProposedPanel(){
+  const el=document.getElementById('prop-panel'); if(!el) return;
+  if(S.layers.active!=='proposed'){ el.style.display='none'; el.innerHTML=''; return; }
+  el.style.display='block';
+  const open=!!S._catOpen, hidden=ACTIONS.filter(a=>S.catVis[a.key]===false).length;
+  const cats=ACTIONS.map(a=>{ const on=S.catVis[a.key]!==false;
+    return '<label class="cat-row'+(on?'':' off')+'"><input type="checkbox" data-cat="'+a.key+'"'+(on?' checked':'')+'><span class="cat-sw" style="background:'+a.color+'"></span>'+esc(a.label)+'</label>'; }).join('');
+  el.innerHTML=
+    '<button class="prop-cats-btn'+(open?' open':'')+'" id="cats-btn">Show categories'+(hidden?' <span class="cats-badge">'+hidden+' hidden</span>':'')+'<span class="caret">▾</span></button>'+
+    '<div class="prop-cats" style="display:'+(open?'block':'none')+'">'+cats+'</div>'+
+    '<label class="prop-toggle"><input type="checkbox" id="side-dims"'+(S.showSideDims?' checked':'')+'> Side dimensions on drawing</label>';
+  el.querySelector('#cats-btn').addEventListener('click',()=>{ S._catOpen=!S._catOpen; renderProposedPanel(); });
+  el.querySelectorAll('input[data-cat]').forEach(cb=>cb.addEventListener('change',()=>{ S.catVis[cb.dataset.cat]=cb.checked; renderProposedPanel(); refreshMList(); scheduleRender(); }));
+  el.querySelector('#side-dims').addEventListener('change',e=>{ S.showSideDims=e.target.checked; scheduleRender(); });
 }
 function setActiveLayer(k){
   if(!LAYER_DEFS.some(d=>d.key===k)) return;
@@ -2934,7 +3168,7 @@ async function persistProject(nameOverride){
     created:(existing&&existing.created)||Date.now(), updated:Date.now(),
     unit:S.unit, pxPerUnit:S.pxPerUnit, calibUnit:S._calibUnit||'m',
     imgW:S.imgW, imgH:S.imgH, imgName:(S._lastFile&&S._lastFile.name)||'image', imgSize:(S._imageBlob&&S._imageBlob.size)||0,
-    measurements:S.measurements, annotations:S.annotations, mCtr:S.mCtr, aCtr:S.aCtr, curve:{on:S.curve.on,R:S.curve.R,cx:S.curve.cx}, layers:{active:S.layers.active, vis:Object.assign({},S.layers.vis)}, thumb:makeThumb() };
+    measurements:S.measurements, annotations:S.annotations, mCtr:S.mCtr, aCtr:S.aCtr, curve:{on:S.curve.on,R:S.curve.R,cx:S.curve.cx}, layers:{active:S.layers.active, vis:Object.assign({},S.layers.vis)}, showSideDims:S.showSideDims, catVis:Object.assign({},S.catVis), areas:S.areas.slice(), activeArea:S.activeArea, thumb:makeThumb() };
   await metaPut(rec); _lastSig=stateSig();
 }
 async function saveProject(){
@@ -2978,6 +3212,8 @@ async function loadRestored(blob, rec, projectId){
     S.measurements=rec.measurements||[]; S.annotations=rec.annotations||[]; S.mCtr=rec.mCtr||S.measurements.length; S.aCtr=rec.aCtr||S.annotations.length;
     S.measurements.forEach(m=>{ if(!m.layer) m.layer='measure'; });   // backward-compat: pre-V16 items
     S.layers={active:'measure', vis:Object.assign({measure:true,condition:true,proposed:true}, (rec.layers&&rec.layers.vis)||{})};
+    S.showSideDims=!!rec.showSideDims; S.catVis=Object.assign({},rec.catVis||{});
+    S.areas=(rec.areas||[]).slice(); if(rec.building && !S.areas.includes(rec.building)) S.areas.unshift(rec.building); S.activeArea=rec.activeArea||''; updateAreaChip();
     S.unit=rec.unit||'mm'; S.pxPerUnit=rec.pxPerUnit||1; S._calibUnit=rec.calibUnit||'m';
     S.curve={on:!!(rec.curve&&rec.curve.on), R:(rec.curve&&rec.curve.R)||0, cx:(rec.curve&&rec.curve.cx!=null)?rec.curve.cx:null, _fit:null, _pts:[]}; updateCurveUI();
     S.projectId=projectId||null; S.selectedId=null; S.editId=null; S.history=[];
