@@ -62,11 +62,12 @@ header {
   z-index: 250;            /* above main-area content; modals (300) still sit on top */
   box-shadow: var(--shadow-sm);
 }
-.logo { display: flex; align-items: center; gap: 9px; white-space: nowrap; flex-shrink: 0; }
+.logo { display: flex; align-items: center; gap: 10px; white-space: nowrap; flex-shrink: 0; }
 .logo-mark { flex-shrink: 0; display: block; }
-.logo-txt { font-size: 15px; font-weight: 700; letter-spacing: 0.05em; color: var(--text); }
+.logo-stack { display: flex; flex-direction: column; line-height: 1.12; }
+.logo-txt { font-size: 14.5px; font-weight: 700; letter-spacing: 0.045em; color: var(--text); }
 .logo-txt em { color: var(--accent); font-style: normal; }
-.logo-sub { font-size: 10.5px; color: var(--text3); letter-spacing: 0.03em; padding-left: 9px; border-left: 1px solid var(--border); }
+.logo-sub { font-size: 10px; font-weight: 600; color: var(--accent); letter-spacing: 0.16em; text-transform: uppercase; }
 .sep { width: 1px; height: 26px; background: var(--border); flex-shrink: 0; }
 .file-btn {
   display: flex; align-items: center; gap: 6px;
@@ -467,6 +468,12 @@ header {
 .prop-cats-btn.open .caret { transform: rotate(180deg); }
 .cats-badge { font-size: 10px; color: var(--accent); margin-left: 4px; }
 .prop-cats { margin-top: 4px; }
+.prop-labelrow { display: flex; gap: 6px; margin-bottom: 8px; }
+.prop-label-btn { flex: 1; padding: 8px 10px; border: 1px solid var(--accent); border-radius: 7px; background: var(--accent-light); color: var(--accent-deep); font-family: Georgia, serif; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.prop-label-btn:hover { background: #f7e0c6; }
+.prop-label-btn.on { background: var(--accent); color: #fff; border-color: var(--accent-deep); }
+.prop-help-btn { width: 30px; flex-shrink: 0; border: 1px solid var(--border2); border-radius: 7px; background: var(--surface); color: var(--text2); font-family: Georgia, serif; font-style: italic; font-weight: 700; cursor: pointer; }
+.prop-help-btn:hover { background: var(--surface2); color: var(--accent); }
 .m-class { margin: 7px 0 3px; }
 .m-class-sel { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font-size: 12px; font-family: Georgia, serif; cursor: pointer; }
 .m-class-sel:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 0 3px var(--accent-light); }
@@ -679,8 +686,7 @@ header {
       <rect x="8.5" y="2" width="6" height="5" rx="1" fill="#d06a12"/><rect x="8.5" y="8.5" width="6" height="5" rx="1" fill="#d06a12" opacity="0.78"/><rect x="8.5" y="15" width="6" height="5" rx="1" fill="#d06a12" opacity="0.56"/>
       <circle cx="18.6" cy="4.5" r="1.4" fill="#d06a12"/><circle cx="22.9" cy="4.5" r="1.1" fill="#ea8b2c"/><circle cx="18.6" cy="11" r="1.3" fill="#d06a12" opacity="0.85"/><circle cx="22.9" cy="11" r="1" fill="#ea8b2c" opacity="0.6"/><circle cx="18.6" cy="17.5" r="1.1" fill="#d06a12" opacity="0.7"/>
     </svg>
-    <span class="logo-txt">BUILDING&nbsp;REALITY&nbsp;<em>3D</em></span>
-    <span class="logo-sub">FacadeMeasure</span>
+    <span class="logo-stack"><span class="logo-txt">BUILDING&nbsp;REALITY&nbsp;<em>3D</em></span><span class="logo-sub">FacadeMeasure</span></span>
   </div>
   <div class="sep"></div>
   <button class="file-btn" id="open-btn">
@@ -788,13 +794,13 @@ header {
       </svg>
     </button>
 
-    <button class="tool-btn" id="tool-rect" data-layers="measure condition proposed" data-tip="Rectangle  [R]">
+    <button class="tool-btn" id="tool-rect" data-layers="measure proposed" data-tip="Rectangle  [R]">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-rect)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="3" y="6" width="18" height="12" rx="1"/>
       </svg>
     </button>
 
-    <button class="tool-btn" id="tool-pline" data-layers="measure condition" data-tip="Crack length / polyline  [L]">
+    <button class="tool-btn" id="tool-pline" data-layers="measure" data-tip="Crack length / polyline  [L]">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-pline)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="3,17 8,9 13,14 21,5"/>
         <circle cx="3" cy="17" r="1.4" fill="var(--c-pline)"/><circle cx="8" cy="9" r="1.4" fill="var(--c-pline)"/>
@@ -802,47 +808,47 @@ header {
       </svg>
     </button>
 
-    <button class="tool-btn" id="tool-poly" data-layers="measure condition proposed" data-tip="Polygon area / stone  [P]">
+    <button class="tool-btn" id="tool-poly" data-layers="measure proposed" data-tip="Polygon area / stone  [P]">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-poly)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="12,3 21,8.5 21,15.5 12,21 3,15.5 3,8.5"/>
       </svg>
     </button>
 
-    <button class="tool-btn" id="tool-refline" data-layers="measure condition proposed" data-tip="Annotate · line">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="3" y1="20" x2="21" y2="4" stroke-dasharray="3.5,3"/><circle cx="3" cy="20" r="1.6" fill="#5a534a"/><circle cx="21" cy="4" r="1.6" fill="#5a534a"/>
-      </svg>
-    </button>
-
-    <button class="tool-btn" id="tool-refcircle" data-layers="measure condition proposed" data-tip="Annotate · circle">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="8" stroke-dasharray="3.5,3"/><circle cx="12" cy="12" r="1.5" fill="#5a534a"/>
-      </svg>
-    </button>
-
-    <button class="tool-btn" id="tool-arc" data-layers="measure condition proposed" data-tip="Annotate · 3-point arc">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 19 A 13 13 0 0 1 21 7" stroke-dasharray="3.5,3"/><circle cx="3" cy="19" r="1.6" fill="#5a534a"/><circle cx="10.5" cy="9.7" r="1.6" fill="#5a534a"/><circle cx="21" cy="7" r="1.6" fill="#5a534a"/>
-      </svg>
-    </button>
-
-    <button class="tool-btn" id="tool-apoly" data-layers="measure condition proposed" data-tip="Annotate · polyline">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="3,16 8,8 14,13 21,5" stroke-dasharray="3.5,3"/><circle cx="3" cy="16" r="1.5" fill="#5a534a"/><circle cx="8" cy="8" r="1.5" fill="#5a534a"/><circle cx="14" cy="13" r="1.5" fill="#5a534a"/><circle cx="21" cy="5" r="1.5" fill="#5a534a"/>
-      </svg>
-    </button>
-
-    <div class="tool-sep"></div>
-
-    <button class="tool-btn" id="tool-point" data-layers="measure condition" data-tip="Point marker  [M]">
+    <button class="tool-btn" id="tool-point" data-layers="measure" data-tip="Point marker  [M]">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-point)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
       </svg>
     </button>
 
-    <button class="tool-btn" id="tool-annot" data-layers="condition" data-tip="Annotation  [A]">
+    <button class="tool-btn" id="tool-annot" data-layers="measure" data-tip="Note marker  [A]">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--c-annot)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    </button>
+
+    <div class="tool-sep"></div>
+
+    <button class="tool-btn" id="tool-refline" data-layers="measure proposed" data-tip="Annotate · line">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="20" x2="21" y2="4" stroke-dasharray="3.5,3"/><circle cx="3" cy="20" r="1.6" fill="#5a534a"/><circle cx="21" cy="4" r="1.6" fill="#5a534a"/>
+      </svg>
+    </button>
+
+    <button class="tool-btn" id="tool-refcircle" data-layers="measure proposed" data-tip="Annotate · circle">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="8" stroke-dasharray="3.5,3"/><circle cx="12" cy="12" r="1.5" fill="#5a534a"/>
+      </svg>
+    </button>
+
+    <button class="tool-btn" id="tool-arc" data-layers="measure proposed" data-tip="Annotate · 3-point arc">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 19 A 13 13 0 0 1 21 7" stroke-dasharray="3.5,3"/><circle cx="3" cy="19" r="1.6" fill="#5a534a"/><circle cx="10.5" cy="9.7" r="1.6" fill="#5a534a"/><circle cx="21" cy="7" r="1.6" fill="#5a534a"/>
+      </svg>
+    </button>
+
+    <button class="tool-btn" id="tool-apoly" data-layers="measure proposed" data-tip="Annotate · polyline">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3,16 8,8 14,13 21,5" stroke-dasharray="3.5,3"/><circle cx="3" cy="16" r="1.5" fill="#5a534a"/><circle cx="8" cy="8" r="1.5" fill="#5a534a"/><circle cx="14" cy="13" r="1.5" fill="#5a534a"/><circle cx="21" cy="5" r="1.5" fill="#5a534a"/>
       </svg>
     </button>
 
@@ -981,7 +987,8 @@ const S = {
   imp: { on:false, unit:'in' },   // read-only imperial confirmation companion (mm always stays the truth)
   calibA: null,         // first point when setting scale from the image
   curve: { on:false, R:0, cx:null, _fit:null, _pts:[] },   // curved-facade (cylinder) correction — R in real units, cx = centre-line x (px)
-  layers: { active:'measure', vis:{ measure:true, condition:true, proposed:true } },   // V16 working layers
+  layers: { active:'measure', vis:{ measure:true, proposed:true } },   // V19: two layers
+  stoneLabels: [],       // V19: stone register — ordered {id,x,y}; number = index+1 (image/PDF only)
   showSideDims: false,   // V17: proposed-layer side W/H edge labels (off = clean drawing)
   catVis: {},            // V17: per-category visibility in Proposed works (missing key = visible)
   areas: [],             // V18: user-defined area/level names for this building (custom per project)
@@ -996,9 +1003,8 @@ const AREA_M2_THRESHOLD_MM2 = 250000;
 
 /* ── V16: layers + classification taxonomy ───────────────────────────────── */
 const LAYER_DEFS = [
-  { key:'measure',   name:'Measurement',       tip:'Dimensions & reference lines' },
-  { key:'condition', name:'Existing condition', tip:'Cracks, spalls, weathering — what’s there now' },
-  { key:'proposed',  name:'Proposed works',     tip:'Stones marked for repair / replacement' },
+  { key:'measure',   name:'Measurement',    tip:'Dimensions, references & notes' },
+  { key:'proposed',  name:'Proposed works', tip:'Label stones & mark repairs / replacements' },
 ];
 /* Proposed-works actions, ordered most → least severe; colours run red → green. WSR is the default. */
 const ACTIONS = [
@@ -1027,8 +1033,7 @@ function classifyNew(m){
   m.layer = S.layers.active;
   if(isAnnotType(m)) return m;                          // annotations carry no action / condition / severity colour
   m.level = S.activeArea||'';                            // V18: inherit the active area/level
-  if(m.layer==='proposed'){ m.action='wsr'; m.color=ACTION_BY.wsr.color; if(m.label) m.label=m.label.replace(/^\w+/, 'Stone'); }
-  else if(m.layer==='condition'){ m.cond='crack'; m.color=COND_BY.crack.color; if(m.label) m.label=m.label.replace(/^\w+/, 'Defect'); }
+  if(m.layer==='proposed'){ m.action='wsr'; m.color=ACTION_BY.wsr.color; if(m.label) m.label=m.label.replace(/^\w+/, 'Stone'); assignStoneNumber(m); }
   return m;
 }
 
@@ -1219,7 +1224,7 @@ async function loadFile(f) {
     S.measurements=[]; S.annotations=[]; S.mCtr=0; S.aCtr=0; S.selectedId=null; S.editId=null; S.history=[];
     S._lastFile = f; S._imageBlob = f; S.projectId = null;
     S.curve.cx=null; S.curve._fit=null; S.curve._pts=[]; S.curve.on=false; updateCurveUI();   // keep fitted R across the swap; centre line is per-image
-    S.layers={active:'measure', vis:{measure:true,condition:true,proposed:true}}; S.catVis={}; S.showSideDims=false; S.areas=[]; S.activeArea=''; updateAreaChip(); refreshLayers(); updateToolbarForLayer();
+    S.layers={active:'measure', vis:{measure:true,proposed:true}}; S.catVis={}; S.showSideDims=false; S.areas=[]; S.activeArea=''; S.stoneLabels=[]; S._proposedIntroShown=false; updateAreaChip(); refreshLayers(); updateToolbarForLayer();
     dropOvl.classList.add('hidden');
     resizeCanvas();
     fitView();
@@ -1353,11 +1358,11 @@ document.addEventListener('keydown', e => {
   const tag = e.target.tagName;
   if (tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
   if (e.code==='Space') { e.preventDefault(); S.spaceDown=true; setCursor(); return; }
-  if (e.key==='Escape') { if (S.editId) exitEdit(); else if (S.tool==='curvefit'||S.tool==='curvecentre'){ if(S.curve)S.curve._pts=[]; hideBanner(); setTool('pan'); } else cancelDraw(); return; }
+  if (e.key==='Escape') { if (S.editId) exitEdit(); else if (S.tool==='curvefit'||S.tool==='curvecentre'||S.tool==='slabel'){ if(S.curve)S.curve._pts=[]; hideBanner(); setTool('pan'); } else cancelDraw(); return; }
   if (e.key==='Enter' && (S.tool==='poly'||S.tool==='pline') && S.drawing) { finishPolyish(); return; }
   if (e.key==='Enter' && S.tool==='apoly' && S.drawing) { finishApoly(); return; }
   if (e.key==='Enter' && S.tool==='curvefit') { finishCurveFit(); return; }
-  if (e.ctrlKey && e.key==='z') { e.preventDefault(); undo(); return; }
+  if (e.ctrlKey && e.key==='z') { e.preventDefault(); if(S.tool==='slabel'&&S.stoneLabels.length){ S.stoneLabels.pop(); renumberLabels(); refreshMList(); scheduleRender(); } else undo(); return; }
   if ((e.key==='Delete'||e.key==='Backspace') && S.selectedId && !S.editId) {
     e.preventDefault();
     if (S.measurements.some(m=>m.id===S.selectedId)) delM(S.selectedId);
@@ -1492,8 +1497,9 @@ function renderOverlay() {
   if (S.drawing) renderPreview();
 
   S.measurements.forEach((m,i) => { if(layerVisible(m.layer) && catVisible(m)) drawMeasurement(m, m.n||(i+1)); });
-  if(layerVisible('condition')) S.annotations.forEach(a => drawAnnotation(a));
+  if(layerVisible('measure')) S.annotations.forEach(a => drawAnnotation(a));
   drawCurveOverlay();
+  drawStoneLabels();
 
   if (S._snapPt && (S.drawing||S.dragVert)) {
     const s=imgToScreen(S._snapPt.x,S._snapPt.y);
@@ -1595,6 +1601,22 @@ function drawNumberBadge(centerImg, n, color){
     (()=>{const t=mkEl('text',{x:c.x,y:c.y+fs*0.35,'text-anchor':'middle',fill:'#fff','font-family':'Georgia,serif','font-weight':'700','font-size':fs,'pointer-events':'none'});t.textContent=String(n);return t;})()
   );
   return g;
+}
+/* V19 stone register: grey number discs on every labelled stone; one consumed by each replacement
+   (hidden so only the coloured replacement disc shows). In label mode the next number rides the cursor. */
+function drawStoneLabels(){
+  if(!layerVisible('proposed')) return;
+  if(!S.stoneLabels.length && S.tool!=='slabel') return;
+  const consumed=new Set(); S.measurements.forEach(m=>{ if(m.layer==='proposed' && m.labelId) consumed.add(m.labelId); });
+  const g=mkEl('g',{});
+  S.stoneLabels.forEach((l,i)=>{ if(!consumed.has(l.id)) g.append(drawNumberBadge({x:l.x,y:l.y}, i+1, '#5f5e5a')); });
+  if(S.tool==='slabel' && S.mouseImg && !S.dragSL){ const cb=drawNumberBadge(S.mouseImg, S.stoneLabels.length+1, '#d06a12'); cb.setAttribute('opacity','0.92'); g.append(cb); }
+  if(g.childNodes.length) svg.appendChild(g);
+}
+function hitStoneLabel(clientX, clientY){
+  const r=wrap.getBoundingClientRect(), tol=Math.max(16, labelPx()*1.4);
+  for(let i=S.stoneLabels.length-1;i>=0;i--){ const l=S.stoneLabels[i], s=imgToScreen(l.x,l.y); if(Math.hypot(clientX-r.left-s.x, clientY-r.top-s.y)<=tol) return l; }
+  return null;
 }
 /* Sample a 3-point arc as a polyline (image coords); falls back to the raw points if near-collinear. */
 function arcPts(p0,p1,p2){
@@ -1807,7 +1829,7 @@ function setTool(t) {
   document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
   const btn=document.getElementById('tool-'+t);
   if(btn) btn.classList.add('active');
-  const names={pan:'Pan / Select',edit:'Edit points',dist:'Distance',pline:'Polyline',poly:'Polygon',rect:'Rectangle',point:'Point marker',annot:'Annotation',calib:'Set scale',curvefit:'Fit radius',curvecentre:'Set centre line',refline:'Annotate line',refcircle:'Annotate circle',arc:'Annotate arc',apoly:'Annotate polyline'};
+  const names={pan:'Pan / Select',edit:'Edit points',dist:'Distance',pline:'Polyline',poly:'Polygon',rect:'Rectangle',point:'Point marker',annot:'Annotation',calib:'Set scale',curvefit:'Fit radius',curvecentre:'Set centre line',refline:'Annotate line',refcircle:'Annotate circle',arc:'Annotate arc',apoly:'Annotate polyline',slabel:'Label stones'};
   sTool.textContent=names[t]||t;
   if (t==='edit') {
     if (!S.editId && S.selectedId && S.measurements.find(m=>m.id===S.selectedId)) enterEdit(S.selectedId);
@@ -1828,11 +1850,13 @@ function setTool(t) {
     hideBanner();
   }
   setCursor();
+  if(S.layers && S.layers.active==='proposed') renderProposedPanel();   // keep the Label-stones button in sync
 }
 function setCursor() {
   if (S.panning) { wrap.style.cursor='grabbing'; return; }
   if (S.spaceDown||S.tool==='pan') { wrap.style.cursor='grab'; return; }
   if (S.tool==='edit') { wrap.style.cursor='default'; return; }
+  if (S.tool==='slabel') { wrap.style.cursor='none'; return; }   // the number is the cursor
   wrap.style.cursor='crosshair';
 }
 function showBanner(h){ banner.innerHTML=h; banner.classList.add('show'); }
@@ -1872,6 +1896,7 @@ wrap.addEventListener('mousedown', e => {
   }
 
   if (!S.loaded) return;
+  if (S.tool==='slabel'){ const hit=hitStoneLabel(e.clientX,e.clientY); if(hit){ S.dragSL=hit; return; } }   // grab to reposition
   const p = clamp(toImg(e.clientX, e.clientY));
   toolDown(p, e);
 });
@@ -1883,6 +1908,9 @@ wrap.addEventListener('mousemove', e => {
   const p = clamp(toImg(e.clientX, e.clientY));
   S.mouseImg=p;
   sCrd.textContent='x: '+Math.round(p.x)+'  y: '+Math.round(p.y)+' px';
+
+  if (S.dragSL){ S.dragSL.x=p.x; S.dragSL.y=p.y; scheduleRender(); return; }
+  if (S.tool==='slabel'){ scheduleRender(); return; }            // the placing number follows the cursor
 
   if (S.dragVert) {
     const m=S.measurements.find(x=>x.id===S.dragVert.id);
@@ -1901,6 +1929,7 @@ wrap.addEventListener('mousemove', e => {
 
 window.addEventListener('mouseup', e => {
   if (S.panning) { S.panning=false; _interacting=false; if(_settleT)clearTimeout(_settleT); scheduleRender(); setCursor(); return; }
+  if (S.dragSL){ S.dragSL=null; scheduleRender(); return; }
   if (S.dragVert) { S.dragVert=null; S._snapPt=null; setCursor(); scheduleRender(); return; }
   if (!S.loaded||e.button!==0) return;
 });
@@ -1913,6 +1942,7 @@ wrap.addEventListener('dblclick', e => {
 });
 wrap.addEventListener('auxclick', e => { if (e.button===1) e.preventDefault(); });
 wrap.addEventListener('contextmenu', e => {
+  if (S.tool==='slabel'){ const hit=hitStoneLabel(e.clientX,e.clientY); if(hit){ e.preventDefault(); S.stoneLabels=S.stoneLabels.filter(l=>l!==hit); renumberLabels(); refreshMList(); scheduleRender(); return; } }
   if (S.tool==='edit' && S.editId) { const hit=hitVertex(e.clientX,e.clientY); if(hit){ e.preventDefault(); deleteVertex(hit.id, hit.index); } }
 });
 
@@ -1981,6 +2011,8 @@ function toolDown(p, e) {
     S.cursorImg=p;
     showBanner('<b>Annotate polyline</b> · click points · <span class="kbd">double-click</span>/<span class="kbd">Enter</span> finishes · <span class="kbd">Esc</span> cancels');
     scheduleRender();
+  } else if (S.tool==='slabel') {
+    S.stoneLabels.push({id:nMid(), x:p.x, y:p.y}); renumberLabels(); refreshMList(); scheduleRender();
   }
 }
 
@@ -2383,37 +2415,37 @@ function openScaleDialog(pixelDist){
 function defaultPrefix(m){
   if(isAnnotType(m)) return ({refline:'Line',refcircle:'Circle',arc:'Arc',apoly:'Polyline'})[m.type];
   if(m.layer==='proposed') return 'Stone';
-  if(m.layer==='condition') return 'Defect';
   return ({dist:'Distance',pline:'Crack',poly:'Area',rect:'Rect',point:'Point'})[m.type]||'Item';
 }
 function isAutoLabel(m,p){ return !m.named && (!m.label || new RegExp('^'+p+' \\d+$').test(m.label)); }
 /* Keep auto labels gap-free per family so deleting a stone doesn't leave a hole in the schedule.
    m.n is the number shown on each item's badge; custom (renamed) labels are left untouched. */
 /* Reading order for proposed stones: bottom-left → left-to-right across a course → up. */
-function spatialOrder(items){
-  if(!items.length) return [];
-  const o=items.map(m=>{ const ys=m.coords.map(p=>p.y), xs=m.coords.map(p=>p.x);
-    return {m, cx:(Math.min(...xs)+Math.max(...xs))/2, cy:(Math.min(...ys)+Math.max(...ys))/2, h:Math.max(...ys)-Math.min(...ys)}; });
-  const heights=o.map(x=>x.h).sort((a,b)=>a-b);
-  const band=(heights[Math.floor(heights.length/2)]||40)*0.6;     // same-course vertical tolerance
-  const byY=[...o].sort((a,b)=>b.cy-a.cy);                          // image y grows downward → bottom first
-  const courses=[]; let cur=[byY[0]];
-  for(let i=1;i<byY.length;i++){ const refY=cur.reduce((s,x)=>s+x.cy,0)/cur.length;
-    if(Math.abs(byY[i].cy-refY)<=band) cur.push(byY[i]); else { courses.push(cur); cur=[byY[i]]; } }
-  courses.push(cur);
-  const out=[];
-  courses.forEach(c=>{ c.sort((a,b)=>a.cx-b.cx); c.forEach(x=>out.push(x.m)); });
-  return out;
+/* V19 stone register: a proposed stone takes the number of the label inside it, else the next free number. */
+function pointInItem(pt, m){ return (m.type==='rect'||m.type==='poly') && pointInPoly(pt.x, pt.y, m.coords); }
+function nextFreeStoneNumber(){
+  const used=new Set();
+  S.stoneLabels.forEach((l,i)=>used.add(i+1));
+  S.measurements.forEach(m=>{ if(m.layer==='proposed' && !isAnnotType(m) && m.n) used.add(m.n); });
+  let n=1; while(used.has(n)) n++; return n;
+}
+function assignStoneNumber(m){
+  const lbl=S.stoneLabels.find(l=>pointInItem(l, m));
+  if(lbl){ m.labelId=lbl.id; m.n=S.stoneLabels.indexOf(lbl)+1; }
+  else { m.labelId=null; m.n=nextFreeStoneNumber(); }
 }
 function renumberLabels(){
   const seq={};
-  const stoneRank=new Map();
-  spatialOrder(S.measurements.filter(m=>m.layer==='proposed' && !isAnnotType(m))).forEach((m,i)=>stoneRank.set(m.id,i+1));
   S.measurements.forEach(m=>{
-    const p=defaultPrefix(m);
-    if(p==='Stone'){ m.n=stoneRank.get(m.id)||0; }   // proposed stones numbered by position
-    else { seq[p]=(seq[p]||0)+1; m.n=seq[p]; }
-    if(isAutoLabel(m,p)) m.label=p+' '+m.n;
+    if(m.layer==='proposed' && !isAnnotType(m)){
+      if(m.labelId){ const idx=S.stoneLabels.findIndex(l=>l.id===m.labelId); if(idx>=0) m.n=idx+1; else { m.labelId=null; if(!m.n) m.n=nextFreeStoneNumber(); } }
+      else if(!m.n) m.n=nextFreeStoneNumber();
+      if(isAutoLabel(m,'Stone')) m.label='Stone '+(m.n||'');
+    } else {
+      const p=defaultPrefix(m);
+      seq[p]=(seq[p]||0)+1; m.n=seq[p];
+      if(isAutoLabel(m,p)) m.label=p+' '+m.n;
+    }
   });
   S.annotations.forEach((a,i)=>{ a.num=i+1; });
 }
@@ -2849,6 +2881,8 @@ function compositeRegion(region, outW, items, anns, fullRes, opts){
   const mx=ix=>(ix-region.sx)*k, my=iy=>(iy-region.sy)*k;
   (items||[]).forEach((m,i)=>drawMeasOnCanvas(g,m,mx,my,strokeW,fontS,mode,m.n||(startNum+i),opts.edges));
   (anns||[]).forEach(a=>drawAnnOnCanvas(g,a,mx,my,fontS));
+  if(opts.stoneLabels){ const consumed=new Set(); (items||[]).forEach(m=>{ if(m.labelId) consumed.add(m.labelId); });
+    opts.stoneLabels.forEach((l,i)=>{ if(!consumed.has(l.id)) drawBadge(g, mx(l.x), my(l.y), i+1, '#5f5e5a', fontS); }); }
   if(opts.scaleBar) drawScaleBar(g,outW,outH,k);
   return cv.toDataURL('image/jpeg', 0.86);
 }
@@ -2898,7 +2932,7 @@ function buildReportHTML(){
   if(hasImg){
     const ow=Math.min(2000,S.imgW);
     const url=compositeRegion({sx:0,sy:0,sw:S.imgW,sh:S.imgH}, ow, S.measurements.filter(m=>!isAnnotType(m)), S.annotations, false,
-      {strokeW:Math.max(3,ow/300), fontS:Math.max(13,Math.round(ow/68)), mode:'badge', scaleBar:true});
+      {strokeW:Math.max(3,ow/300), fontS:Math.max(13,Math.round(ow/68)), mode:'badge', scaleBar:true, stoneLabels:S.stoneLabels});
     overviewImg=`<div class="figure"><img src="${url}" alt="Annotated facade overview"><div class="cap">Annotated orthophoto — numbered markers keyed to the legend and tables below. Scale ${scaleStr}.</div></div>`;
     if(S.measurements.length||S.annotations.length){
       const lgItem=m=>`<span class="lg-item"><span class="lg-badge sq" style="background:${m.color}">${m.n||''}</span>${esc(m.label)}${legendVal(m)?` <span class="lg-val">${esc(legendVal(m))}</span>`:''}</span>`;
@@ -2910,7 +2944,7 @@ function buildReportHTML(){
       legend=`<div class="legend">${grp('Measurements',meas)}${grp('Existing condition',cond)}${prop}${aGrp}</div>`;
     }
   }
-  const crop=(items,anns,region)=>compositeRegion(region, 460, items, anns, true, {strokeW:6, fontS:20, mode:'none', edges:true});
+  const crop=(items,anns,region)=>compositeRegion(region, 460, items, anns, true, {strokeW:6, fontS:20, mode:'none', edges:false});
   const rowFor=(m)=>{
     let val='';
     if(m.type==='dist')  val=fmtDist(m.value);
@@ -3002,9 +3036,9 @@ const EYE_ON='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke
 const EYE_OFF='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9 9 0 0 1 12 4c7 0 11 8 11 8a18 18 0 0 1-2.16 3.19M6.06 6.06A18 18 0 0 0 1 12s4 8 11 8a9 9 0 0 0 3.94-.94M9.9 9.9a3 3 0 0 0 4.2 4.2"/><line x1="2" y1="2" x2="22" y2="22"/></svg>';
 function refreshLayers(){
   const panel=document.getElementById('layers-panel'); if(!panel) return;
-  const counts={measure:0,condition:0,proposed:0};
+  const counts={measure:0,proposed:0};
   S.measurements.forEach(m=>{ const L=m.layer||'measure'; counts[L]=(counts[L]||0)+1; });
-  counts.condition += S.annotations.length;          // annotations live in the condition layer
+  counts.measure += S.annotations.length;          // annotations live in the measurement layer
   panel.innerHTML='<div class="layers-title">Layers</div>'+LAYER_DEFS.map(d=>{
     const on=layerVisible(d.key), active=S.layers.active===d.key;
     return '<div class="layer-row'+(active?' active':'')+(on?'':' hidden-layer')+'" data-layer="'+d.key+'" title="'+esc(d.tip)+'">'+
@@ -3025,10 +3059,14 @@ function renderProposedPanel(){
   const open=!!S._catOpen, hidden=ACTIONS.filter(a=>S.catVis[a.key]===false).length;
   const cats=ACTIONS.map(a=>{ const on=S.catVis[a.key]!==false;
     return '<label class="cat-row'+(on?'':' off')+'"><input type="checkbox" data-cat="'+a.key+'"'+(on?' checked':'')+'><span class="cat-sw" style="background:'+a.color+'"></span>'+esc(a.label)+'</label>'; }).join('');
+  const labelling=(S.tool==='slabel');
   el.innerHTML=
+    '<div class="prop-labelrow"><button class="prop-label-btn'+(labelling?' on':'')+'" id="label-stones-btn">'+(labelling?'■ Stop labelling · '+S.stoneLabels.length+' placed':'⬣ Label stones'+(S.stoneLabels.length?' · '+S.stoneLabels.length:''))+'</button><button class="prop-help-btn" id="label-help-btn" title="How stone labelling works">?</button></div>'+
     '<button class="prop-cats-btn'+(open?' open':'')+'" id="cats-btn">Show categories'+(hidden?' <span class="cats-badge">'+hidden+' hidden</span>':'')+'<span class="caret">▾</span></button>'+
     '<div class="prop-cats" style="display:'+(open?'block':'none')+'">'+cats+'</div>'+
     '<label class="prop-toggle"><input type="checkbox" id="side-dims"'+(S.showSideDims?' checked':'')+'> Side dimensions on drawing</label>';
+  el.querySelector('#label-stones-btn').addEventListener('click',()=>{ if(S.tool==='slabel') setTool('pan'); else startLabelMode(); });
+  el.querySelector('#label-help-btn').addEventListener('click', showStoneLabelIntro);
   el.querySelector('#cats-btn').addEventListener('click',()=>{ S._catOpen=!S._catOpen; renderProposedPanel(); });
   el.querySelectorAll('input[data-cat]').forEach(cb=>cb.addEventListener('change',()=>{ S.catVis[cb.dataset.cat]=cb.checked; renderProposedPanel(); refreshMList(); scheduleRender(); }));
   el.querySelector('#side-dims').addEventListener('change',e=>{ S.showSideDims=e.target.checked; scheduleRender(); });
@@ -3040,6 +3078,18 @@ function setActiveLayer(k){
   if(dl && !dl.split(' ').includes(k)) setTool('pan');     // current tool not in this layer → reset
   updateToolbarForLayer(); refreshLayers(); refreshMList(); scheduleRender();
   msg('Layer: '+layerName(k));
+  if(k==='proposed' && !S._proposedIntroShown){ S._proposedIntroShown=true; showStoneLabelIntro(); }
+}
+function startLabelMode(){
+  setTool('slabel');
+  showBanner('<b>Labelling stones</b> · the number rides your cursor — click to place · <span class="kbd">right-click</span> a label to delete · drag to move · <span class="kbd">Ctrl+Z</span> undo · <span class="kbd">Esc</span> stop');
+  renderProposedPanel(); scheduleRender();
+}
+function showStoneLabelIntro(){
+  modalConfirm('Label the stones',
+   'Proposed works has two steps.<br><br><b>1 · Label every stone.</b> In labelling mode the next number follows your cursor — click each stone to drop its number and it auto-advances. <b>Right-click</b> a label to delete it (the rest renumber), <b>drag</b> to nudge one, and <b>Ctrl+Z</b> undoes the last. These numbers show only on the drawing and the main PDF photo.<br><br><b>2 · Mark replacements.</b> With labelling off, draw the rectangle/stone tool over a stone and it takes on that stone\'s number. Only WSR &amp; indent stones reach the cutting list, so the numbers will naturally jump.',
+   {ok:'Start labelling', cancel:'Just mark replacements'})
+   .then(go=>{ if(go) startLabelMode(); });
 }
 function toggleLayer(k){ S.layers.vis[k]=!layerVisible(k); refreshLayers(); scheduleRender(); }
 function updateToolbarForLayer(){
@@ -3075,7 +3125,7 @@ function buildInfo(){
   } else {
     h+='<div class="ip-sec">Curve correction</div>'+ipRow('Status',S.curve.R>0?'off · radius set':'off');
   }
-  const cm={measure:0,condition:0,proposed:0}; S.measurements.forEach(m=>{cm[m.layer||'measure']=(cm[m.layer||'measure']||0)+1;}); cm.condition+=S.annotations.length;
+  const cm={measure:0,proposed:0}; S.measurements.forEach(m=>{cm[m.layer||'measure']=(cm[m.layer||'measure']||0)+1;}); cm.measure+=S.annotations.length;
   h+='<div class="ip-sec">Items by layer</div>';
   LAYER_DEFS.forEach(d=>h+=ipRow(d.name,String(cm[d.key]||0)));
   return h;
@@ -3168,7 +3218,7 @@ async function persistProject(nameOverride){
     created:(existing&&existing.created)||Date.now(), updated:Date.now(),
     unit:S.unit, pxPerUnit:S.pxPerUnit, calibUnit:S._calibUnit||'m',
     imgW:S.imgW, imgH:S.imgH, imgName:(S._lastFile&&S._lastFile.name)||'image', imgSize:(S._imageBlob&&S._imageBlob.size)||0,
-    measurements:S.measurements, annotations:S.annotations, mCtr:S.mCtr, aCtr:S.aCtr, curve:{on:S.curve.on,R:S.curve.R,cx:S.curve.cx}, layers:{active:S.layers.active, vis:Object.assign({},S.layers.vis)}, showSideDims:S.showSideDims, catVis:Object.assign({},S.catVis), areas:S.areas.slice(), activeArea:S.activeArea, thumb:makeThumb() };
+    measurements:S.measurements, annotations:S.annotations, mCtr:S.mCtr, aCtr:S.aCtr, curve:{on:S.curve.on,R:S.curve.R,cx:S.curve.cx}, layers:{active:S.layers.active, vis:Object.assign({},S.layers.vis)}, showSideDims:S.showSideDims, catVis:Object.assign({},S.catVis), areas:S.areas.slice(), activeArea:S.activeArea, stoneLabels:S.stoneLabels.map(l=>({id:l.id,x:l.x,y:l.y})), thumb:makeThumb() };
   await metaPut(rec); _lastSig=stateSig();
 }
 async function saveProject(){
@@ -3210,8 +3260,9 @@ async function loadRestored(blob, rec, projectId){
     S.imgW=dec.w; S.imgH=dec.h; S.loaded=true; S._imageBlob=blob; S._lastFile={name:rec.imgName||'image',size:rec.imgSize||blob.size};
     await buildOverview(sourceBitmap);
     S.measurements=rec.measurements||[]; S.annotations=rec.annotations||[]; S.mCtr=rec.mCtr||S.measurements.length; S.aCtr=rec.aCtr||S.annotations.length;
-    S.measurements.forEach(m=>{ if(!m.layer) m.layer='measure'; });   // backward-compat: pre-V16 items
-    S.layers={active:'measure', vis:Object.assign({measure:true,condition:true,proposed:true}, (rec.layers&&rec.layers.vis)||{})};
+    S.measurements.forEach(m=>{ if(!m.layer||m.layer==='condition') m.layer='measure'; });   // backward-compat; V19 folds condition into measure
+    S.stoneLabels=(rec.stoneLabels||[]).map(l=>({id:l.id||nMid(),x:l.x,y:l.y}));
+    S.layers={active:'measure', vis:Object.assign({measure:true,proposed:true}, (rec.layers&&rec.layers.vis)||{})}; S._proposedIntroShown=false;
     S.showSideDims=!!rec.showSideDims; S.catVis=Object.assign({},rec.catVis||{});
     S.areas=(rec.areas||[]).slice(); if(rec.building && !S.areas.includes(rec.building)) S.areas.unshift(rec.building); S.activeArea=rec.activeArea||''; updateAreaChip();
     S.unit=rec.unit||'mm'; S.pxPerUnit=rec.pxPerUnit||1; S._calibUnit=rec.calibUnit||'m';
