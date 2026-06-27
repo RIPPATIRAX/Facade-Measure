@@ -458,6 +458,7 @@ header {
 .cat-row.off { opacity: .5; }
 .cat-row input, .prop-toggle input { cursor: pointer; }
 .cat-sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
+.cat-note { font-size: 10px; color: var(--text3); font-style: italic; }
 .prop-toggle { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text); cursor: pointer; padding: 8px 5px 4px; margin-top: 6px; border-top: 1px solid var(--border); }
 .prop-row { display: flex; align-items: center; gap: 8px; padding: 7px 5px 2px; font-size: 12px; color: var(--text2); }
 .prop-row input { flex: 1; padding: 5px 7px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--text); font-family: Georgia, serif; font-size: 12px; }
@@ -681,10 +682,27 @@ header {
 
 <header>
   <div class="logo">
-    <svg class="logo-mark" width="27" height="22" viewBox="0 0 27 22" fill="none" aria-hidden="true">
-      <rect x="1" y="2" width="6" height="5" rx="1" fill="#2a2724"/><rect x="1" y="8.5" width="6" height="5" rx="1" fill="#2a2724"/><rect x="1" y="15" width="6" height="5" rx="1" fill="#2a2724"/>
-      <rect x="8.5" y="2" width="6" height="5" rx="1" fill="#d06a12"/><rect x="8.5" y="8.5" width="6" height="5" rx="1" fill="#d06a12" opacity="0.78"/><rect x="8.5" y="15" width="6" height="5" rx="1" fill="#d06a12" opacity="0.56"/>
-      <circle cx="18.6" cy="4.5" r="1.4" fill="#d06a12"/><circle cx="22.9" cy="4.5" r="1.1" fill="#ea8b2c"/><circle cx="18.6" cy="11" r="1.3" fill="#d06a12" opacity="0.85"/><circle cx="22.9" cy="11" r="1" fill="#ea8b2c" opacity="0.6"/><circle cx="18.6" cy="17.5" r="1.1" fill="#d06a12" opacity="0.7"/>
+    <svg class="logo-mark" width="56" height="40" viewBox="0 0 112 80" fill="none" aria-hidden="true">
+      <defs>
+        <mask id="lm-joints" maskUnits="userSpaceOnUse" x="0" y="0" width="112" height="80">
+          <rect x="0" y="0" width="112" height="80" fill="#fff"/>
+          <g stroke="#000" stroke-width="1.8" stroke-linecap="round">
+            <line x1="54" y1="27" x2="10" y2="29.8"/><line x1="54" y1="42" x2="10" y2="41.6"/><line x1="54" y1="57" x2="10" y2="53.3"/>
+            <line x1="40" y1="13.9" x2="40" y2="69.8"/><line x1="28" y1="15.6" x2="28" y2="67.9"/><line x1="18" y1="16.9" x2="18" y2="66.4"/>
+            <line x1="54" y1="27" x2="68" y2="27.9"/><line x1="54" y1="42" x2="68" y2="41.9"/><line x1="54" y1="57" x2="68" y2="55.9"/>
+          </g>
+        </mask>
+      </defs>
+      <g mask="url(#lm-joints)">
+        <polygon points="54,12 68,13.9 68,69.9 54,72" fill="#7d786f"/>
+        <polygon points="54,12 10,18 10,65.1 54,72" fill="#aaa49b"/>
+      </g>
+      <rect x="69.5" y="16.97" width="9" height="9" rx="2.2" ry="2.2" fill="#c8691a"/><rect x="69.5" y="30.53" width="9" height="9" rx="2.2" ry="2.2" fill="#c8691a"/><rect x="69.5" y="44.09" width="9" height="9" rx="2.2" ry="2.2" fill="#c8691a"/><rect x="69.5" y="57.64" width="9" height="9" rx="2.2" ry="2.2" fill="#c8691a"/>
+      <rect x="79.2" y="18.56" width="7.6" height="7.6" rx="2.6" ry="2.6" fill="#e0781a"/><rect x="79.2" y="31.47" width="7.6" height="7.6" rx="2.6" ry="2.6" fill="#e0781a"/><rect x="79.2" y="44.38" width="7.6" height="7.6" rx="2.6" ry="2.6" fill="#e0781a"/><rect x="79.2" y="57.28" width="7.6" height="7.6" rx="2.6" ry="2.6" fill="#e0781a"/>
+      <rect x="87.9" y="20.05" width="6.2" height="6.2" rx="2.8" ry="2.8" fill="#ef8c1f"/><rect x="87.9" y="32.38" width="6.2" height="6.2" rx="2.8" ry="2.8" fill="#ef8c1f"/><rect x="87.9" y="44.71" width="6.2" height="6.2" rx="2.8" ry="2.8" fill="#ef8c1f"/><rect x="87.9" y="57.04" width="6.2" height="6.2" rx="2.8" ry="2.8" fill="#ef8c1f"/>
+      <rect x="95.6" y="21.44" width="4.8" height="4.8" rx="2.4" ry="2.4" fill="#f3a637" opacity="0.95"/><rect x="95.6" y="33.26" width="4.8" height="4.8" rx="2.4" ry="2.4" fill="#f3a637" opacity="0.95"/><rect x="95.6" y="45.09" width="4.8" height="4.8" rx="2.4" ry="2.4" fill="#f3a637" opacity="0.95"/><rect x="95.6" y="56.92" width="4.8" height="4.8" rx="2.4" ry="2.4" fill="#f3a637" opacity="0.95"/>
+      <rect x="102.1" y="22.53" width="3.8" height="3.8" rx="1.9" ry="1.9" fill="#f6bb43" opacity="0.85"/><rect x="102.1" y="33.92" width="3.8" height="3.8" rx="1.9" ry="1.9" fill="#f6bb43" opacity="0.85"/><rect x="102.1" y="45.32" width="3.8" height="3.8" rx="1.9" ry="1.9" fill="#f6bb43" opacity="0.85"/><rect x="102.1" y="56.71" width="3.8" height="3.8" rx="1.9" ry="1.9" fill="#f6bb43" opacity="0.85"/>
+      <rect x="107.5" y="23.42" width="3" height="3" rx="1.5" ry="1.5" fill="#f8c64e" opacity="0.7"/><rect x="107.5" y="34.45" width="3" height="3" rx="1.5" ry="1.5" fill="#f8c64e" opacity="0.7"/><rect x="107.5" y="45.49" width="3" height="3" rx="1.5" ry="1.5" fill="#f8c64e" opacity="0.7"/><rect x="107.5" y="56.52" width="3" height="3" rx="1.5" ry="1.5" fill="#f8c64e" opacity="0.7"/>
     </svg>
     <span class="logo-stack"><span class="logo-txt">BUILDING&nbsp;REALITY&nbsp;<em>3D</em></span><span class="logo-sub">FacadeMeasure</span></span>
   </div>
@@ -1607,10 +1625,12 @@ function drawNumberBadge(centerImg, n, color){
 function drawStoneLabels(){
   if(!layerVisible('proposed')) return;
   if(!S.stoneLabels.length && S.tool!=='slabel') return;
+  const labelMode=(S.tool==='slabel');
+  const showGrey = labelMode || S.showStoneLabels!==false;   // grey unmarked labels have their OWN toggle, independent of WSR (always on while labelling)
   const consumed=new Set(); S.measurements.forEach(m=>{ if(m.layer==='proposed' && m.labelId) consumed.add(m.labelId); });
   const g=mkEl('g',{});
-  S.stoneLabels.forEach((l,i)=>{ if(!consumed.has(l.id)) g.append(drawNumberBadge({x:l.x,y:l.y}, i+1, '#5f5e5a')); });
-  if(S.tool==='slabel' && S.mouseImg && !S.dragSL){ const cb=drawNumberBadge(S.mouseImg, S.stoneLabels.length+1, '#d06a12'); cb.setAttribute('opacity','0.92'); g.append(cb); }
+  if(showGrey) S.stoneLabels.forEach((l,i)=>{ if(!consumed.has(l.id)) g.append(drawNumberBadge({x:l.x,y:l.y}, i+1, '#5f5e5a')); });
+  if(labelMode && S.mouseImg && !S.dragSL){ const cb=drawNumberBadge(S.mouseImg, S.stoneLabels.length+1, '#d06a12'); cb.setAttribute('opacity','0.92'); g.append(cb); }
   if(g.childNodes.length) svg.appendChild(g);
 }
 function hitStoneLabel(clientX, clientY){
@@ -2790,7 +2810,7 @@ function stoneDims(m){
 }
 function exportCuttingList(){
   renumberLabels();
-  const stones=spatialOrder(S.measurements.filter(m=>m.layer==='proposed' && !isAnnotType(m) && (m.action==='wsr'||m.action==='indent')));
+  const stones=S.measurements.filter(m=>m.layer==='proposed' && !isAnnotType(m) && (m.action==='wsr'||m.action==='indent')).sort((a,b)=>(a.n||0)-(b.n||0));
   if(!stones.length){ msg('No whole-stone-replacement or indent stones to put on a cutting list.'); return; }
   const rows=[['PROJECT:',''],['BUILDING/AREA:',S.areas.join(', ')],['DATE:',new Date().toISOString().slice(0,10)],[],
     ['Stone No.','Level','RWS/IND','Length (mm)','Depth (mm)','Height (mm)','m³','face m²','bed m²','Notes']];
@@ -3056,9 +3076,11 @@ function renderProposedPanel(){
   const el=document.getElementById('prop-panel'); if(!el) return;
   if(S.layers.active!=='proposed'){ el.style.display='none'; el.innerHTML=''; return; }
   el.style.display='block';
-  const open=!!S._catOpen, hidden=ACTIONS.filter(a=>S.catVis[a.key]===false).length;
-  const cats=ACTIONS.map(a=>{ const on=S.catVis[a.key]!==false;
+  const open=!!S._catOpen, hidden=ACTIONS.filter(a=>S.catVis[a.key]===false).length + ((S.stoneLabels.length && S.showStoneLabels===false)?1:0);
+  let cats=ACTIONS.map(a=>{ const on=S.catVis[a.key]!==false;
     return '<label class="cat-row'+(on?'':' off')+'"><input type="checkbox" data-cat="'+a.key+'"'+(on?' checked':'')+'><span class="cat-sw" style="background:'+a.color+'"></span>'+esc(a.label)+'</label>'; }).join('');
+  if(S.stoneLabels.length){ const lon=S.showStoneLabels!==false;     // independent toggle: grey unmarked stone labels (RWS rectangles keep their own labels regardless)
+    cats+='<label class="cat-row'+(lon?'':' off')+'"><input type="checkbox" id="cat-labels"'+(lon?' checked':'')+'><span class="cat-sw" style="background:#5f5e5a"></span>Stone labels <span class="cat-note">unmarked</span></label>'; }
   const labelling=(S.tool==='slabel');
   el.innerHTML=
     '<div class="prop-labelrow"><button class="prop-label-btn'+(labelling?' on':'')+'" id="label-stones-btn">'+(labelling?'■ Stop labelling · '+S.stoneLabels.length+' placed':'⬣ Label stones'+(S.stoneLabels.length?' · '+S.stoneLabels.length:''))+'</button><button class="prop-help-btn" id="label-help-btn" title="How stone labelling works">?</button></div>'+
@@ -3069,6 +3091,7 @@ function renderProposedPanel(){
   el.querySelector('#label-help-btn').addEventListener('click', showStoneLabelIntro);
   el.querySelector('#cats-btn').addEventListener('click',()=>{ S._catOpen=!S._catOpen; renderProposedPanel(); });
   el.querySelectorAll('input[data-cat]').forEach(cb=>cb.addEventListener('change',()=>{ S.catVis[cb.dataset.cat]=cb.checked; renderProposedPanel(); refreshMList(); scheduleRender(); }));
+  const lblCb=el.querySelector('#cat-labels'); if(lblCb) lblCb.addEventListener('change',()=>{ S.showStoneLabels=lblCb.checked; renderProposedPanel(); scheduleRender(); });
   el.querySelector('#side-dims').addEventListener('change',e=>{ S.showSideDims=e.target.checked; scheduleRender(); });
 }
 function setActiveLayer(k){
