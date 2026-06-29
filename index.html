@@ -65,9 +65,9 @@ header {
 .logo { display: flex; align-items: center; gap: 10px; white-space: nowrap; flex-shrink: 0; }
 .logo-mark { flex-shrink: 0; display: block; }
 .logo-stack { display: flex; flex-direction: column; line-height: 1.12; }
-.logo-txt { font-size: 14.5px; font-weight: 700; letter-spacing: 0.045em; color: var(--text); }
-.logo-txt em { color: var(--accent); font-style: normal; }
-.logo-sub { font-size: 10px; font-weight: 600; color: var(--accent); letter-spacing: 0.16em; text-transform: uppercase; }
+.logo-txt { font-family: 'Gill Sans', 'Gill Sans MT', 'Gill Sans Nova', Calibri, sans-serif; font-size: 14.5px; font-weight: 400; letter-spacing: 0.07em; color: var(--text); }
+.logo-txt em { color: var(--accent); font-style: normal; font-weight: 700; }
+.logo-sub { font-family: 'Gill Sans', 'Gill Sans MT', 'Gill Sans Nova', Calibri, sans-serif; font-size: 10px; font-weight: 600; color: var(--accent); letter-spacing: 0.16em; text-transform: uppercase; }
 .sep { width: 1px; height: 26px; background: var(--border); flex-shrink: 0; }
 .file-btn {
   display: flex; align-items: center; gap: 6px;
@@ -934,7 +934,7 @@ header {
 
     <div class="label-size-ctrl">
       <span>Label size</span>
-      <input type="range" id="label-size" min="0.7" max="2" step="0.1" value="1.1">
+      <input type="range" id="label-size" min="0.7" max="2" step="0.1" value="1.0">
     </div>
 
     <div class="info-pop" id="info-pop"></div>
@@ -995,7 +995,7 @@ const S = {
   selectedId: null,
   history: [],
   mCtr: 0, aCtr: 0,
-  labelScale: 1.1,
+  labelScale: 1.0,
   editId: null,
   dragVert: null,
   mouseImg: { x:0, y:0 },
@@ -1380,7 +1380,7 @@ document.addEventListener('keydown', e => {
   if (e.key==='Enter' && (S.tool==='poly'||S.tool==='pline') && S.drawing) { finishPolyish(); return; }
   if (e.key==='Enter' && S.tool==='apoly' && S.drawing) { finishApoly(); return; }
   if (e.key==='Enter' && S.tool==='curvefit') { finishCurveFit(); return; }
-  if (e.ctrlKey && e.key==='z') { e.preventDefault(); if(S.tool==='slabel'&&S.stoneLabels.length){ S.stoneLabels.pop(); renumberLabels(); refreshMList(); scheduleRender(); } else undo(); return; }
+  if ((e.ctrlKey||e.metaKey) && e.key==='z') { e.preventDefault(); if(S.tool==='slabel'&&S.stoneLabels.length){ S.stoneLabels.pop(); renumberLabels(); refreshMList(); scheduleRender(); } else undo(); return; }
   if ((e.key==='Delete'||e.key==='Backspace') && S.selectedId && !S.editId) {
     e.preventDefault();
     if (S.measurements.some(m=>m.id===S.selectedId)) delM(S.selectedId);
@@ -1498,6 +1498,10 @@ function labelPx() {
   const base = 12 * S.labelScale;
   return Math.max(9, Math.min(30, base * Math.pow(S.zoom, 0.34)));
 }
+/* Number discs (stone-register labels + replacement-stone numbers) are sized in IMAGE space —
+   a ~65 mm disc (× the size slider) in the orthophoto (1px = 1mm) — so they scale 1:1 with the
+   photo: no crowding when zoomed out. Small screen floor keeps a disc visible/clickable at low zoom. */
+function badgeRadiusPx(){ return Math.max(4.5, (65 * S.labelScale * S.zoom) / 2); }
 
 /* ═══════════════════════════════════════════════════
    OVERLAY (SVG)  — everything drawn in SCREEN coordinates
@@ -1610,10 +1614,12 @@ function impPane(m){
 }
 
 /* Prominent stone-number disc, drawn in the stone's centre (proposed works). */
-function drawNumberBadge(centerImg, n, color){
+function drawNumberBadge(centerImg, n, color, opts){
+  opts = opts || {};
   const c = imgToScreen(centerImg.x, centerImg.y);
-  const fs = labelPx()*1.3, r = fs*1.05;
+  const r = (opts.floor===false) ? (65*S.labelScale*S.zoom)/2 : badgeRadiusPx(), fs = r*0.95;
   const g = mkEl('g', {});
+  if(opts.opacity!=null) g.setAttribute('opacity', String(opts.opacity));
   g.append(
     mkEl('circle',{cx:c.x,cy:c.y,r:r,fill:color,stroke:'#fff','stroke-width':Math.max(1.5,r*0.13)}),
     (()=>{const t=mkEl('text',{x:c.x,y:c.y+fs*0.35,'text-anchor':'middle',fill:'#fff','font-family':'Georgia,serif','font-weight':'700','font-size':fs,'pointer-events':'none'});t.textContent=String(n);return t;})()
@@ -1627,14 +1633,18 @@ function drawStoneLabels(){
   if(!S.stoneLabels.length && S.tool!=='slabel') return;
   const labelMode=(S.tool==='slabel');
   const showGrey = labelMode || S.showStoneLabels!==false;   // grey unmarked labels have their OWN toggle, independent of WSR (always on while labelling)
+  // Grey register labels fade out as you zoom right out — so they don't crowd / freeze at the size floor;
+  // coloured replacement discs never fade. While labelling they stay fully visible (you're working close in).
+  const dia = 65 * S.labelScale * S.zoom;                                  // natural disc ⌀ (px), no floor
+  const greyOp = labelMode ? 1 : Math.max(0, Math.min(1, (dia-3)/5));      // solid above ~8px ⌀, gone below ~3px ⌀
   const consumed=new Set(); S.measurements.forEach(m=>{ if(m.layer==='proposed' && m.labelId) consumed.add(m.labelId); });
   const g=mkEl('g',{});
-  if(showGrey) S.stoneLabels.forEach((l,i)=>{ if(!consumed.has(l.id)) g.append(drawNumberBadge({x:l.x,y:l.y}, i+1, '#5f5e5a')); });
+  if(showGrey && greyOp>0.02) S.stoneLabels.forEach((l,i)=>{ if(!consumed.has(l.id)) g.append(drawNumberBadge({x:l.x,y:l.y}, i+1, '#5f5e5a', {floor:false, opacity:greyOp})); });
   if(labelMode && S.mouseImg && !S.dragSL){ const cb=drawNumberBadge(S.mouseImg, S.stoneLabels.length+1, '#d06a12'); cb.setAttribute('opacity','0.92'); g.append(cb); }
   if(g.childNodes.length) svg.appendChild(g);
 }
 function hitStoneLabel(clientX, clientY){
-  const r=wrap.getBoundingClientRect(), tol=Math.max(16, labelPx()*1.4);
+  const r=wrap.getBoundingClientRect(), tol=Math.max(16, badgeRadiusPx()*1.4);
   for(let i=S.stoneLabels.length-1;i>=0;i--){ const l=S.stoneLabels[i], s=imgToScreen(l.x,l.y); if(Math.hypot(clientX-r.left-s.x, clientY-r.top-s.y)<=tol) return l; }
   return null;
 }
@@ -2717,15 +2727,15 @@ labelSizeInp.addEventListener('input',()=>{ S.labelScale=parseFloat(labelSizeInp
    UNDO
 ═══════════════════════════════════════════════════ */
 function pushH(){
-  S.history.push({ measurements:JSON.parse(JSON.stringify(S.measurements)), annotations:JSON.parse(JSON.stringify(S.annotations)), mCtr:S.mCtr, aCtr:S.aCtr });
+  S.history.push({ measurements:JSON.parse(JSON.stringify(S.measurements)), annotations:JSON.parse(JSON.stringify(S.annotations)), stoneLabels:JSON.parse(JSON.stringify(S.stoneLabels||[])), mCtr:S.mCtr, aCtr:S.aCtr });
   if(S.history.length>60) S.history.shift();
 }
 function undo(){
   if(!S.history.length) return;
   const snap=S.history.pop();
-  S.measurements=snap.measurements; S.annotations=snap.annotations; S.mCtr=snap.mCtr; S.aCtr=snap.aCtr;
+  S.measurements=snap.measurements; S.annotations=snap.annotations; if(snap.stoneLabels) S.stoneLabels=snap.stoneLabels; S.mCtr=snap.mCtr; S.aCtr=snap.aCtr;
   if(S.editId && !S.measurements.find(x=>x.id===S.editId)) exitEdit();
-  refreshMList(); refreshAList(); scheduleRender(); msg('Undo');
+  refreshMList(); refreshAList(); renderProposedPanel(); scheduleRender(); msg('Undo');
 }
 
 /* ═══════════════════════════════════════════════════
@@ -2952,7 +2962,7 @@ function buildReportHTML(){
   if(hasImg){
     const ow=Math.min(2000,S.imgW);
     const url=compositeRegion({sx:0,sy:0,sw:S.imgW,sh:S.imgH}, ow, S.measurements.filter(m=>!isAnnotType(m)), S.annotations, false,
-      {strokeW:Math.max(3,ow/300), fontS:Math.max(13,Math.round(ow/68)), mode:'badge', scaleBar:true, stoneLabels:S.stoneLabels});
+      {strokeW:Math.max(3,ow/300), fontS:Math.max(13,Math.round(ow/68)), mode:'badge', scaleBar:true});
     overviewImg=`<div class="figure"><img src="${url}" alt="Annotated facade overview"><div class="cap">Annotated orthophoto — numbered markers keyed to the legend and tables below. Scale ${scaleStr}.</div></div>`;
     if(S.measurements.length||S.annotations.length){
       const lgItem=m=>`<span class="lg-item"><span class="lg-badge sq" style="background:${m.color}">${m.n||''}</span>${esc(m.label)}${legendVal(m)?` <span class="lg-val">${esc(legendVal(m))}</span>`:''}</span>`;
@@ -3162,8 +3172,28 @@ function buildInfo(){
 
 document.getElementById('btn-undo').addEventListener('click',undo);
 document.getElementById('btn-clear').addEventListener('click',()=>{
-  modalConfirm('Clear everything?', 'This removes all measurements and notes from the current survey. You can undo with Ctrl+Z.', {ok:'Clear all', cancel:'Cancel', danger:true})
-    .then(ok=>{ if(!ok) return; pushH(); S.measurements=[]; S.annotations=[]; S.editId=null; S.selectedId=null; refreshMList(); refreshAList(); scheduleRender(); });
+  const n=(S.stoneLabels||[]).length;
+  const clear=(withLabels)=>{ pushH(); S.measurements=[]; S.annotations=[]; if(withLabels) S.stoneLabels=[]; S.editId=null; S.selectedId=null; refreshMList(); refreshAList(); renderProposedPanel(); scheduleRender(); };
+  if(!n){
+    modalConfirm('Clear everything?', 'This removes all measurements and notes from the current survey. You can undo with Ctrl+Z.', {ok:'Clear all', cancel:'Cancel', danger:true})
+      .then(ok=>{ if(ok) clear(true); });
+    return;
+  }
+  const {ov,card,close}=modalShell(
+    '<div class="modal-title">Clear survey?</div>'+
+    '<div class="modal-sub">"Measurements &amp; works" keeps your '+n+' grey stone label'+(n>1?'s':'')+'. "Everything" clears those too. You can undo with Ctrl+Z.</div>'+
+    '<div class="modal-acts" style="flex-wrap:wrap;gap:8px;justify-content:flex-end">'+
+      '<button class="btn-sm" id="_cc">Cancel</button>'+
+      '<button class="btn-sm btn-danger" id="_cm">Measurements &amp; works</button>'+
+      '<button class="btn-sm btn-danger" id="_ca">Everything</button>'+
+    '</div>');
+  const done=fn=>{ document.removeEventListener('keydown',key,true); close(); if(fn)fn(); };
+  function key(e){ if(e.key==='Escape'){e.stopPropagation();done(null);} }
+  card.querySelector('#_cc').onclick=()=>done(null);
+  card.querySelector('#_cm').onclick=()=>done(()=>clear(false));
+  card.querySelector('#_ca').onclick=()=>done(()=>clear(true));
+  ov.addEventListener('mousedown',e=>{ if(e.target===ov)done(null); });
+  document.addEventListener('keydown',key,true);
 });
 
 /* ═══════════════════════════════════════════════════
