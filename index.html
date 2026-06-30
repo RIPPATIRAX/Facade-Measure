@@ -2558,7 +2558,7 @@ function refreshMList(){
     div.addEventListener('mouseleave',()=>{ if(S._hover===m.id){ S._hover=null; scheduleRender(); }});
     div.innerHTML=`
       <div class="m-head">
-        <div class="m-dot" style="background:${m.color}">${m.n||(i+1)}</div>
+        <div class="m-dot" style="background:${m.color}">${m.layer==='proposed'?esc(proposedCode(m)):(m.n||(i+1))}</div>
         <span class="m-label" id="lbl${m.id}">${esc(m.label)}</span>
         <span class="m-tag">${types[m.type]||m.type}</span>
       </div>
