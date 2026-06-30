@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FacadeMeasure — Heritage Survey Tool</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='4%204%2084%2084'%3E%3Cpolygon%20points='54,12%2068,13.9%2068,69.9%2054,72'%20fill='%237d786f'/%3E%3Cpolygon%20points='54,12%2010,18%2010,65.1%2054,72'%20fill='%23aaa49b'/%3E%3Crect%20x='71'%20y='29'%20width='13'%20height='13'%20rx='3'%20fill='%23d06a12'/%3E%3Crect%20x='71'%20y='47'%20width='13'%20height='13'%20rx='3'%20fill='%23ea8b2c'/%3E%3Ccircle%20cx='77.5'%20cy='19'%20r='3.4'%20fill='%23f3a637'/%3E%3Ccircle%20cx='77.5'%20cy='66'%20r='2.8'%20fill='%23f8c64e'/%3E%3C/svg%3E">
 <style>
 :root {
   --bg: #f5f2ee;
@@ -216,6 +217,7 @@ header {
   gap: 3px;
   flex-shrink: 0;
   overflow-y: auto;
+  overflow-x: hidden;            /* never scroll sideways into empty space */
   box-shadow: var(--shadow-sm);
   z-index: 20;
 }
@@ -238,24 +240,25 @@ header {
   box-shadow: inset 0 0 0 1px var(--accent2), 0 1px 3px rgba(45,90,61,0.18);
 }
 .tool-btn svg { pointer-events: none; }
-.tool-btn::after {
-  content: attr(data-tip);
-  position: absolute;
-  left: 46px; top: 50%;
-  transform: translateY(-50%);
+/* Tooltip lives on <body> (position:fixed) so it can never widen the toolbar's
+   scroll area — appears after a short hover delay and explains the tool. */
+.tool-tip {
+  position: fixed;
   background: #1a1714;
   color: #fff;
-  font-size: 11px;
-  padding: 3px 7px;
-  border-radius: 4px;
-  white-space: nowrap;
+  font-size: 11.5px;
+  line-height: 1.42;
+  padding: 6px 9px;
+  border-radius: 5px;
+  max-width: 232px;
   pointer-events: none;
   opacity: 0;
-  transition: opacity .15s;
-  z-index: 200;
+  transition: opacity .12s;
+  z-index: 9999;
   font-family: Georgia, serif;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.32);
 }
-.tool-btn:hover::after { opacity: 1; }
+.tool-tip.show { opacity: 1; }
 
 /* CANVAS AREA */
 .canvas-wrap {
@@ -473,7 +476,9 @@ header {
 .lbl-mini.danger:hover { border-color: #b3261e; color: #b3261e; }
 .lbl-codes { display: flex; flex-wrap: wrap; gap: 5px; padding: 8px; }
 .lbl-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600; color: #4a4843; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; cursor: pointer; }
-.lbl-chip:hover { border-color: #b3261e; color: #b3261e; }
+.lbl-chip:hover { border-color: var(--accent); color: var(--accent); }
+.lbl-chip.ann { color: #2f6fae; }
+.lbl-chip .lbl-chipx:hover { color: #b3261e; }
 .lbl-chipx { font-size: 9px; opacity: 0.45; }
 .lbl-chip:hover .lbl-chipx { opacity: 1; }
 .prop-toggle { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text); cursor: pointer; padding: 8px 5px 4px; margin-top: 6px; border-top: 1px solid var(--border); }
@@ -798,7 +803,6 @@ header {
       <div class="menu-head">Export survey</div>
       <button class="menu-item primary-item menu-close" id="btn-pdf"><span class="mi-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span> PDF report</button>
       <button class="menu-item menu-close" id="btn-cutlist"><span class="mi-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span> Cutting list (RWS / indent)</button>
-      <button class="menu-item menu-close" id="btn-labelcsv"><span class="mi-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0l-7.18-7.18A2 2 0 0 1 2.83 11V5a2 2 0 0 1 2-2h6a2 2 0 0 1 1.41.59l7.18 7.17a2 2 0 0 1-.01 2.66"/><circle cx="7.5" cy="7.5" r="1"/></svg></span> Stone labels (CSV)</button>
       <button class="menu-item menu-close" id="btn-schedule"><span class="mi-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 9h18M3 14h18M9 4v16"/></svg></span> Full schedule</button>
       <button class="menu-item menu-close" id="btn-csv"><span class="mi-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg></span> CSV data</button>
       <button class="menu-item menu-close" id="btn-json"><span class="mi-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg></span> JSON data</button>
@@ -909,6 +913,8 @@ header {
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5a534a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9.2a3 3 0 0 1 5.8 1c0 2-3 2.3-3 4"/><line x1="12" y1="17.4" x2="12.01" y2="17.4"/></svg>
     </button>
   </div>
+
+  <div id="tool-tip" class="tool-tip"></div>
 
   <div class="canvas-wrap" id="canvas-wrap">
     <canvas id="view-canvas"></canvas>
@@ -1392,7 +1398,7 @@ document.addEventListener('keydown', e => {
   if (e.key==='Enter' && (S.tool==='poly'||S.tool==='pline') && S.drawing) { finishPolyish(); return; }
   if (e.key==='Enter' && S.tool==='apoly' && S.drawing) { finishApoly(); return; }
   if (e.key==='Enter' && S.tool==='curvefit') { finishCurveFit(); return; }
-  if ((e.ctrlKey||e.metaKey) && e.key==='z') { e.preventDefault(); if(S.tool==='slabel'&&S.stoneLabels.length){ S.stoneLabels.pop(); renumberLabels(); refreshMList(); refreshLabelsTab(); scheduleRender(); } else undo(); return; }
+  if ((e.ctrlKey||e.metaKey) && (e.key==='z'||e.key==='Z'||e.code==='KeyZ')) { e.preventDefault(); if(S.tool==='slabel'&&S.stoneLabels.length){ S.stoneLabels.pop(); renumberLabels(); refreshMList(); refreshLabelsTab(); scheduleRender(); } else undo(); return; }
   if (S.tool==='slabel' && !e.ctrlKey && !e.metaKey && !e.altKey) {   // V21: letters set the course prefix; normal shortcuts are suppressed while labelling
     if (/^[a-zA-Z]$/.test(e.key)) { e.preventDefault();
       const L=e.key.toUpperCase(), now=Date.now();
@@ -1640,17 +1646,23 @@ function drawNumberBadge(centerImg, n, color, opts){
   opts = opts || {};
   const c = imgToScreen(centerImg.x, centerImg.y);
   const r = (opts.floor===false) ? (65*S.labelScale*S.zoom)/2 : badgeRadiusPx(), fs = r*0.95;
+  const txt = String(n), sw = Math.max(1.5, r*0.13);
   const g = mkEl('g', {});
   if(opts.opacity!=null) g.setAttribute('opacity', String(opts.opacity));
-  g.append(
-    mkEl('circle',{cx:c.x,cy:c.y,r:r,fill:color,stroke:'#fff','stroke-width':Math.max(1.5,r*0.13)}),
-    (()=>{const t=mkEl('text',{x:c.x,y:c.y+fs*0.35,'text-anchor':'middle',fill:'#fff','font-family':'Georgia,serif','font-weight':'700','font-size':fs,'pointer-events':'none'});t.textContent=String(n);return t;})()
-  );
+  if(txt.length<=2){
+    g.append(mkEl('circle',{cx:c.x,cy:c.y,r:r,fill:color,stroke:'#fff','stroke-width':sw}));
+  } else {                                                    // 3+ chars → adaptive rounded square so the code doesn't bleed out
+    const w=Math.max(2*r, fs*0.62*txt.length + r*0.9), h=2*r;
+    g.append(mkEl('rect',{x:c.x-w/2,y:c.y-h/2,width:w,height:h,rx:r*0.42,ry:r*0.42,fill:color,stroke:'#fff','stroke-width':sw}));
+  }
+  g.append((()=>{const t=mkEl('text',{x:c.x,y:c.y+fs*0.35,'text-anchor':'middle',fill:'#fff','font-family':'Georgia,serif','font-weight':'700','font-size':fs,'pointer-events':'none'});t.textContent=txt;return t;})());
   return g;
 }
 /* V19 stone register: grey number discs on every labelled stone; one consumed by each replacement
    (hidden so only the coloured replacement disc shows). In label mode the next number rides the cursor. */
 function drawStoneLabels(){
+  if(S._flash && Date.now()<S._flash.until){ const fc=imgToScreen(S._flash.x,S._flash.y);   // "go to" highlight from the Labels tab
+    svg.appendChild(mkEl('circle',{cx:fc.x,cy:fc.y,r:34,fill:'none',stroke:'#d06a12','stroke-width':4,'stroke-opacity':0.95})); }
   if(!layerVisible('proposed')) return;
   if(!S.stoneLabels.length && S.tool!=='slabel') return;
   const labelMode=(S.tool==='slabel');
@@ -1661,7 +1673,9 @@ function drawStoneLabels(){
   const greyOp = labelMode ? 1 : Math.max(0, Math.min(1, (dia-3)/5));      // solid above ~8px ⌀, gone below ~3px ⌀
   const consumed=new Set(); S.measurements.forEach(m=>{ if(m.layer==='proposed' && m.labelId) consumed.add(m.labelId); });
   const g=mkEl('g',{});
-  if(showGrey && greyOp>0.02) S.stoneLabels.forEach((l)=>{ if(!consumed.has(l.id)) g.append(drawNumberBadge({x:l.x,y:l.y}, stoneLabelCode(l), '#5f5e5a', {floor:false, opacity:greyOp})); });
+  if(showGrey && greyOp>0.02){ const seq={};                                  // single O(n) pass: per-course running number (matches stoneLabelCode)
+    S.stoneLabels.forEach((l)=>{ const p=l.prefix||'', num=(seq[p]=(seq[p]||0)+1);
+      if(!consumed.has(l.id)) g.append(drawNumberBadge({x:l.x,y:l.y}, p+num, '#5f5e5a', {floor:false, opacity:greyOp})); }); }
   if(labelMode && S.mouseImg && !S.dragSL){ const cb=drawNumberBadge(S.mouseImg, S.labelPrefix + nextLabelNumberFor(S.labelPrefix), '#d06a12'); cb.setAttribute('opacity','0.92'); g.append(cb); }
   if(g.childNodes.length) svg.appendChild(g);
 }
@@ -1744,25 +1758,25 @@ function drawMeasurement(m, num) {
   } else if (m.type==='refline') {
     const a=imgToScreen(m.coords[0].x,m.coords[0].y), b=imgToScreen(m.coords[1].x,m.coords[1].y);
     g.append(
-      mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:m.color,'stroke-width':sStroke,'stroke-dasharray':'7,5','stroke-linecap':'round'}),
+      mkEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:m.color,'stroke-width':sStroke*1.25,'stroke-linecap':'round'}),
       vertexHandle(m,0,editing), vertexHandle(m,1,editing)
     );
   } else if (m.type==='refcircle') {
     const c=imgToScreen(m.coords[0].x,m.coords[0].y), rr=dist2(m.coords[0],m.coords[1])*S.zoom;
     g.append(
-      mkEl('circle',{cx:c.x,cy:c.y,r:rr,fill:'none',stroke:m.color,'stroke-width':sStroke,'stroke-dasharray':'7,5'}),
+      mkEl('circle',{cx:c.x,cy:c.y,r:rr,fill:'none',stroke:m.color,'stroke-width':sStroke*1.25}),
       vertexHandle(m,0,editing), vertexHandle(m,1,editing)
     );
   } else if (m.type==='arc') {
     const pts=arcPts(m.coords[0],m.coords[1],m.coords[2]).map(p=>imgToScreen(p.x,p.y));
     g.append(
-      mkEl('polyline',{points:pts.map(p=>p.x+','+p.y).join(' '),fill:'none',stroke:m.color,'stroke-width':sStroke,'stroke-dasharray':'7,5','stroke-linecap':'round'}),
+      mkEl('polyline',{points:pts.map(p=>p.x+','+p.y).join(' '),fill:'none',stroke:m.color,'stroke-width':sStroke*1.25,'stroke-linecap':'round'}),
       ...m.coords.map((_,i)=>vertexHandle(m,i,editing))
     );
   } else if (m.type==='apoly') {
     const pts=m.coords.map(p=>imgToScreen(p.x,p.y));
     g.append(
-      mkEl('polyline',{points:pts.map(p=>p.x+','+p.y).join(' '),fill:'none',stroke:m.color,'stroke-width':sStroke,'stroke-dasharray':'7,5','stroke-linejoin':'round','stroke-linecap':'round'}),
+      mkEl('polyline',{points:pts.map(p=>p.x+','+p.y).join(' '),fill:'none',stroke:m.color,'stroke-width':sStroke*1.25,'stroke-linejoin':'round','stroke-linecap':'round'}),
       ...m.coords.map((_,i)=>vertexHandle(m,i,editing))
     );
   }
@@ -2527,7 +2541,7 @@ function setItemClass(id, key){
 function refreshMList(){
   renumberLabels();
   const active=S.layers.active;
-  const items=S.measurements.filter(m=>(m.layer||'measure')===active && catVisible(m));
+  const items=S.measurements.filter(m=>(m.layer||'measure')===active && catVisible(m) && !isAnnotType(m));   // annotations live in the Labels tab now
   if(!items.length){ mList.innerHTML='<div class="empty-state">Nothing in <b>'+esc(layerName(active))+'</b> yet.<br>'+layerHint(active)+'</div>'; return; }
   mList.innerHTML='';
   if(S.areas.length){
@@ -2639,6 +2653,10 @@ function panToPoint(ix,iy){
   const ww=wrap.clientWidth, wh=wrap.clientHeight;
   S.panX=ww/2-ix*S.zoom; S.panY=wh/2-iy*S.zoom; applyXform();
 }
+/* Centre an image point on screen and flash a ring there — used by the Labels tab "go to". */
+function gotoCanvas(ix,iy){ panToPoint(ix,iy); S._flash={x:ix,y:iy,until:Date.now()+1400}; scheduleRender();
+  setTimeout(()=>{ if(S._flash && Date.now()>=S._flash.until){ S._flash=null; scheduleRender(); } }, 1500); }
+function gotoLabel(l){ if(S.layers.active!=='proposed' || !(S.layers.vis&&S.layers.vis.proposed)){ if(S.layers.vis) S.layers.vis.proposed=true; S.layers.active='proposed'; updateToolbarForLayer(); refreshLayers(); } gotoCanvas(l.x,l.y); }
 
 function renM(id){
   const m=S.measurements.find(x=>x.id===id); if(!m) return;
@@ -2682,6 +2700,38 @@ function switchTab(name){
   if(name==='labels') refreshLabelsTab();
 }
 document.querySelectorAll('.stab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
+/* Delayed, explanatory tool tooltips — rendered on <body> (position:fixed) so they can never widen the toolbar. */
+(function(){
+  const TIP=document.getElementById('tool-tip'); if(!TIP) return;
+  const HELP={
+    'tool-pan':'Pan & select — drag to move the view; click a marking to select it.  [V]',
+    'tool-edit':'Edit points — drag a marking’s vertices (hold Shift to keep rectangle corners square).  [E]',
+    'tool-dist':'Distance — click two points to measure a straight length.  [D]',
+    'tool-rect':'Rectangle — drag a box; on the Proposed-works layer it becomes a replacement stone.  [R]',
+    'tool-pline':'Crack length — trace a crack or stringcourse as a multi-point line.  [L]',
+    'tool-poly':'Polygon — click around an irregular stone or area; click the first point to close.  [P]',
+    'tool-point':'Point — drop a single position marker.  [M]',
+    'tool-annot':'Note — drop a numbered note / defect marker.  [A]',
+    'tool-refline':'Annotation line — a plain line on the photo (not measured, excluded from exports).',
+    'tool-refcircle':'Annotation circle — a plain circle highlight (not measured, excluded from exports).',
+    'tool-arc':'Annotation arc — a 3-point arc highlight (not measured, excluded from exports).',
+    'tool-apoly':'Annotation polyline — a freeform multi-point line (not measured, excluded from exports).',
+    'btn-undo':'Undo the last action.  [Ctrl / Cmd + Z]',
+    'btn-clear':'Clear the survey — measurements & works only, or everything including the stone labels.',
+    'btn-help':'Help & keyboard shortcuts.  [?]'
+  };
+  let timer=null, cur=null;
+  function show(btn){ const txt=HELP[btn.id]||btn.getAttribute('data-tip')||''; if(!txt) return;
+    TIP.textContent=txt; const r=btn.getBoundingClientRect();
+    TIP.style.left=(r.right+9)+'px'; TIP.style.top=(r.top+r.height/2)+'px'; TIP.style.transform='translateY(-50%)';
+    TIP.classList.add('show'); }
+  function hide(){ cur=null; clearTimeout(timer); TIP.classList.remove('show'); }
+  document.querySelectorAll('.tool-btn').forEach(btn=>{
+    btn.addEventListener('mouseenter',()=>{ cur=btn; clearTimeout(timer); timer=setTimeout(()=>{ if(cur===btn) show(btn); }, 550); });
+    btn.addEventListener('mouseleave',hide);
+    btn.addEventListener('mousedown',hide);
+  });
+})();
 /* V21: Labels tab — manage the grey stone register (grouped by course; remove & edit). */
 function refreshLabelsTab(){
   const el=document.getElementById('labels-list'); if(!el) return;
@@ -2690,22 +2740,31 @@ function refreshLabelsTab(){
   if(labelling) h+='<div class="labels-hint">Press <b>A–Z</b> to start a course · current: <b>'+(S.labelPrefix||'plain')+'</b></div>';
   if(!S.stoneLabels.length){
     h+='<div class="empty-state">No stone labels yet.<br>Start labelling and click each stone; press a letter (A–Z) to begin a course (A1, A2…).</div>';
-    el.innerHTML=h; el.querySelector('#labels-toggle').onclick=()=>{ if(S.tool==='slabel') setTool('pan'); else startLabelMode(); }; return;
+  } else {
+    const groups={}, order=[];
+    S.stoneLabels.forEach(l=>{ const p=l.prefix||''; if(!(p in groups)){groups[p]=[];order.push(p);} groups[p].push(l); });
+    order.sort((a,b)=> a===b?0 : a===''?-1 : b===''?1 : (a.length-b.length)||(a<b?-1:1));
+    order.forEach(p=>{
+      const ls=groups[p], name=p?('Course '+p):'Unprefixed';
+      h+='<div class="lbl-group"><div class="lbl-ghead"><span class="lbl-gname">'+esc(name)+'<span class="lbl-count">'+ls.length+'</span></span><span class="lbl-gacts">'+(p?('<button class="lbl-mini" data-rename="'+esc(p)+'">rename</button>'):'')+'<button class="lbl-mini danger" data-clear="'+esc(p)+'">clear</button></span></div><div class="lbl-codes">';
+      ls.forEach(l=>{ const code=esc(stoneLabelCode(l)); h+='<span class="lbl-chip" data-go="'+l.id+'" title="Go to '+code+'">'+code+'<span class="lbl-chipx" data-del="'+l.id+'" title="Delete">✕</span></span>'; });
+      h+='</div></div>';
+    });
   }
-  const groups={}, order=[];
-  S.stoneLabels.forEach(l=>{ const p=l.prefix||''; if(!(p in groups)){groups[p]=[];order.push(p);} groups[p].push(l); });
-  order.sort((a,b)=> a===b?0 : a===''?-1 : b===''?1 : (a.length-b.length)||(a<b?-1:1));
-  order.forEach(p=>{
-    const ls=groups[p], name=p?('Course '+p):'Unprefixed';
-    h+='<div class="lbl-group"><div class="lbl-ghead"><span class="lbl-gname">'+esc(name)+'<span class="lbl-count">'+ls.length+'</span></span><span class="lbl-gacts">'+(p?('<button class="lbl-mini" data-rename="'+esc(p)+'">rename</button>'):'')+'<button class="lbl-mini danger" data-clear="'+esc(p)+'">clear</button></span></div><div class="lbl-codes">';
-    ls.forEach(l=>{ const code=esc(stoneLabelCode(l)); h+='<span class="lbl-chip" data-del="'+l.id+'" title="Delete '+code+'">'+code+'<span class="lbl-chipx">✕</span></span>'; });
+  const anns=S.measurements.filter(m=>isAnnotType(m));
+  if(anns.length){                                            // annotations always at the bottom, below all label courses
+    h+='<div class="lbl-group"><div class="lbl-ghead"><span class="lbl-gname">Annotations<span class="lbl-count">'+anns.length+'</span></span></div><div class="lbl-codes">';
+    anns.forEach(a=>{ const nm=esc(a.label||defaultPrefix(a)||'Annotation'); h+='<span class="lbl-chip ann" data-goa="'+a.id+'" title="Go to '+nm+'">'+nm+'<span class="lbl-chipx" data-dela="'+a.id+'" title="Delete">✕</span></span>'; });
     h+='</div></div>';
-  });
+  }
   el.innerHTML=h;
-  el.querySelector('#labels-toggle').onclick=()=>{ if(S.tool==='slabel') setTool('pan'); else startLabelMode(); };
-  el.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ const id=+b.dataset.del; pushH(); S.stoneLabels=S.stoneLabels.filter(l=>l.id!==id); renumberLabels(); refreshLabelsTab(); refreshMList(); renderProposedPanel(); scheduleRender(); });
-  el.querySelectorAll('[data-clear]').forEach(b=>b.onclick=()=>{ const p=b.dataset.clear, cnt=groups[p].length; modalConfirm('Clear course?', 'Delete all '+cnt+' label'+(cnt>1?'s':'')+' in '+(p?('course '+p):'the unprefixed group')+'? Undo with Ctrl+Z.',{ok:'Clear',cancel:'Cancel',danger:true}).then(ok=>{ if(!ok)return; pushH(); S.stoneLabels=S.stoneLabels.filter(l=>(l.prefix||'')!==p); renumberLabels(); refreshLabelsTab(); refreshMList(); renderProposedPanel(); scheduleRender(); }); });
+  const tg=el.querySelector('#labels-toggle'); if(tg) tg.onclick=()=>{ if(S.tool==='slabel') setTool('pan'); else startLabelMode(); };
+  el.querySelectorAll('.lbl-chip[data-go]').forEach(b=>b.onclick=(e)=>{ if(e.target.closest('[data-del]'))return; const l=S.stoneLabels.find(x=>x.id===+b.dataset.go); if(l) gotoLabel(l); });
+  el.querySelectorAll('[data-del]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); const id=+b.dataset.del; pushH(); S.stoneLabels=S.stoneLabels.filter(l=>l.id!==id); renumberLabels(); refreshLabelsTab(); refreshMList(); renderProposedPanel(); scheduleRender(); });
+  el.querySelectorAll('[data-clear]').forEach(b=>b.onclick=()=>{ const p=b.dataset.clear, cnt=S.stoneLabels.filter(l=>(l.prefix||'')===p).length; modalConfirm('Clear course?', 'Delete all '+cnt+' label'+(cnt>1?'s':'')+' in '+(p?('course '+p):'the unprefixed group')+'? Undo with Ctrl+Z.',{ok:'Clear',cancel:'Cancel',danger:true}).then(ok=>{ if(!ok)return; pushH(); S.stoneLabels=S.stoneLabels.filter(l=>(l.prefix||'')!==p); renumberLabels(); refreshLabelsTab(); refreshMList(); renderProposedPanel(); scheduleRender(); }); });
   el.querySelectorAll('[data-rename]').forEach(b=>b.onclick=()=>{ const p=b.dataset.rename; modalPrompt('Rename course', 'New letter prefix for course '+p+' (A–Z):',{value:p,ok:'Rename'}).then(v=>{ if(v==null)return; const np=String(v).trim().toUpperCase().replace(/[^A-Z]/g,''); pushH(); S.stoneLabels.forEach(l=>{ if((l.prefix||'')===p) l.prefix=np; }); renumberLabels(); refreshLabelsTab(); refreshMList(); scheduleRender(); }); });
+  el.querySelectorAll('.lbl-chip.ann[data-goa]').forEach(b=>b.onclick=(e)=>{ if(e.target.closest('[data-dela]'))return; const m=S.measurements.find(x=>x.id===+b.dataset.goa); if(!m)return; S.selectedId=m.id; const xs=m.coords.map(p=>p.x),ys=m.coords.map(p=>p.y); gotoCanvas((Math.min(...xs)+Math.max(...xs))/2,(Math.min(...ys)+Math.max(...ys))/2); });
+  el.querySelectorAll('[data-dela]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); delM(+b.dataset.dela); refreshLabelsTab(); });
 }
 pxInp.addEventListener('change',()=>{ S.pxPerUnit=parseFloat(pxInp.value)||1; recomputeAll(); updateScaleChip(); });
 unitSel.addEventListener('change',()=>{ S.unit=unitSel.value; recomputeAll(); updateScaleChip(); });
@@ -2820,7 +2879,6 @@ document.getElementById('btn-json').addEventListener('click', exportJSON);
 document.getElementById('btn-pdf').addEventListener('click', exportPDF);
 document.getElementById('btn-schedule').addEventListener('click', exportSchedule);
 document.getElementById('btn-cutlist').addEventListener('click', exportCuttingList);
-document.getElementById('btn-labelcsv').addEventListener('click', exportLabelsCSV);
 
 function exportCSV(){
   const rows=[['ID','Type','Label','Value','Unit','Width','Height','Area','Area_Unit','Length','Length_Unit','X_px','Y_px','Note']];
@@ -2862,10 +2920,30 @@ function scheduleRows(){
   S.annotations.forEach(a=>{ rows.push(['Note '+a.num, layerName('condition'), '', 'note', a.category||'', '', '', '', '', '', a.text||'']); });
   return rows;
 }
+/* Full schedule — everything except annotations, in the cutting-list column format:
+   every proposed-works stone (any action), every measurement, and every un-replaced grey label. */
 function exportSchedule(){
-  const headers=['Ref','Layer','Area / level','Type','Action / defect','Severity','Width','Height','Area','Length','Notes'];
-  const rows=[headers, ...scheduleRows()];
-  dl(rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),'stone-schedule.csv','text/csv');
+  renumberLabels();
+  const items=S.measurements.filter(m=>!isAnnotType(m));
+  const absorbed=new Set(); items.forEach(m=>{ if(m.layer==='proposed' && m.labelId) absorbed.add(m.labelId); });
+  const proposed=items.filter(m=>m.layer==='proposed').sort((a,b)=>codeCmp(proposedCode(a),proposedCode(b)));
+  const measures=items.filter(m=>m.layer!=='proposed');
+  const labelsOnly=S.stoneLabels.filter(l=>!absorbed.has(l.id)).slice().sort((a,b)=>codeCmp(stoneLabelCode(a),stoneLabelCode(b)));
+  if(!proposed.length && !measures.length && !labelsOnly.length){ msg('Nothing to schedule yet.'); return; }
+  const ACT={wsr:'RWS',indent:'IND'};
+  const actName=m=>{ const a=ACTION_BY[m.action]; return ACT[m.action]||(a?a.label:(m.action||'')); };
+  const typeName=m=>({dist:'Distance',pline:'Crack',poly:'Area',rect:'Rectangle',point:'Point'}[m.type]||m.type);
+  const rows=[['PROJECT:',''],['BUILDING/AREA:',S.areas.join(', ')],['DATE:',new Date().toISOString().slice(0,10)],[],
+    ['Ref','Level','Type / action','Length (mm)','Depth (mm)','Height (mm)','m³','face m²','bed m²','Notes']];
+  proposed.forEach(m=>{ const d=stoneDims(m);
+    rows.push([ proposedCode(m), (m.level||''), actName(m), Math.round(d.L), '', Math.round(d.H), '', (+d.face.toFixed(5)), '', (m.note||'') ]); });
+  measures.forEach(m=>{ let L='',H='',face='';
+    if(m.type==='rect'||m.type==='poly'){ const d=stoneDims(m); L=Math.round(d.L); H=Math.round(d.H); face=+d.face.toFixed(5); }
+    else if(m.type==='dist'){ L=Math.round(pxToU(m.value)); }
+    else if(m.type==='pline'){ L=Math.round(pxToU(m.length)); }
+    rows.push([ (m.label||''), (m.level||''), typeName(m), L, '', H, '', face, '', (m.note||'') ]); });
+  labelsOnly.forEach(l=>{ rows.push([ stoneLabelCode(l), '', 'Stone label', '', '', '', '', '', '', '' ]); });
+  dl(rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),'full-schedule.csv','text/csv');
 }
 /* Cut dimensions for a stone: rect → its width × height; polygon → bounding-box width × height
    (you order a rectangular block), with face m² = the true measured face area. */
@@ -2889,15 +2967,7 @@ function exportCuttingList(){
       Math.round(d.L), '', Math.round(d.H), '', (+d.face.toFixed(5)), '', (m.note||'') ]); });
   dl(rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),'cutting-list.csv','text/csv');
 }
-function exportLabelsCSV(){
-  renumberLabels();
-  if(!S.stoneLabels.length){ msg('No stone labels to export — label some stones first.'); return; }
-  const rows=[['PROJECT:',''],['BUILDING/AREA:',S.areas.join(', ')],['DATE:',new Date().toISOString().slice(0,10)],[],
-    ['Code','Course','Number','X (mm)','Y (mm)']];
-  S.stoneLabels.slice().sort((a,b)=>codeCmp(stoneLabelCode(a),stoneLabelCode(b)))
-    .forEach(l=>{ rows.push([ stoneLabelCode(l), (l.prefix||'—'), stoneLabelNumber(l), Math.round(l.x), Math.round(l.y) ]); });
-  dl(rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),'stone-labels.csv','text/csv');
-}
+/* Stone-label CSV removed in V21 — the Full schedule now lists labels too. */
 function exportJSON(){
   const data={ exported:new Date().toISOString(), scale:{pxPerUnit:S.pxPerUnit,unit:S.unit}, image:{width:S.imgW,height:S.imgH},
     measurements:S.measurements.filter(m=>!isAnnotType(m)).map(m=>({...m,valueFmt:m.type==='dist'?fmtDist(m.value):'',lengthFmt:m.type==='pline'?fmtDist(m.length):'',areaFmt:(m.type==='poly'||m.type==='rect')?fmtArea(m.area):''})),
@@ -2928,28 +2998,32 @@ function drawTag(g,x,y,txt,color,fs){
   g.save(); g.globalAlpha=0.92; g.fillStyle=color; rr(g,x-bw/2,y-bh/2,bw,bh,Math.max(2,fs*0.26)); g.fill(); g.restore();
   g.fillStyle='#fff'; g.fillText(txt, x, y+fs*0.06);
 }
-function drawMeasOnCanvas(g,m,mx,my,lw,fs,mode,num,edges){
+function drawMeasOnCanvas(g,m,mx,my,lw,fs,mode,num,edges,badgeR){
   g.lineWidth=lw; g.strokeStyle=m.color; g.fillStyle=m.color; g.lineJoin='round'; g.lineCap='round';
   const P=m.coords.map(c=>({x:mx(c.x),y:my(c.y)}));
   if(m.type==='dist'){ g.beginPath(); g.moveTo(P[0].x,P[0].y); g.lineTo(P[1].x,P[1].y); g.stroke(); }
   else if(m.type==='pline'){ g.beginPath(); P.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.stroke(); }
   else if(m.type==='poly'||m.type==='rect'){ g.beginPath(); P.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.closePath(); g.save(); g.globalAlpha=0.13; g.fill(); g.restore(); g.stroke(); }
   else if(m.type==='point'){ g.beginPath(); g.arc(P[0].x,P[0].y,Math.max(3,lw*1.8),0,Math.PI*2); g.fill(); }
-  if(m.type!=='point') P.forEach(p=>{ g.beginPath(); g.arc(p.x,p.y,Math.max(2,lw*1.0),0,Math.PI*2); g.fillStyle='#fff'; g.fill(); g.lineWidth=Math.max(1,lw*0.6); g.strokeStyle=m.color; g.stroke(); });
+  // vertex handles are an on-screen editing affordance — omitted from exports
   if(edges && m.type==='rect'){
     const efs=Math.max(16, fs*1.5);
     for(let i=0;i<m.coords.length;i++){ const j=(i+1)%m.coords.length; drawEdgeLabelCanvas(g, mx(m.coords[i].x),my(m.coords[i].y), mx(m.coords[j].x),my(m.coords[j].y), fmtDist(mDist(m.coords[i],m.coords[j])), m.color, efs); }
   }
   const c=outCentroid(P,m.type);
   if(mode==='label') drawTag(g,c.x,c.y,labelText(m),m.color,fs);
-  else if(mode==='badge') drawBadge(g,c.x,c.y,num,m.color,fs);
+  else if(mode==='badge') drawBadge(g,c.x,c.y,num,m.color,(badgeR||fs*0.92));
 }
-function drawBadge(g,x,y,txt,color,fs){
-  const r=fs*0.92, w=r*2;
-  g.save(); g.fillStyle=color; rr(g,x-r,y-r,w,w,Math.max(2,r*0.32)); g.fill();
-  g.lineWidth=Math.max(1.2,fs*0.13); g.strokeStyle='rgba(255,255,255,0.92)'; g.stroke(); g.restore();
-  g.fillStyle='#fff'; g.font='700 '+Math.round(fs)+'px Georgia, serif'; g.textAlign='center'; g.textBaseline='middle';
-  g.fillText(String(txt), x, y+fs*0.04);
+/* Number badge for exports — mirrors the on-screen badge: a circle for ≤2 chars, an adaptive
+   rounded square for 3+ (so long codes don't bleed out). r = disc radius (image-space, slider-driven). */
+function drawBadge(g,x,y,txt,color,r){
+  txt=String(txt); const fs=r*0.95, sw=Math.max(1.2,r*0.13);
+  g.font='700 '+fs+'px Georgia, serif'; g.textAlign='center'; g.textBaseline='middle';
+  g.save(); g.fillStyle=color; g.strokeStyle='rgba(255,255,255,0.95)'; g.lineWidth=sw;
+  if(txt.length<=2){ g.beginPath(); g.arc(x,y,r,0,Math.PI*2); g.fill(); g.stroke(); }
+  else { const w=Math.max(2*r, g.measureText(txt).width + r*0.9), h=2*r; rr(g,x-w/2,y-h/2,w,h,Math.max(2,r*0.42)); g.fill(); g.stroke(); }
+  g.restore();
+  g.fillStyle='#fff'; g.fillText(txt, x, y+fs*0.04);
 }
 function drawEdgeLabelCanvas(g, ax, ay, bx, by, txt, color, fs){
   const mx=(ax+bx)/2, my=(ay+by)/2;
@@ -2967,10 +3041,10 @@ function drawAnnOnCanvas(g,a,mx,my,fs){
 function compositeRegion(region, outW, items, anns, fullRes, opts){
   opts=opts||{};
   const mode = opts.mode || 'none';            // 'label' | 'badge' | 'none'
-  const strokeW = opts.strokeW || Math.max(2.5, outW/300);
+  const strokeW = opts.strokeW || Math.max(1.8, outW/440);   // finer borders for precision
   const fontS   = opts.fontS   || Math.max(13, Math.round(outW/56));
   const startNum = opts.startNum || 1;
-  const k=outW/region.sw, outH=Math.max(1,Math.round(region.sh*k));
+  const k=outW/region.sw, outH=Math.max(1,Math.round(region.sh*k)), lblR=(65*S.labelScale/2)*k;
   const cv=document.createElement('canvas'); cv.width=outW; cv.height=outH;
   const g=cv.getContext('2d');
   g.fillStyle='#efece7'; g.fillRect(0,0,outW,outH);
@@ -2978,10 +3052,10 @@ function compositeRegion(region, outW, items, anns, fullRes, opts){
   g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
   if(src){ try{ g.drawImage(src, region.sx*ss, region.sy*ss, region.sw*ss, region.sh*ss, 0,0,outW,outH); }catch(e){} }
   const mx=ix=>(ix-region.sx)*k, my=iy=>(iy-region.sy)*k;
-  (items||[]).forEach((m,i)=>drawMeasOnCanvas(g,m,mx,my,strokeW,fontS,mode,(m.layer==='proposed'?proposedCode(m):(m.n||(startNum+i))),opts.edges));
+  (items||[]).forEach((m,i)=>drawMeasOnCanvas(g,m,mx,my,strokeW,fontS,mode,(m.layer==='proposed'?proposedCode(m):(m.n||(startNum+i))),opts.edges,lblR));
   (anns||[]).forEach(a=>drawAnnOnCanvas(g,a,mx,my,fontS));
   if(opts.stoneLabels){ const consumed=new Set(); (items||[]).forEach(m=>{ if(m.labelId) consumed.add(m.labelId); });
-    opts.stoneLabels.forEach((l)=>{ if(!consumed.has(l.id)) drawBadge(g, mx(l.x), my(l.y), stoneLabelCode(l), '#5f5e5a', fontS); }); }
+    opts.stoneLabels.forEach((l)=>{ if(!consumed.has(l.id)) drawBadge(g, mx(l.x), my(l.y), stoneLabelCode(l), '#5f5e5a', lblR); }); }
   if(opts.scaleBar) drawScaleBar(g,outW,outH,k);
   return cv.toDataURL('image/jpeg', 0.86);
 }
@@ -3061,7 +3135,7 @@ function buildReportHTML(){
       repairsPage=`<div class="page-break"></div><h2>Repairs map — RWS &amp; indent (${nW} RWS, ${reps.length-nW} indent)</h2><div class="figure"><img src="${url}" alt="Repairs map"><div class="cap">Whole-stone replacements and indents only. Scale ${scaleStr}.</div></div>`;
     }
   }
-  const crop=(items,anns,region)=>compositeRegion(region, 460, items, anns, true, {strokeW:6, fontS:20, mode:'none', edges:false});
+  const crop=(items,anns,region)=>compositeRegion(region, 460, items, anns, true, {strokeW:2.4, fontS:20, mode:'none', edges:false});
   const rowFor=(m)=>{
     let val='';
     if(m.type==='dist')  val=fmtDist(m.value);
